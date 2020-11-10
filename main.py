@@ -21,17 +21,31 @@ def p_l_infected(k, l, beta):
 
 def little_test():
     degree_data = np.random.poisson(10, 100)
-    P_k = make_degree_dist(degree_data)
+    P_k = pdf_of(degree_data)
     plt.plot(P_k)
     plt.show()
     g_0 = infections_caused_matrix(P_k, .15)
+    avg_degree = z1_of(P_k)
+    g_1 = g1_of(P_k)
     return g_0
 
-def make_degree_dist(degree_list):
+def pdf_of(degree_list):
     g0 = np.zeros(len(degree_list))
     for i in range(len(g0)):
         g0[i] = len(np.where(degree_list == i)[0]) / len(degree_list)
     return g0
+
+def z1_of(g_0):
+    z1=0
+    for k in range(len(g_0)):
+        z1+=(k * g_0[k])
+    return z1
+
+def g1_of(g_0):
+    g_1 = np.zeros(len(g_0))
+    for k in range(len(g_0)-1):
+        g_1[k] = (k+1)*g_0[k+1]
+    return g_1/(z1_of(g_0))
 
 
 
