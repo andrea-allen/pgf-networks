@@ -26,7 +26,7 @@ def little_test():
     plt.show()
     g_0_matrix = infections_caused_matrix(P_k, .15)
     avg_degree = z1_of(P_k)
-    z2 = z2_of(P_k)   # This might be wrong
+    z2 = z1_of(g1_of(g1_of(P_k)))   # This might be wrong
     beta = .3
     r_0 = beta*z2/avg_degree
     g_1 = g1_of(P_k)
@@ -58,6 +58,7 @@ def z1_of(g_0):
 
 def z2_of(g_0):
     z2=0                       #Is this wrong?
+                                # Adjust this to be the second derivative of G0 and use either g1 or z1 function
     for k in range(len(g_0)-2):
         z2+=(k+1)*(k+2)*g_0[k+2]
     return z2
