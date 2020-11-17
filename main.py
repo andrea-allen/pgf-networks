@@ -57,8 +57,7 @@ def z1_of(g_0):
     return z1
 
 def z2_of(g_0):
-    z2=0                       #Is this wrong?
-                                # Adjust this to be the second derivative of G0 and use either g1 or z1 function
+    z2=0
     for k in range(len(g_0)-2):
         z2+=(k+1)*(k+2)*g_0[k+2]
     return z2
@@ -75,6 +74,24 @@ def phase_space(g_0, g_1, g=10):
     # Initial condition:
     Psi_sm[0][1][1] = 1
     return Psi_sm
+
+# Given a degree distribution for G0 (or the degree distribution of the entire network.
+
+# degreeDist = insert probability list for the starting distribution
+# maxk = maximum k
+# start_G0 = pdf_of(degreeDist) Maybe adjust this to have the generation in this and
+    # loop for as many generations as we see fit.
+#
+# start_G1 = g1_of(g0)
+#
+
+# for g in range(len(generation)):
+#     begin taking away nodes from the dist that become infected
+#       Then recompute G1 for each time step until hitting intervention
+#       Different function comes in there where we decide on the new distribution or new T
+#       For the generation before intervention, solve the selfconsistent equation and
+#       and compute final outbreak size. 
+#
 
 # h = 100;
 #
