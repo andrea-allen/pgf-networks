@@ -75,23 +75,44 @@ def phase_space(g_0, g_1, g=10):
     Psi_sm[0][1][1] = 1
     return Psi_sm
 
-# Given a degree distribution for G0 (or the degree distribution of the entire network.
+# Given a degree distribution for G0 (or the degree distribution of the entire network).
+T = 0.5 # Transmissability
+r0 = 3 # mean
+a =  0.2 # dispersion/clustering coefficient
+#need to iterate over i for this
+# Add for loop
+maxk = 1000
+for i in range(maxK):
+    p_k = math.gamma(r0 + i)/(math.factorial(i)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(i) # make vector
+    degreeDist = (p_k)*((math.gamma(k + 1)/(math.gamma(l + 1)*math.gamma(k - l + 1)) * T**l * (1-T)**(k-l) # Given p_k and then adjust with the transmission probability need to adjust the k and l variables
 
-# degreeDist = insert probability list for the starting distribution
-# maxk = maximum k
-# start_G0 = pdf_of(degreeDist) Maybe adjust this to have the generation in this and
-    # loop for as many generations as we see fit.
-#
-# start_G1 = g1_of(g0)
-#
 
-# for g in range(len(generation)):
+start_G0 = pgf_of(degreeDist)
+
+start_G1 = g1_of(start_G0)
+
+# Construct the probabilities and PGF for the state (s',m') has prob psi (g-1 s'm') to get the recurrence relation
+    # Implement equation 12 
+
+#
+# for g in range(len(generation)): Should this be a poisson process? Since we need to be working on generations with multiple
+    # times steps in a generation
+
 #     begin taking away nodes from the dist that become infected
 #       Then recompute G1 for each time step until hitting intervention
 #       Different function comes in there where we decide on the new distribution or new T
-#       For the generation before intervention, solve the selfconsistent equation and
-#       and compute final outbreak size. 
-#
+#       For the generation before intervention, solve the self consistent equation and
+#       and compute final outbreak size.
+
+# I think we need to use the phase space to do this part of the simulation and since it is hard to determine the degree
+    # Distribution for the gth generation without understanding the susceptibles left over
+
+    # Equations 15 and 14 are the key for the tangibles of this code.
+
+
+# Evolution of G1 we need to adjust the degree dist as we go
+
+# Coding for G0 and G1 distribution is
 
 # h = 100;
 #
