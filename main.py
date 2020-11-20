@@ -7,6 +7,7 @@ import scipy
 from scipy import stats
 from matplotlib import rc
 import math
+import SIR_sims
 
 
 def infections_caused_matrix(P_k, beta, x=1):
@@ -57,9 +58,9 @@ def z1_of(g_0):
     return z1
 
 def z2_of(g_0):
-    z2=0                       #Is this wrong?
+    z2 = 0                       #Is this wrong?
     for k in range(len(g_0)-2):
-        z2+=(k+1)*(k+2)*g_0[k+2]
+        z2 += (k+1)*(k+2)*g_0[k+2]
     return z2
 
 
@@ -124,4 +125,5 @@ if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     rc('text', usetex=True)
     print('pgfs yay!')
-    little_test()
+    # little_test()
+    SIR_sims.run()
