@@ -121,11 +121,11 @@ class Simulation:
         for gen in self.gen_collection.keys():
             nodes = self.gen_collection[gen]
             for node in nodes:
-                val_map[node] = gen/max_gen
+                val_map[node] = (gen+3)/max_gen
 
         values = [val_map.get(node, 0) for node in self.G.nodes()]
 
-        nx.draw_networkx_nodes(self.G, pos=self.graph_pos, cmap=plt.get_cmap('inferno'), node_color=values)
+        nx.draw_networkx_nodes(self.G, pos=self.graph_pos, cmap=plt.get_cmap('YlOrRd'), node_color=values)
         # nx.draw_networkx_nodes(self.G, pos=self.graph_pos, node_color=)
         nx.draw_networkx_labels(self.G, pos=self.graph_pos, with_labels=True)
         nx.draw_networkx_edges(self.G, pos=self.graph_pos)
