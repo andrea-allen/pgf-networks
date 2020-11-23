@@ -51,30 +51,36 @@ class Simulation:
         self.V_R = []
         self.graph_pos = pos
         self.gen_collection = {}
+        self.nodes = []
+        # add number infected at gen g total?
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
         p_zero_idx = random.randint(0, len(self.A[0])-1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
+        self.nodes.append(patient_zero)
         self.gen_collection[0] = [p_zero_idx]
         self.V_I.append(patient_zero)
         self.has_been_infected_labels.append(p_zero_idx)
         for j in range(0, len(self.A[0])):
             if self.A[p_zero_idx, j] == 1:
-                edge_ij = Edge(patient_zero, Node(j, -1, 0, self.Gamma[j]), self.Lambda[p_zero_idx, j])
+                neighbor = Node(j, -1, 0, self.Gamma[j])
+                self.nodes.append(neighbor)
+                edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
 
-    def run_sim(self):
+    def run_sim(self, visualize=False):
         self.intialize()
         while self.current_sim_time < self.sim_time:
-            self.visualize_network()
+            if visualize:
+                self.visualize_network()
             print('time: ', self.current_sim_time)
-            # print('Current IS edges: ')
-            # for edge in self.V_IS:
-            #     edge.display_info()
-            # print('Current Infected nodes: ')
-            # for node in self.V_I:
-            #     node.display_info()
+            print('Current IS edges: ')
+            for edge in self.V_IS:
+                edge.display_info()
+            print('Current Infected nodes: ')
+            for node in self.V_I:
+                node.display_info()
             # print('Current Recovered nodes: ')
             # for node in self.V_R:
             #     node.display_info()
@@ -90,11 +96,12 @@ class Simulation:
                 except KeyError:
                     self.gen_collection[infection_event.j.gen] = [infection_event.j.i]
                 self.has_been_infected_labels.append(infection_event.j.i)
+                self.update_IS_edges()
                 self.add_IS_edges(infection_event.j)
             if event_class == 2:
                 recovery_event = draw_specific_event(np.max(self.Gamma), self.V_I)
                 self.V_I.remove(recovery_event)
-                self.remove_IS_edges(recovery_event)
+                self.update_IS_edges()
                 self.V_R.append(recovery_event)
             self.current_sim_time += tau
             if len(self.V_IS) == 0:
@@ -103,15 +110,24 @@ class Simulation:
     def add_IS_edges(self, infected_node):
         for j in range(0, len(self.A[infected_node.i])):
             if self.A[infected_node.i][j] == 1:
-                if j not in self.has_been_infected_labels:
-                    edge_ij = Edge(infected_node, Node(j, -1, 0, self.Gamma[j]), self.Lambda[infected_node.i][j])
+                candidate_node = Node(j, -1, 0, self.Gamma[j])
+                neighbor_node = self.existing_node(candidate_node)
+                if neighbor_node.state == 0:
+                    edge_ij = Edge(infected_node, neighbor_node, self.Lambda[infected_node.i][j])
                     self.V_IS.append(edge_ij)
 
-    def remove_IS_edges(self, infected_node):
+    def existing_node(self, candidate_node):
+        for node in self.nodes:
+            if candidate_node.equals(node):
+                return node
+        self.nodes.append(candidate_node)
+        return candidate_node
+
+    def update_IS_edges(self):
         print('VIS has num edges, ', len(self.V_IS))
         updated_V_IS = []
         for edge in self.V_IS:
-            if edge.i.i != infected_node.i:
+            if (edge.i.state == 1) & (edge.j.state == 0):
                 updated_V_IS.append(edge)
         self.V_IS = updated_V_IS
 
@@ -125,12 +141,27 @@ class Simulation:
 
         values = [val_map.get(node, 0) for node in self.G.nodes()]
 
-        nx.draw_networkx_nodes(self.G, pos=self.graph_pos, cmap=plt.get_cmap('YlOrRd'), node_color=values)
+        nx.draw_networkx_nodes(self.G, pos=self.graph_pos, cmap=plt.get_cmap('Reds'), node_color=values)
         # nx.draw_networkx_nodes(self.G, pos=self.graph_pos, node_color=)
         nx.draw_networkx_labels(self.G, pos=self.graph_pos, with_labels=True)
-        nx.draw_networkx_edges(self.G, pos=self.graph_pos)
+        nx.draw_networkx_edges(self.G, pos=self.graph_pos, edge_color='Grey', lw=2)
         plt.show()
         return 0
+
+    def generate_matrix_gen(self):
+        gens = len(self.gen_collection)
+        matrix = np.zeros((2, gens))
+        s = 1
+        m = 1
+        for gen in self.gen_collection.keys():
+            matrix[0][gen] = m
+            matrix[1][gen] = s
+            try:
+                m = len(self.gen_collection[gen+1]) #num infected in gen g
+                s += m
+            except KeyError:
+                continue
+        return matrix
 
 
 
@@ -152,6 +183,12 @@ class Node:
 
     def display_info(self):
         print('Node index: ', self.i, ' state: ', self.state, ' event_rate: ', self.event_rate, ' gen: ', self.gen)
+
+    def equals(self, node):
+        if self.i == node.i:
+            return True
+        else:
+            return False
 
 
 class Edge:

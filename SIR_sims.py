@@ -8,9 +8,18 @@ def run():
     print('running')
     simulate(0, 0, 0, 0)
 
+# def ensemble():
+    #Want: One set of matrices per simulation:
+# #   One matrix per gen g, matrix=sxm, s=number infected from 0, N, m=number infected during gen g: 0,N
+    #Simulation_Data = []
+    #for gen g in gens:
+    # append(Matrix(number_tagged_in_g, number_tagged_in_g-number_tagged_in_g-1)
+    # Can put the matrix data in the simulation class, then it spits out the whole matrix, per g? Or just have a self function on it
+    # given all the matrices, take the sum of the set of matrices and divide by number of simulations?
+
 def simulate(A, beta, gamma, num_times):
     degree_dist = [0, .20, .20, .15, .05, .35, .02, .02, .01]
-    N = 40
+    N = 30
     G, pos = generate_graph(N, degree_dist)
     A = nx.adjacency_matrix(G)
 
@@ -20,8 +29,9 @@ def simulate(A, beta, gamma, num_times):
         Gamma[i] = .05
         for j in range(N):
             Lambda[i][j] = .5
-    sim = event_driven.Simulation(100, G, Lambda, Gamma, pos)
-    sim.run_sim()
+    sim = event_driven.Simulation(N*5, G, Lambda, Gamma, pos)
+    sim.run_sim(True)
+    sm_matrix = sim.generate_matrix_gen()
     print(len(sim.has_been_infected_labels))
 
 
