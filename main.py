@@ -47,7 +47,7 @@ def little_test():
 def pdf_of(degree_list):
     g0 = np.zeros(len(degree_list))
     for i in range(len(g0)):
-        g0[i] = len(np.where(degree_list == i)[0]) / len(degree_list)
+        g0[i] = degree_list[i]/ np.sum(degree_list)
     return g0
 
 def z1_of(g_0):
@@ -75,21 +75,73 @@ def phase_space(g_0, g_1, g=10):
     Psi_sm[0][1][1] = 1
     return Psi_sm
 
-# Given a degree distribution for G0 (or the degree distribution of the entire network).
-T = 0.5 # Transmissability
-r0 = 3 # mean
-a =  0.2 # dispersion/clustering coefficient
-#need to iterate over i for this
-# Add for loop
-maxk = 1000
-for i in range(maxK):
-    p_k = math.gamma(r0 + i)/(math.factorial(i)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(i) # make vector
-    degreeDist = (p_k)*((math.gamma(k + 1)/(math.gamma(l + 1)*math.gamma(k - l + 1)) * T**l * (1-T)**(k-l) # Given p_k and then adjust with the transmission probability need to adjust the k and l variables
+
+def formalism():
+    # Given a degree distribution for G0 (or the degree distribution of the entire network).
+    T = 0.5 # Transmissability
+    r0 = 3 # mean
+    a =  0.2 # dispersion/clustering coefficient
+    #need to iterate over i for this
+    # Add for loop
+    maxk = 100
+    p_k = np.empty(maxk)
+    degreeDist = np.empty(maxk)
+    transProb = np.empty(maxk)
+    p_LK = []
+    for k in range(maxk):
+        p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
+        p_LgivenK = []
+        for l in range(k):
+            p_LgivenK.append(math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
+        p_LK.append(p_LgivenK)
+        transProb[k] = np.sum(p_LK[k])
+        degreeDist[k] = p_k[k] * transProb[k]
+
+    start_G0 = pdf_of(degreeDist)
+
+    start_G1 = g1_of(start_G0)
+
+    G1_func = start_G1
+
+    G1_func[1] = G1_func[1] - 1
+
+    fun = np.poly1d(np.flip(start_G1))
+    roots = np.roots(fun)
+    u = roots[(roots > 0) & (roots < 1)]
+
+    # Outbreak size, What is going on here with the imaginary numbers
+    if len(u) == 0:
+        S = 1
+    else:
+        S = 1 - np.polyval(np.flip(start_G0), u[1])
+    #print(S)
+    return start_G0, start_G1
+
+def prob_Of_State_Leading_To_MInfections(prev_m, gen):
+    g1 = formalism()
+    return g1**((gen-1)*prev_m)
+
+def psiRecursion(g0, g1, initProb, gen, s_count, m_count):
+    # The number of people that are infective is important for the k values of the matrix
+    # The matrix should by and s By m, so the k values should line up with the s values
+    probMat = np.zeros([s_count, m_count])
+    for s in range(s_count):
+        for m in range(m_count):
+            probMat[s, m] = initProb*g0*(g1)**(gen-1) # Figure out what is going on with the sequences here, should we be accounting for k value somewhere? 
+
+    return probMat
+
+def phaseSpace(gen, s, m):
+    # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
+    g0, g1 = formalism()
+    initProb = 1
+    mat = psiRecursion(g0, g1, initProb, gen, s, m)
 
 
-start_G0 = pgf_of(degreeDist)
+    return mat
 
-start_G1 = g1_of(start_G0)
+
+
 
 # Construct the probabilities and PGF for the state (s',m') has prob psi (g-1 s'm') to get the recurrence relation
     # Implement equation 12 
@@ -163,4 +215,6 @@ if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     rc('text', usetex=True)
     print('pgfs yay!')
-    little_test()
+    #little_test()
+    #formalism()
+    probMat = phaseSpace(2, 4, 2)
