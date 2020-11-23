@@ -74,13 +74,13 @@ class Simulation:
         while self.current_sim_time < self.sim_time:
             if visualize:
                 self.visualize_network()
-            print('time: ', self.current_sim_time)
-            print('Current IS edges: ')
-            for edge in self.V_IS:
-                edge.display_info()
-            print('Current Infected nodes: ')
-            for node in self.V_I:
-                node.display_info()
+            # print('time: ', self.current_sim_time)
+            # print('Current IS edges: ')
+            # for edge in self.V_IS:
+            #     edge.display_info()
+            # print('Current Infected nodes: ')
+            # for node in self.V_I:
+            #     node.display_info()
             # print('Current Recovered nodes: ')
             # for node in self.V_R:
             #     node.display_info()
@@ -124,7 +124,6 @@ class Simulation:
         return candidate_node
 
     def update_IS_edges(self):
-        print('VIS has num edges, ', len(self.V_IS))
         updated_V_IS = []
         for edge in self.V_IS:
             if (edge.i.state == 1) & (edge.j.state == 0):
