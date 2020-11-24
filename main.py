@@ -2,11 +2,12 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import random
 import numpy as np
-import itertools
+import itertools as it
 import scipy
 from scipy import stats
 from matplotlib import rc
 import math
+
 
 
 def infections_caused_matrix(P_k, beta, x=1):
@@ -86,7 +87,6 @@ def formalism():
     maxk = 100
     p_k = np.empty(maxk)
     degreeDist = np.empty(maxk)
-    transProb = np.empty(maxk)
     p_LK = []
     for k in range(maxk):
         p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
@@ -94,9 +94,16 @@ def formalism():
         for l in range(k):
             p_LgivenK.append(math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
         p_LK.append(p_LgivenK)
-        transProb[k] = np.sum(p_LK[k])
-        degreeDist[k] = p_k[k] * transProb[k]
+        #p_l[k] = np.sum(p_LK[k]) # need to sum these the other way
 
+
+    p_LK =  [elem[::-1] for elem in p_LK] # Need to normalize this by the columns
+    b = np.zeros([len(p_LK), len(max(p_LK, key=lambda x: len(x)))])
+    for i, j in enumerate(p_LK):
+        b[i][0:len(j)] = j
+    p_l = b.sum(axis = 0)
+    for r in range(maxk-1):
+        degreeDist[r] = p_k[r] * p_l[r]
     start_G0 = pdf_of(degreeDist)
 
     start_G1 = g1_of(start_G0)
@@ -115,7 +122,7 @@ def formalism():
     else:
         S = 1 - np.polyval(np.flip(start_G0), u[1])
     #print(S)
-    return start_G0, start_G1
+    return start_G1, start_G0
 
 def prob_Of_State_Leading_To_MInfections(prev_m, gen):
     g1 = formalism()
@@ -136,8 +143,6 @@ def phaseSpace(gen, s, m):
     g0, g1 = formalism()
     initProb = 1
     mat = psiRecursion(g0, g1, initProb, gen, s, m)
-
-
     return mat
 
 
