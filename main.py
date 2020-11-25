@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
-import networkx as nx
-import random
 import numpy as np
 import itertools as it
 import scipy
-from scipy import stats
 from matplotlib import rc
-import math
+
+import SIR_sims
 
 
 
@@ -58,9 +56,9 @@ def z1_of(g_0):
     return z1
 
 def z2_of(g_0):
-    z2=0
+    z2 = 0                       #Is this wrong?
     for k in range(len(g_0)-2):
-        z2+=(k+1)*(k+2)*g_0[k+2]
+        z2 += (k+1)*(k+2)*g_0[k+2]
     return z2
 
 
@@ -234,8 +232,6 @@ def convolve_dists(X,Y):
 #     return ic_dist / sum(ic_dist)
 
 
-
-
 if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     rc('text', usetex=True)
@@ -243,3 +239,4 @@ if __name__ == '__main__':
     #little_test()
     #formalism()
     probMat = phaseSpace(2, 4, 2)
+    SIR_sims.run()
