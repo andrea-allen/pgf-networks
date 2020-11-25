@@ -3,6 +3,7 @@ import numpy as np
 import itertools as it
 import scipy
 from matplotlib import rc
+import math
 
 import SIR_sims
 
@@ -80,7 +81,7 @@ def phase_space(g_0, g_1, g=10):
 
 def formalism():
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
-    T = 0.5 # Transmissability
+    T = 0.8 # Transmissability
     r0 = 3 # mean
     a =  0.2 # dispersion/clustering coefficient
 
@@ -124,23 +125,23 @@ def formalism():
     #print(S)
     return start_G1, start_G0
 
-def constructMatrixM():
-    g1, g0 = formalism()
-    #N_0 = len(g0)
-    N_1 = len(g1)
+def constructMatrixM(g_0, g_1):
+    N_0 = len(g_0)
+    N_1 = len(g_1)
     # Need to make matrix that does all the powers of G_g-1 (collect like terms)
-    #M_0 = np.empty([N_0, N_0])
+    M_0 = np.zeros((N_0, N_0))
     M_1 = np.zeros((N_1, N_1))
     # For loop to feed new dist into the convolve again
 
-    M_0 = g0
-    newDist = g1
+    M_0[1] = g_0
+    newDist = g_1
     M_1[1] = newDist
     for row in range(2,N_1):
-        M_1[row] = convolve_dists(newDist, g1)
+        convol = convolve_dists(newDist, g_1)
+        M_1[row] = convol
         newDist = M_1[row]
 
-    return M_1
+    return (M_0, M_1)
 
 def computeLittlePsi(s, m, prevGenPsi, M):
     s_prime = s - m
@@ -148,33 +149,34 @@ def computeLittlePsi(s, m, prevGenPsi, M):
     return newPsi
 
 
-def layeredPsi(g0, g1, initProb, gen, s_count, m_count, M_0, M_1):
+def layeredPsi(initProb, num_gens, s_count, m_count, M_0, M_1):
     # The number of people that are infective is important for the k values of the matrix
     # The matrix should by and s By m, so the k values should line up with the s values
-    allPsi = np.zeros(((gen, s_count, m_count)))
+    allPsi = np.zeros(((num_gens, s_count, m_count)))
     #onePsiMat = np.zeros((s_count, m_count))
     allPsi[0][1][1] = initProb
     for s in range(s_count):
         for m in range(m_count):
-            #probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
+            #probMat[s, m] = initProb*g0*(g1)**(num_gens-1) INCORRECT
             allPsi[1][s][m] = computeLittlePsi(s, m, allPsi[0], M_0)
             #probMat[s,m] = initProb*
         #Figure out what is going on with the sequences here, should we be accounting for k value somewhere?
                 # This is where the implementation for the convolution needs to come into play
 
-    for g in range(gen):
+    for g in range(2, num_gens):
         for s in range(s_count):
             for m in range(m_count):
                 # probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
                 allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g-1], M_1)
     return allPsi
 
-def phaseSpace(gen, s, m):
+def phaseSpace(num_gens):
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     g0, g1 = formalism()
     initProb = 1
-    mat = psiRecursion(g0, g1, initProb, gen, s, m)
-    return mat
+    M = constructMatrixM(g0, g1)
+    all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
+    return all_psi_results
 
 # How to structure this code.
 # The phase space formalism needs
@@ -211,7 +213,8 @@ def convolve_dists(X,Y):
     ### each giving a distribution on a finite subset of the naturals
     len_X = len(X)
     len_Y = len(Y)
-    new_dist_len = len_X + len_Y - 1
+    new_dist_len = len_X + len_Y - 1 # Don't think it has to be this long
+    new_dist_len = len_X
     new_dist = np.zeros(new_dist_len)
     for m in np.arange(new_dist_len):
         new_prob = 0
@@ -238,5 +241,5 @@ if __name__ == '__main__':
     print('pgfs yay!')
     #little_test()
     #formalism()
-    probMat = phaseSpace(2, 4, 2)
+    probMat = phaseSpace(20)
     SIR_sims.run()
