@@ -1,12 +1,8 @@
 import matplotlib.pyplot as plt
-import networkx as nx
-import random
 import numpy as np
-import itertools
 import scipy
-from scipy import stats
 from matplotlib import rc
-import math
+
 import SIR_sims
 
 
@@ -76,54 +72,9 @@ def phase_space(g_0, g_1, g=10):
     Psi_sm[0][1][1] = 1
     return Psi_sm
 
-# h = 100;
-#
-# for lambda =1: h
-#
-# maxk = h;
-#
-# x0 = 0.5;
-#
-# g1 = poisspdf(1:maxk, lambda ); % Poisson distribution set up
-#
-#
-#
-#                              g1 = g1./ sum(g1); % normalizes the data for G1
-
-#                              g0 =[0 g1]; % gives the polynomial constants in G0
-#
-#                              % which is the PGF for the prob distribution
-#
-#                              % of vertex degrees k.
-#
-# for k=2: maxk
-#
-# g0(k) = g1(k - 1) / (k - 1);
-#
-# end
-#
-# g0 = g0. / sum(g0);
-#
-# fun =
-#
-#
-# @(x)
-#
-#
-# polyval(fliplr(g1), x) - x;
-#
-# u = fzero(fun, x0);
-#
-# S(lambda ) = 1-polyval(fliplr(g0), u);
-#
-# end
-#
-# plot(1: 10, S(1: 10))
-
 
 if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     rc('text', usetex=True)
     print('pgfs yay!')
-    # little_test()
     SIR_sims.run()
