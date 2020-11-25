@@ -17,8 +17,8 @@ def infections_caused_matrix(P_k, beta, x=1):
             dist[l][k] = P_k[k]*p_l_infected(k, l, beta)*(x**l)
     return dist
 
-def p_l_infected(k, l, beta):
-    return scipy.special.binom(k, l)*(beta**l)*((1-beta)**(k-l))
+# def p_l_infected(k, l, beta):
+#     return scipy.special.binom(k, l)*(beta**l)*((1-beta)**(k-l))
 
 def little_test():
     degree_data = np.random.poisson(10, 50)
@@ -77,13 +77,15 @@ def phase_space(g_0, g_1, g=10):
     return Psi_sm
 
 
+
+
+
 def formalism():
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
     T = 0.5 # Transmissability
     r0 = 3 # mean
     a =  0.2 # dispersion/clustering coefficient
-    #need to iterate over i for this
-    # Add for loop
+
     maxk = 100
     p_k = np.empty(maxk)
     degreeDist = np.empty(maxk)
@@ -124,19 +126,50 @@ def formalism():
     #print(S)
     return start_G1, start_G0
 
-def prob_Of_State_Leading_To_MInfections(prev_m, gen):
-    g1 = formalism()
-    return g1**((gen-1)*prev_m)
+def constructMatrixM():
+    g1, g0 = formalism()
+    #N_0 = len(g0)
+    N_1 = len(g1)
+    # Need to make matrix that does all the powers of G_g-1 (collect like terms)
+    #M_0 = np.empty([N_0, N_0])
+    M_1 = np.zeros((N_1, N_1))
+    # For loop to feed new dist into the convolve again
 
-def psiRecursion(g0, g1, initProb, gen, s_count, m_count):
+    M_0 = g0
+    newDist = g1
+    M_1[1] = newDist
+    for row in range(2,N_1):
+        M_1[row] = convolve_dists(newDist, g1)
+        newDist = M_1[row]
+
+    return M_1
+
+def computeLittlePsi(s, m, prevGenPsi, M):
+    s_prime = s - m
+    newPsi = prevGenPsi[s_prime].dot(M[:,m])
+    return newPsi
+
+
+def layeredPsi(g0, g1, initProb, gen, s_count, m_count, M_0, M_1):
     # The number of people that are infective is important for the k values of the matrix
     # The matrix should by and s By m, so the k values should line up with the s values
-    probMat = np.zeros([s_count, m_count])
+    allPsi = np.zeros(((gen, s_count, m_count)))
+    #onePsiMat = np.zeros((s_count, m_count))
+    allPsi[0][1][1] = initProb
     for s in range(s_count):
         for m in range(m_count):
-            probMat[s, m] = initProb*g0*(g1)**(gen-1) # Figure out what is going on with the sequences here, should we be accounting for k value somewhere? 
+            #probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
+            allPsi[1][s][m] = computeLittlePsi(s, m, allPsi[0], M_0)
+            #probMat[s,m] = initProb*
+        #Figure out what is going on with the sequences here, should we be accounting for k value somewhere?
+                # This is where the implementation for the convolution needs to come into play
 
-    return probMat
+    for g in range(gen):
+        for s in range(s_count):
+            for m in range(m_count):
+                # probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g-1], M_1)
+    return allPsi
 
 def phaseSpace(gen, s, m):
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
@@ -145,75 +178,62 @@ def phaseSpace(gen, s, m):
     mat = psiRecursion(g0, g1, initProb, gen, s, m)
     return mat
 
+# How to structure this code.
+# The phase space formalism needs
+        # 1) Need the G_{g-1} formalism (This includes the double sum formula) **DONE
+        # 2) Need to put together the matrix that Andrea is drawing,
+            # this matrix will have rows of PGFs, each row is a exponentiated G_{g-1}
+        # 3) Convolve the rows of this matrix to get one value associated with [G_{g-1}]^m'
+        # 4) The value from the convolution will then lead to the Psi matrix
+
+# This is the convolution code
+from scipy.stats import binom
 
 
+def find_pairs(m, len_dist_1, len_dist_2):
+    ### must have all three args nat num valued
+    ### must be that m <= len_dist_1 + len_dist_2
+    pairs = []
+    if (m <= len_dist_1 and m <= len_dist_2):
+        for i in np.arange(0,m+1,1):
+            pairs.append([i,m-i])
+    elif (m <= len_dist_1 and m > len_dist_2):
+        for i in np.arange(m-len_dist_2,m+1,1):
+            pairs.append([i,m-i])
+    elif (m > len_dist_1 and m <= len_dist_2):
+        for i in np.arange(0, len_dist_1+1,1):
+            pairs.append([i,m-i])
+    else:
+        for i in np.arange(m-len_dist_2 ,len_dist_1+1,1):
+            pairs.append([i,m-i])
+    return pairs
 
-# Construct the probabilities and PGF for the state (s',m') has prob psi (g-1 s'm') to get the recurrence relation
-    # Implement equation 12 
+def convolve_dists(X,Y):
+    ### X and Y should be vectors of probabilities (For our problem we need to incorporate the G0 and G1 probabilities in here.)
+    ### each giving a distribution on a finite subset of the naturals
+    len_X = len(X)
+    len_Y = len(Y)
+    new_dist_len = len_X + len_Y - 1
+    new_dist = np.zeros(new_dist_len)
+    for m in np.arange(new_dist_len):
+        new_prob = 0
+        pairs = find_pairs(m, len_X-1, len_Y-1)
+        for l_pair in pairs:
+            new_prob = new_prob + X[l_pair[0]]*Y[l_pair[1]]
+        new_dist[m] = new_prob
+    return new_dist
 
-#
-# for g in range(len(generation)): Should this be a poisson process? Since we need to be working on generations with multiple
-    # times steps in a generation
-
-#     begin taking away nodes from the dist that become infected
-#       Then recompute G1 for each time step until hitting intervention
-#       Different function comes in there where we decide on the new distribution or new T
-#       For the generation before intervention, solve the self consistent equation and
-#       and compute final outbreak size.
-
-# I think we need to use the phase space to do this part of the simulation and since it is hard to determine the degree
-    # Distribution for the gth generation without understanding the susceptibles left over
-
-    # Equations 15 and 14 are the key for the tangibles of this code.
+# def gen_ic_probs(sens, vec):
+#     ### sens is test sensitivity should be in [0,1]
+#     ### vec is a vector of pairs (n,p) where n is natural num p is a prob
+#     ### n represents number of incoming students from a county
+#     ### p is estimated prevalence in county/prob of having COVID if from county
+#     ic_dist = binom.pmf(np.arange(vec[0][0]+1), vec[0][0], vec[0][1]*(1-sens))
+#     for v in vec[1:]:
+#         ic_dist = convolve_dists(ic_dist, binom.pmf(np.arange(v[0]+1), v[0], v[1]*(1-sens)))
+#     return ic_dist / sum(ic_dist)
 
 
-# Evolution of G1 we need to adjust the degree dist as we go
-
-# Coding for G0 and G1 distribution is
-
-# h = 100;
-#
-# for lambda =1: h
-#
-# maxk = h;
-#
-# x0 = 0.5;
-#
-# g1 = poisspdf(1:maxk, lambda ); % Poisson distribution set up
-#
-#
-#
-#                              g1 = g1./ sum(g1); % normalizes the data for G1
-
-#                              g0 =[0 g1]; % gives the polynomial constants in G0
-#
-#                              % which is the PGF for the prob distribution
-#
-#                              % of vertex degrees k.
-#
-# for k=2: maxk
-#
-# g0(k) = g1(k - 1) / (k - 1);
-#
-# end
-#
-# g0 = g0. / sum(g0);
-#
-# fun =
-#
-#
-# @(x)
-#
-#
-# polyval(fliplr(g1), x) - x;
-#
-# u = fzero(fun, x0);
-#
-# S(lambda ) = 1-polyval(fliplr(g0), u);
-#
-# end
-#
-# plot(1: 10, S(1: 10))
 
 
 if __name__ == '__main__':
