@@ -178,6 +178,11 @@ def phaseSpace(num_gens):
     initProb = 1
     M = constructMatrixM(g0, g1)
     all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
+    fig, ax = plt.subplots()
+    inverted_s_m = all_psi_results[11].T
+    ax.imshow(inverted_s_m[:50][:,:50], cmap='Blues') #gen 5
+    ax.invert_yaxis()
+    plt.show()
     return all_psi_results
 
 # How to structure this code.
