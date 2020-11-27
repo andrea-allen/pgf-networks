@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 def run():
     print('running')
-    simulate(0, 0, 0, 0)
+    # simulate(0, 0, 0, 0)
 
-    s_sizes, ps_g = p_s_g_set(100, 1000)
-    for gen in [1, 2, 3, 6, 10]:
+    s_sizes, ps_g = p_s_g_set(100000, 1000)
+    np.savetxt('ps_g.txt', ps_g, delimiter=',')
+    for gen in [1, 2, 3, 6, 10, 15, 20, 25, 30, 35, 40]:
         plt.plot(s_sizes[:350], ps_g[gen][:350], label='$g=$'+str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
@@ -56,12 +57,32 @@ def p_s_g_set(num_sims=10, N=1000):
     # sample tonight, for one g
     s_sizes = np.arange(N) #s vector, for one g
     ps_g = np.zeros((100, N))
+    degree_dist = np.zeros(40)
+    for k in range(1, len(degree_dist)):
+        p_k = (k**(-2))*(math.e**(-k/5))
+        degree_dist[k] = p_k
+    G, pos = generate_graph(N, degree_dist)
+    N = len(G.nodes())
+    Lambda = np.zeros((N, N))
+    Gamma = np.zeros(N)
+    for n in range(N):
+        Gamma[n] = .001
+        for j in range(N):
+            Lambda[n][j] = .8
     for i in range(num_sims):
-        # TODO need to fix
-        sm_matrix = simulate_multi_noel(N, 0, 0, 0, 100, i)
+        if i%1000==0:
+            G, pos = generate_graph(N, degree_dist)
+            N = len(G.nodes())
+            Lambda = np.zeros((N, N))
+            Gamma = np.zeros(N)
+            for n in range(N):
+                Gamma[n] = .001
+                for j in range(N):
+                    Lambda[n][j] = .8
+        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i)
         for g in range(len(sm_matrix[0])):
             gen_s = int(sm_matrix[1][g])
-            ps_g[g][gen_s] +=1
+            ps_g[g][gen_s] += 1
 
     # averaging:
     for gen in range(100):
@@ -92,54 +113,52 @@ def simulate(A, beta, gamma, num_times):
     sm_matrix = sim.generate_matrix_gen()
     return sm_matrix
 
-def simulate_noel(N, A, beta, gamma, num_times):
-    degree_dist = np.zeros(40)
-    for k in range(1, len(degree_dist)):
-        p_k = (k**(-2))*(math.e**(-k/5))
-        degree_dist[k] = p_k
-    G, pos = generate_graph(N, degree_dist)
-    N = len(G.nodes())
-    Lambda = np.zeros((N, N))
-    Gamma = np.zeros(N)
-    for i in range(N):
-        Gamma[i] = .001
-        for j in range(N):
-            Lambda[i][j] = .8
+def simulate_noel(G, pos, Lambda, Gamma, current):
+    # degree_dist = np.zeros(40)
+    # for k in range(1, len(degree_dist)):
+    #     p_k = (k**(-2))*(math.e**(-k/5))
+    #     degree_dist[k] = p_k
+    # G, pos = generate_graph(N, degree_dist)
+    # N = len(G.nodes())
+    # Lambda = np.zeros((N, N))
+    # Gamma = np.zeros(N)
+    # for i in range(N):
+    #     Gamma[i] = .001
+    #     for j in range(N):
+    #         Lambda[i][j] = .8
+    print('current sim '+str(current))
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim()
     sm_matrix = sim.generate_matrix_gen()
     return sm_matrix
 
-def simulate_multi_noel(N, A, beta, gamma, num_times_per_graph, current_sim):
-    degree_dist = np.zeros(40)
-    for k in range(1, len(degree_dist)):
-        p_k = (k**(-2))*(math.e**(-k/5))
-        degree_dist[k] = p_k
-    G, pos = generate_graph(N, degree_dist)
-    N = len(G.nodes())
-    Lambda = np.zeros((N, N))
-    Gamma = np.zeros(N)
-    s_m_multi = np.zeros((2, 100))
-    for i in range(N):
-        Gamma[i] = .001
-        for j in range(N):
-            Lambda[i][j] = .8
-    for k in range(num_times_per_graph):
-        print('graph number '+str(current_sim)+' simulation '+str(k)+' out of '+str(num_times_per_graph))
-        sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
-        sim.run_sim()
-        sm_matrix = sim.generate_matrix_gen()
-        for g in range(len(sm_matrix[0])):
-            s_m_multi[0][g] += sm_matrix[0][g]
-            s_m_multi[1][g] += sm_matrix[1][g]
-    for gen in range(100):
-        m_row = s_m_multi[0]
-        s_row = s_m_multi[1]
-        m_row = m_row / num_times_per_graph
-        s_row = s_row / num_times_per_graph
-        s_m_multi[0] = m_row
-        s_m_multi[1] = s_row
-    return s_m_multi
+def simulate_multi_noel(G, pos, Lambda, Gamma):
+    # degree_dist = np.zeros(40)
+    # for k in range(1, len(degree_dist)):
+    #     p_k = (k**(-2))*(math.e**(-k/5))
+    #     degree_dist[k] = p_k
+    # G, pos = generate_graph(N, degree_dist)
+    # N = len(G.nodes())
+    # Lambda = np.zeros((N, N))
+    # Gamma = np.zeros(N)
+    # for i in range(N):
+    #     Gamma[i] = .001
+    #     for j in range(N):
+    #         Lambda[i][j] = .8
+    #     print('graph number '+str(current_sim)+' simulation '+str(k)+' out of '+str(num_times_per_graph))
+    sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
+    sim.run_sim()
+    sm_matrix = sim.generate_matrix_gen()
+    # for g in range(len(sm_matrix[0])):
+    #     sm[0][g] += sm_matrix[0][g]
+    #     s_m_multi[1][g] += sm_matrix[1][g]
+    # m_row = s_m_multi[0]
+    # s_row = s_m_multi[1]
+    # m_row = m_row / num_times_per_graph
+    # s_row = s_row / num_times_per_graph
+    # s_m_multi[0] = m_row
+    # s_m_multi[1] = s_row
+    return sm_matrix
 
 
 def generate_graph(N, deg_dist):
@@ -172,3 +191,4 @@ def generate_graph(N, deg_dist):
     inferred_degree_dist = np.array(nx.degree_histogram(G)) / N
     # print('Inferred equals given degree distribution: ', inferred_degree_dist == deg_dist)
     return G, pos
+

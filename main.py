@@ -89,8 +89,10 @@ def formalism():
     p_k = np.empty(maxk)
     degreeDist = np.empty(maxk)
     p_LK = []
-    for k in range(maxk):
-        p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
+    p_k[0] = 0
+    for k in range(1, maxk):
+        p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
+        # p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
         p_LgivenK = []
         for l in range(k):
             p_LgivenK.append(math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
@@ -109,19 +111,19 @@ def formalism():
 
     start_G1 = g1_of(start_G0)
 
-    G1_func = start_G1
-
-    G1_func[1] = G1_func[1] - 1
-
-    fun = np.poly1d(np.flip(start_G1))
-    roots = np.roots(fun)
-    u = roots[(roots > 0) & (roots < 1)]
+    # G1_func = start_G1
+    #
+    # G1_func[1] = G1_func[1] - 1
+    #
+    # fun = np.poly1d(np.flip(start_G1))
+    # roots = np.roots(fun)
+    # u = roots[(roots > 0) & (roots < 1)]
 
     # Outbreak size, What is going on here with the imaginary numbers
-    if len(u) == 0:
-        S = 1
-    else:
-        S = 1 - np.polyval(np.flip(start_G0), u[1])
+    # if len(u) == 0:
+    #     S = 1
+    # else:
+    #     S = 1 - np.polyval(np.flip(start_G0), u[1])
     #print(S)
     return start_G1, start_G0
 
@@ -224,16 +226,6 @@ def convolve_dists(X,Y):
         new_dist[m] = new_prob
     return new_dist
 
-# def gen_ic_probs(sens, vec):
-#     ### sens is test sensitivity should be in [0,1]
-#     ### vec is a vector of pairs (n,p) where n is natural num p is a prob
-#     ### n represents number of incoming students from a county
-#     ### p is estimated prevalence in county/prob of having COVID if from county
-#     ic_dist = binom.pmf(np.arange(vec[0][0]+1), vec[0][0], vec[0][1]*(1-sens))
-#     for v in vec[1:]:
-#         ic_dist = convolve_dists(ic_dist, binom.pmf(np.arange(v[0]+1), v[0], v[1]*(1-sens)))
-#     return ic_dist / sum(ic_dist)
-
 
 if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
@@ -242,4 +234,4 @@ if __name__ == '__main__':
     #little_test()
     #formalism()
     probMat = phaseSpace(20)
-    SIR_sims.run()
+    # SIR_sims.run()
