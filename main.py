@@ -4,45 +4,10 @@ import itertools as it
 import scipy
 from matplotlib import rc
 import math
+import matplotlib as m
+
 
 import SIR_sims
-
-
-
-def infections_caused_matrix(P_k, beta, x=1):
-    dist = np.zeros((len(P_k), len(P_k)))
-    for k in range(len(P_k)):
-        for l in range(k):
-            dist[l][k] = P_k[k]*p_l_infected(k, l, beta)*(x**l)
-    return dist
-
-# def p_l_infected(k, l, beta):
-#     return scipy.special.binom(k, l)*(beta**l)*((1-beta)**(k-l))
-
-def little_test():
-    degree_data = np.random.poisson(10, 50)
-    P_k = pdf_of(degree_data)
-    plt.plot(P_k)
-    plt.show()
-    g_0_matrix = infections_caused_matrix(P_k, .15)
-    avg_degree = z1_of(P_k)
-    z2 = z1_of(g1_of(g1_of(P_k)))   # This might be wrong
-    beta = .3
-    r_0 = beta*z2/avg_degree
-    g_1 = g1_of(P_k)
-    g_1_matrix = infections_caused_matrix(g_1, .15)
-    # myplot = plt.plot(g_0_matrix)
-    fig, ax = plt.subplots()
-    fig1 = ax.imshow(g_0_matrix, cmap='plasma')
-    plt.show()
-    fig, ax = plt.subplots()
-    fig2 = ax.imshow(g_1_matrix, cmap='plasma')
-    plt.show()
-    Psi_sm = phase_space(P_k, g_1)
-    fig, ax = plt.subplots()
-    fig3 = ax.imshow(Psi_sm[0], cmap='plasma')
-    plt.show()
-    return g_0_matrix
 
 def pdf_of(degree_list):
     g0 = np.zeros(len(degree_list))
@@ -173,15 +138,27 @@ def layeredPsi(initProb, num_gens, s_count, m_count, M_0, M_1):
     return allPsi
 
 def phaseSpace(num_gens):
+    cdict = {
+        'red': ((0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
+        'green': ((0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
+        'blue': ((0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
+    }
+
+    cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     g0, g1 = formalism()
     initProb = 1
     M = constructMatrixM(g0, g1)
     all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
     fig, ax = plt.subplots()
-    inverted_s_m = all_psi_results[11].T
-    ax.imshow(inverted_s_m[:50][:,:50], cmap='Blues') #gen 5
+    inverted_s_m = all_psi_results[5].T
+    ax.imshow(inverted_s_m[:30][:,:30], cmap=cm) #gen 5
     ax.invert_yaxis()
+    plt.title('Phase Space at Generation 5 of Power Law Network')
+    plt.ylabel('$m$')
+    plt.xlabel('$s$')
+    plt.savefig('draft_phase_space.png')
     plt.show()
     return all_psi_results
 
