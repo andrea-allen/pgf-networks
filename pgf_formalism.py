@@ -21,7 +21,6 @@ def z2_of(g_0):
         z2 += (k+1)*(k+2)*g_0[k+2]
     return z2
 
-
 def g1_of(g_0):
     g_1 = np.zeros(len(g_0))
     for k in range(len(g_0)-1):
@@ -29,7 +28,7 @@ def g1_of(g_0):
     return g_1/(z1_of(g_0))
 
 def phase_space(g_0, g_1, g=10):
-    Psi_sm = np.zeros((10, 100,100))
+    Psi_sm = np.zeros((10, 100, 100))
     # Initial condition:
     Psi_sm[0][1][1] = 1
     return Psi_sm
@@ -42,24 +41,15 @@ def formalism():
 
     maxk = 100
     p_k = np.empty(maxk)
-    degreeDist = np.empty(maxk)
     p_LK = np.zeros((maxk, maxk))
     p_k[0] = 0
     for k in range(1, maxk):
         p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
     p_k = p_k / np.sum(p_k)
     for k in range(0, maxk):
-        # p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
-        # p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
-        # p_LgivenK =
         for l in range(0, k+1):
             p_LgivenK = p_k[k] * (math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
             p_LK[k][l] = p_LgivenK
-        #p_l[k] = np.sum(p_LK[k]) # need to sum these the other way
-    # p_LK = [elem[::-1] for elem in p_LK] # Need to normalize this by the columns
-    # b = np.zeros([len(p_LK), len(max(p_LK, key=lambda x: len(x)))])
-    # for i, j in enumerate(p_LK):
-    #     b[i][0:len(j)] = j
     p_l = np.sum(p_LK, axis=0)
     p_l = p_l / (np.sum(p_l))
     start_G0 = pdf_of(p_l)
@@ -85,10 +75,8 @@ def formalism():
 def constructMatrixM(g_0, g_1):
     N_0 = len(g_0)
     N_1 = len(g_1)
-    # Need to make matrix that does all the powers of G_g-1 (collect like terms)
     M_0 = np.zeros((N_0, N_0))
     M_1 = np.zeros((N_1, N_1))
-    # For loop to feed new dist into the convolve again
 
     M_0[1] = g_0
     newDist = g_1
@@ -110,21 +98,15 @@ def layeredPsi(initProb, num_gens, s_count, m_count, M_0, M_1):
     # The number of people that are infective is important for the k values of the matrix
     # The matrix should by and s By m, so the k values should line up with the s values
     allPsi = np.zeros(((num_gens, s_count, m_count)))
-    #onePsiMat = np.zeros((s_count, m_count))
     allPsi[0][1][1] = initProb
     for s_g1 in range(s_count):
         for m_g1 in range(m_count):
-            #probMat[s, m] = initProb*g0*(g1)**(num_gens-1) INCORRECT
             allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
-            #probMat[s,m] = initProb*
-        #Figure out what is going on with the sequences here, should we be accounting for k value somewhere?
-                # This is where the implementation for the convolution needs to come into play
 
     for g in range(2, num_gens):
         # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
         for s in range(s_count):
             for m in range(m_count):
-                # probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
                 allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g-1], M_1)
     return allPsi
 
@@ -144,7 +126,7 @@ def phaseSpace(num_gens):
     M = constructMatrixM(g0, g1)
     all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
     fig, ax = plt.subplots()
-    inverted_s_m = all_psi_results[5].T
+    inverted_s_m = all_psi_results[5].T #example for gen 5
     ax.imshow(inverted_s_m[:180][:,:180], cmap=cm) #gen 5
     ax.invert_yaxis()
     plt.title('Phase Space at Generation 5 of Power Law Network')
