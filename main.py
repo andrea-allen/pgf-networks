@@ -216,4 +216,4 @@ if __name__ == '__main__':
     #little_test()
     #formalism()
     probMat = phaseSpace(20)
-    # SIR_sims.run()
+    SIR_sims.run()

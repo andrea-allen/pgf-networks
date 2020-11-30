@@ -9,10 +9,10 @@ def run():
     print('running')
     # simulate(0, 0, 0, 0)
 
-    s_sizes, ps_g = p_s_g_set(100000, 1000)
+    s_sizes, ps_g = p_s_g_set(10000, 1000)
     np.savetxt('ps_g.txt', ps_g, delimiter=',')
-    for gen in [1, 2, 3, 6, 10, 15, 20, 25, 30, 35, 40]:
-        plt.plot(s_sizes[:350], ps_g[gen][:350], label='$g=$'+str(gen))
+    for gen in [2, 6, 11, 30]:
+        plt.plot(s_sizes[1:350], ps_g[gen][1:350], label='$g=$'+str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
@@ -54,7 +54,6 @@ def ensemble(num_sims=10, N=1000):
     # Want: One set of matrices per simulation:
 
 def p_s_g_set(num_sims=10, N=1000):
-    # sample tonight, for one g
     s_sizes = np.arange(N) #s vector, for one g
     ps_g = np.zeros((100, N))
     degree_dist = np.zeros(40)
@@ -72,17 +71,21 @@ def p_s_g_set(num_sims=10, N=1000):
     for i in range(num_sims):
         if i%1000==0:
             G, pos = generate_graph(N, degree_dist)
-            N = len(G.nodes())
-            Lambda = np.zeros((N, N))
-            Gamma = np.zeros(N)
-            for n in range(N):
+            N_resized = len(G.nodes())
+            Lambda = np.zeros((N_resized, N_resized))
+            Gamma = np.zeros(N_resized)
+            for n in range(N_resized):
                 Gamma[n] = .001
-                for j in range(N):
+                for j in range(N_resized):
                     Lambda[n][j] = .8
         sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i)
         for g in range(len(sm_matrix[0])):
             gen_s = int(sm_matrix[1][g])
-            ps_g[g][gen_s] += 1
+            try:
+                ps_g[g][gen_s] += 1
+            except IndexError:
+                print('Index error for g: ', g, ', gen_s: ', gen_s)
+                continue
 
     # averaging:
     for gen in range(100):
