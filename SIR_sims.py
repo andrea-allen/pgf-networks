@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 def run():
     print('running')
-    s_sizes, ps_g = p_s_g_set(10000, 1000)
-    np.savetxt('ps_g.txt', ps_g, delimiter=',')
+    degree_distrb = power_law_degree_distrb()
+    s_sizes, size_distrb_per_gen = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000)
+    np.savetxt('size_distrb_per_gen.txt', size_distrb_per_gen, delimiter=',')
     for gen in [2, 6, 11, 30]:
-        plt.plot(s_sizes[1:350], ps_g[gen][1:350], label='$g=$'+str(gen))
+        plt.plot(s_sizes[1:350], size_distrb_per_gen[gen][1:350], label='$g=$' + str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
@@ -19,11 +20,12 @@ def run():
     plt.show()
 
     results = ensemble(20)
+    # TODO ^ fix this
     still_has_next = True
     while still_has_next:
-        for i in range(len(results)-1):
+        for i in range(len(results) - 1):
             fig, ax = plt.subplots()
-            ax.imshow(results[i][:100][:,:100], cmap='autumn')
+            ax.imshow(results[i][:100][:, :100], cmap='autumn')
             ax.invert_yaxis()
             plt.xlabel('s nodes infected')
             plt.ylabel('m nodes infected in gen g')
@@ -31,11 +33,20 @@ def run():
             plt.title('Generation g=' + str(i))
             plt.savefig('gen' + str(i) + 'samplefig_noel.png')
             plt.show()
-            still_has_next = np.sum(results[i+1]) > 0
+            still_has_next = np.sum(results[i + 1]) > 0
+
+
+def power_law_degree_distrb():
+    degree_dist = np.zeros(40)
+    for k in range(1, len(degree_dist)):
+        p_k = (k ** (-2)) * (math.e ** (-k / 5))
+        degree_dist[k] = p_k
+    return degree_dist
 
 
 def ensemble(num_sims=10, N=1000):
-    gen_results = np.zeros(((int(N / 2), N, N)))
+    # ensemble of simulations to produce s,m phase space
+    gen_results = np.zeros((int(N / 2), N, N))
     for i in range(num_sims):
         sm_matrix = simulate_noel(N, 0, 0, 0, 0)
         for g in range(len(sm_matrix[0])):
@@ -51,14 +62,11 @@ def ensemble(num_sims=10, N=1000):
     return gen_results
     # Want: One set of matrices per simulation:
 
-def p_s_g_set(num_sims=10, N=1000):
-    s_sizes = np.arange(N) #s vector, for one g
-    ps_g = np.zeros((100, N))
-    degree_dist = np.zeros(40)
-    for k in range(1, len(degree_dist)):
-        p_k = (k**(-2))*(math.e**(-k/5))
-        degree_dist[k] = p_k
-    G, pos = generate_graph(N, degree_dist)
+
+def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000):
+    s_sizes = np.arange(N)
+    outbreak_size_distrb_per_gen_matrix = np.zeros((100, N))
+    G, pos = generate_graph(N, degree_distrb)
     N = len(G.nodes())
     Lambda = np.zeros((N, N))
     Gamma = np.zeros(N)
@@ -67,8 +75,8 @@ def p_s_g_set(num_sims=10, N=1000):
         for j in range(N):
             Lambda[n][j] = .8
     for i in range(num_sims):
-        if i%1000==0:
-            G, pos = generate_graph(N, degree_dist)
+        if i % 1000 == 0:
+            G, pos = generate_graph(N, degree_distrb)
             N_resized = len(G.nodes())
             Lambda = np.zeros((N_resized, N_resized))
             Gamma = np.zeros(N_resized)
@@ -80,19 +88,20 @@ def p_s_g_set(num_sims=10, N=1000):
         for g in range(len(sm_matrix[0])):
             gen_s = int(sm_matrix[1][g])
             try:
-                ps_g[g][gen_s] += 1
+                outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1
             except IndexError:
                 print('Index error for g: ', g, ', gen_s: ', gen_s)
                 continue
-
     # averaging:
     for gen in range(100):
-        gen_time_series = ps_g[gen]
+        gen_time_series = outbreak_size_distrb_per_gen_matrix[gen]
         gen_time_series = gen_time_series / num_sims
-        ps_g[gen] = gen_time_series
-    return s_sizes, ps_g
+        outbreak_size_distrb_per_gen_matrix[gen] = gen_time_series
+    return s_sizes, outbreak_size_distrb_per_gen_matrix
 
-def simulate(A, beta, gamma, num_times):
+
+def simulate():
+    # A sample function for event driven simulation use
     degree_dist = [0, .20, .20, .15, .05, .35, .02, .02, .01]
     N = 30
     G, pos = generate_graph(N, degree_dist)
@@ -107,8 +116,9 @@ def simulate(A, beta, gamma, num_times):
     sm_matrix = sim.generate_matrix_gen()
     return sm_matrix
 
+
 def simulate_noel(G, pos, Lambda, Gamma, current):
-    print('current sim '+str(current))
+    print('current sim ' + str(current))
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim()
     sm_matrix = sim.generate_matrix_gen()
@@ -145,4 +155,3 @@ def generate_graph(N, deg_dist):
     inferred_degree_dist = np.array(nx.degree_histogram(G)) / N
     # print('Inferred equals given degree distribution: ', inferred_degree_dist == deg_dist)
     return G, pos
-
