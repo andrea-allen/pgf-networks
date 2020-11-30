@@ -110,14 +110,13 @@ def computeLittlePsi(s, m, prevGenPsi, M):
     return newPsi
 
 
-def Psi(initProb, num_gens, max_s, max_m, intervention_gen=-1):
+def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, intervention_T=0.5):
     # The number of people that are infective is important for the k values of the matrix
     # The matrix should by and s By m, so the k values should line up with the s values
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
 
     original_degree_distrb = power_law_degree_distrb(100)
-    initial_T = .8
     g1, g0 = gen_functions_with_transmissibility(original_degree_distrb,
                                                  initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
     M_0, M_1 = constructMatrixM(g0, g1)
@@ -128,7 +127,7 @@ def Psi(initProb, num_gens, max_s, max_m, intervention_gen=-1):
     for g in range(2, num_gens):
         # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
         if g == intervention_gen:
-            new_T = 0.7
+            new_T = intervention_T
             new_g1, new_g0 = gen_functions_with_transmissibility(original_degree_distrb, new_T)
             new_M = constructMatrixM(new_g0, new_g1)
             M_1 = new_M[1]
@@ -145,20 +144,30 @@ def phaseSpace(num_gens, num_nodes):
         'blue': ((0.0, 0.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
     }
 
-    cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+    cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 4096)
 
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
-    num_nodes = 100
-    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes)
+    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
+    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
     fig, ax = plt.subplots()
     inverted_s_m = all_psi_results[5].T  # example for gen 5
-    ax.imshow(inverted_s_m[:180][:, :180], cmap=cm)  # gen 5
+    ax.imshow(inverted_s_m[:num_nodes][:, :num_nodes], cmap=cm)  # gen 5
     ax.invert_yaxis()
     plt.title('Phase Space at Generation 5 of Power Law Network')
     plt.ylabel('$m$')
     plt.xlabel('$s$')
     plt.savefig('draft_phase_space.png')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    inverted_s_m = all_psi_results_with_intervention[5].T  # example for gen 5
+    ax.imshow(inverted_s_m[:num_nodes][:, :num_nodes], cmap=cm)  # gen 5
+    ax.invert_yaxis()
+    plt.title('Phase Space at Generation 5 with Intervention at Gen 3')
+    plt.ylabel('$m$')
+    plt.xlabel('$s$')
+    plt.savefig('draft_phase_space_with_intervention.png')
     plt.show()
     return all_psi_results
 
