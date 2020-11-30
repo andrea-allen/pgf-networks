@@ -112,15 +112,16 @@ def layeredPsi(initProb, num_gens, s_count, m_count, M_0, M_1):
     allPsi = np.zeros(((num_gens, s_count, m_count)))
     #onePsiMat = np.zeros((s_count, m_count))
     allPsi[0][1][1] = initProb
-    for s in range(s_count):
-        for m in range(m_count):
+    for s_g1 in range(s_count):
+        for m_g1 in range(m_count):
             #probMat[s, m] = initProb*g0*(g1)**(num_gens-1) INCORRECT
-            allPsi[1][s][m] = computeLittlePsi(s, m, allPsi[0], M_0)
+            allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
             #probMat[s,m] = initProb*
         #Figure out what is going on with the sequences here, should we be accounting for k value somewhere?
                 # This is where the implementation for the convolution needs to come into play
 
     for g in range(2, num_gens):
+        # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
         for s in range(s_count):
             for m in range(m_count):
                 # probMat[s, m] = initProb*g0*(g1)**(gen-1) INCORRECT
@@ -132,7 +133,7 @@ def phaseSpace(num_gens):
     cdict = {
         'red': ((0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
         'green': ((0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
-        'blue': ((0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
+        'blue': ((0.0, 0.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
     }
 
     cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
@@ -144,7 +145,7 @@ def phaseSpace(num_gens):
     all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
     fig, ax = plt.subplots()
     inverted_s_m = all_psi_results[5].T
-    ax.imshow(inverted_s_m[:30][:,:30], cmap=cm) #gen 5
+    ax.imshow(inverted_s_m[:180][:,:180], cmap=cm) #gen 5
     ax.invert_yaxis()
     plt.title('Phase Space at Generation 5 of Power Law Network')
     plt.ylabel('$m$')
