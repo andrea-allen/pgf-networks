@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import rc
 import math
 import matplotlib as m
 
@@ -39,7 +38,7 @@ def formalism():
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
     T = 0.8 # Transmissability
     r0 = 3 # mean
-    a =  0.2 # dispersion/clustering coefficient
+    a = 0.2 # dispersion/clustering coefficient
 
     maxk = 100
     p_k = np.empty(maxk)

@@ -162,6 +162,10 @@ class Simulation:
                 continue
         return matrix
 
+    def intervene(self):
+        print('intervention')
+        #TODO intervention code in this method
+
 
 
 class Node:

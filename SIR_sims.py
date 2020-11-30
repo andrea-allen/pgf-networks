@@ -99,6 +99,42 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000):
         outbreak_size_distrb_per_gen_matrix[gen] = gen_time_series
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
+def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N=1000):
+    s_sizes = np.arange(N)
+    outbreak_size_distrb_per_gen_matrix = np.zeros((100, N))
+    G, pos = generate_graph(N, degree_distrb)
+    N = len(G.nodes())
+    Lambda = np.zeros((N, N))
+    Gamma = np.zeros(N)
+    for n in range(N):
+        Gamma[n] = .001
+        for j in range(N):
+            Lambda[n][j] = .8
+    for i in range(num_sims):
+        if i % 1000 == 0:
+            G, pos = generate_graph(N, degree_distrb)
+            N_resized = len(G.nodes())
+            Lambda = np.zeros((N_resized, N_resized))
+            Gamma = np.zeros(N_resized)
+            for n in range(N_resized):
+                Gamma[n] = .001
+                for j in range(N_resized):
+                    Lambda[n][j] = .8
+        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i)
+        for g in range(len(sm_matrix[0])):
+            gen_s = int(sm_matrix[1][g])
+            try:
+                outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1
+            except IndexError:
+                print('Index error for g: ', g, ', gen_s: ', gen_s)
+                continue
+    # averaging:
+    for gen in range(100):
+        gen_time_series = outbreak_size_distrb_per_gen_matrix[gen]
+        gen_time_series = gen_time_series / num_sims
+        outbreak_size_distrb_per_gen_matrix[gen] = gen_time_series
+    return s_sizes, outbreak_size_distrb_per_gen_matrix
+
 
 def simulate():
     # A sample function for event driven simulation use
@@ -119,6 +155,7 @@ def simulate():
 
 def simulate_noel(G, pos, Lambda, Gamma, current):
     print('current sim ' + str(current))
+    # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim()
     sm_matrix = sim.generate_matrix_gen()
