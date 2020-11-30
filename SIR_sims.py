@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 
 def run():
     print('running')
-    # simulate(0, 0, 0, 0)
-
     s_sizes, ps_g = p_s_g_set(10000, 1000)
     np.savetxt('ps_g.txt', ps_g, delimiter=',')
     for gen in [2, 6, 11, 30]:
@@ -94,13 +92,6 @@ def p_s_g_set(num_sims=10, N=1000):
         ps_g[gen] = gen_time_series
     return s_sizes, ps_g
 
-# #   One matrix per gen g, matrix=sxm, s=number infected from 0, N, m=number infected during gen g: 0,N
-# Simulation_Data = []
-# for gen g in gens:
-# append(Matrix(number_tagged_in_g, number_tagged_in_g-number_tagged_in_g-1)
-# Can put the matrix data in the simulation class, then it spits out the whole matrix, per g? Or just have a self function on it
-# given all the matrices, take the sum of the set of matrices and divide by number of simulations?
-
 def simulate(A, beta, gamma, num_times):
     degree_dist = [0, .20, .20, .15, .05, .35, .02, .02, .01]
     N = 30
@@ -117,50 +108,10 @@ def simulate(A, beta, gamma, num_times):
     return sm_matrix
 
 def simulate_noel(G, pos, Lambda, Gamma, current):
-    # degree_dist = np.zeros(40)
-    # for k in range(1, len(degree_dist)):
-    #     p_k = (k**(-2))*(math.e**(-k/5))
-    #     degree_dist[k] = p_k
-    # G, pos = generate_graph(N, degree_dist)
-    # N = len(G.nodes())
-    # Lambda = np.zeros((N, N))
-    # Gamma = np.zeros(N)
-    # for i in range(N):
-    #     Gamma[i] = .001
-    #     for j in range(N):
-    #         Lambda[i][j] = .8
     print('current sim '+str(current))
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim()
     sm_matrix = sim.generate_matrix_gen()
-    return sm_matrix
-
-def simulate_multi_noel(G, pos, Lambda, Gamma):
-    # degree_dist = np.zeros(40)
-    # for k in range(1, len(degree_dist)):
-    #     p_k = (k**(-2))*(math.e**(-k/5))
-    #     degree_dist[k] = p_k
-    # G, pos = generate_graph(N, degree_dist)
-    # N = len(G.nodes())
-    # Lambda = np.zeros((N, N))
-    # Gamma = np.zeros(N)
-    # for i in range(N):
-    #     Gamma[i] = .001
-    #     for j in range(N):
-    #         Lambda[i][j] = .8
-    #     print('graph number '+str(current_sim)+' simulation '+str(k)+' out of '+str(num_times_per_graph))
-    sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
-    sim.run_sim()
-    sm_matrix = sim.generate_matrix_gen()
-    # for g in range(len(sm_matrix[0])):
-    #     sm[0][g] += sm_matrix[0][g]
-    #     s_m_multi[1][g] += sm_matrix[1][g]
-    # m_row = s_m_multi[0]
-    # s_row = s_m_multi[1]
-    # m_row = m_row / num_times_per_graph
-    # s_row = s_row / num_times_per_graph
-    # s_m_multi[0] = m_row
-    # s_m_multi[1] = s_row
     return sm_matrix
 
 
