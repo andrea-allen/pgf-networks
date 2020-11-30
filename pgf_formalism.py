@@ -6,7 +6,7 @@ import matplotlib as m
 def pdf_of(degree_list):
     g0 = np.zeros(len(degree_list))
     for i in range(len(g0)):
-        g0[i] = degree_list[i]/ np.sum(degree_list)
+        g0[i] = degree_list[i] / np.sum(degree_list)
     return g0
 
 def z1_of(g_0):
@@ -43,26 +43,26 @@ def formalism():
     maxk = 100
     p_k = np.empty(maxk)
     degreeDist = np.empty(maxk)
-    p_LK = []
+    p_LK = np.zeros((maxk, maxk))
     p_k[0] = 0
     for k in range(1, maxk):
         p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
+    p_k = p_k / np.sum(p_k)
+    for k in range(0, maxk):
+        # p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
         # p_k[k] = math.gamma(r0 + k)/(math.factorial(k)* math.gamma(r0))*(a/(r0+a))**(a) * (a/(r0+a))**(k) # make vector
-        p_LgivenK = []
-        for l in range(k):
-            p_LgivenK.append(math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
-        p_LK.append(p_LgivenK)
+        # p_LgivenK =
+        for l in range(0, k+1):
+            p_LgivenK = p_k[k] * (math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T**(l) * (1 - T)**(k - l))
+            p_LK[k][l] = p_LgivenK
         #p_l[k] = np.sum(p_LK[k]) # need to sum these the other way
-
-
-    p_LK =  [elem[::-1] for elem in p_LK] # Need to normalize this by the columns
-    b = np.zeros([len(p_LK), len(max(p_LK, key=lambda x: len(x)))])
-    for i, j in enumerate(p_LK):
-        b[i][0:len(j)] = j
-    p_l = b.sum(axis = 0)
-    for r in range(maxk-1):
-        degreeDist[r] = p_k[r] * p_l[r]
-    start_G0 = pdf_of(degreeDist)
+    # p_LK = [elem[::-1] for elem in p_LK] # Need to normalize this by the columns
+    # b = np.zeros([len(p_LK), len(max(p_LK, key=lambda x: len(x)))])
+    # for i, j in enumerate(p_LK):
+    #     b[i][0:len(j)] = j
+    p_l = np.sum(p_LK, axis=0)
+    p_l = p_l / (np.sum(p_l))
+    start_G0 = pdf_of(p_l)
 
     start_G1 = g1_of(start_G0)
 
