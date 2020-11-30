@@ -138,7 +138,7 @@ def phaseSpace(num_gens):
     cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
-    g0, g1 = formalism()
+    g1, g0 = formalism() # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
     initProb = 1
     M = constructMatrixM(g0, g1)
     all_psi_results = layeredPsi(initProb, num_gens, len(g0), len(g0), M[0], M[1])
