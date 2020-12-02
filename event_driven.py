@@ -3,6 +3,7 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+
 def draw_tau():
     tau = random.expovariate(1.0)
     return tau
@@ -52,11 +53,13 @@ class Simulation:
         self.graph_pos = pos
         self.gen_collection = {}
         self.nodes = []
+        self.highest_gen = 0
+        self.intervened = False
         # add number infected at gen g total?
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
-        p_zero_idx = random.randint(0, len(self.A[0])-1)
+        p_zero_idx = random.randint(0, len(self.A[0]) - 1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
         self.nodes.append(patient_zero)
         self.gen_collection[0] = [p_zero_idx]
@@ -69,7 +72,7 @@ class Simulation:
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
 
-    def run_sim(self, visualize=False):
+    def run_sim(self, intervention_gen=-1, intervention_T=0, visualize=False):
         self.intialize()
         while self.current_sim_time < self.sim_time:
             if visualize:
@@ -84,6 +87,13 @@ class Simulation:
             # print('Current Recovered nodes: ')
             # for node in self.V_R:
             #     node.display_info()
+
+            # intervention if applicable:
+            if (not self.intervened) & (intervention_gen > 0):
+                if self.highest_gen >= intervention_gen:
+                    self.intervene(intervention_T)
+                    self.intervened = True
+
             tau = draw_tau()
             event_class = draw_event_class(self.V_IS, self.V_I)
             if event_class == 1:
@@ -95,6 +105,7 @@ class Simulation:
                     self.gen_collection[infection_event.j.gen].append(infection_event.j.i)
                 except KeyError:
                     self.gen_collection[infection_event.j.gen] = [infection_event.j.i]
+                    self.highest_gen += 1
                 self.has_been_infected_labels.append(infection_event.j.i)
                 self.update_IS_edges()
                 self.add_IS_edges(infection_event.j)
@@ -132,11 +143,11 @@ class Simulation:
 
     def visualize_network(self):
         val_map = {}
-        max_gen = max(self.gen_collection.keys())+1
+        max_gen = max(self.gen_collection.keys()) + 1
         for gen in self.gen_collection.keys():
             nodes = self.gen_collection[gen]
             for node in nodes:
-                val_map[node] = (gen+3)/max_gen
+                val_map[node] = (gen + 3) / max_gen
 
         values = [val_map.get(node, 0) for node in self.G.nodes()]
 
@@ -156,16 +167,23 @@ class Simulation:
             matrix[0][gen] = m
             matrix[1][gen] = s
             try:
-                m = len(self.gen_collection[gen+1]) #num infected in gen g
+                m = len(self.gen_collection[gen + 1])  # num infected in gen g
                 s += m
             except KeyError:
                 continue
         return matrix
 
-    def intervene(self):
+    def intervene(self, T):
         print('intervention')
-        #TODO intervention code in this method
-
+        # TODO intervention code in this method
+        # Simplest intervention is just to re-assign Lambda with uniform the new T value
+        # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
+        N = len(self.Lambda[0])
+        new_Lambda = np.zeros((N, N))
+        for i in range(N):
+            for j in range(N):
+                new_Lambda[i][j] = T
+        self.Lambda = new_Lambda
 
 
 class Node:
@@ -196,7 +214,7 @@ class Node:
 
 class Edge:
     def __init__(self, i, j, infect_rate):
-        self.i = i #not just an index, this is a whole Node object
+        self.i = i  # not just an index, this is a whole Node object
         self.j = j
         self.event_rate = infect_rate
 

@@ -171,6 +171,35 @@ def phaseSpace(num_gens, num_nodes):
     plt.show()
     return all_psi_results
 
+def outbreak_size_curves(num_gens, num_nodes):
+    initProb = 1
+    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
+    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    color_key = {4: 'blue', 6: 'red', 11: 'orange'}
+    for gen in [4, 6, 11]:
+        inverted_s_m = all_psi_results[gen].T
+        ps_g_analytical = np.sum(inverted_s_m, axis=0)
+        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
+        label='$g='+str(gen)+'$'
+        color = color_key[gen]
+        plt.plot(ps_g_analytical, label=label, color=color, linestyle='-')
+        # plt.title('No intervention')
+    # plt.show()
+
+    for gen in [4, 6, 11]:
+        inverted_s_m = all_psi_results_with_intervention[gen].T
+        ps_g_analytical = np.sum(inverted_s_m, axis=0)
+        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
+        label='$g='+str(gen)+'$'
+        color = color_key[gen]
+        plt.plot(ps_g_analytical, label=label, color=color, linestyle='--')
+        plt.title('No vs Yes intervention')
+    plt.xlabel('$s$- number nodes infected at generation $g$')
+    plt.ylabel('$p_s^g$')
+    plt.legend(loc='upper right')
+    plt.show()
+
+
 
 # How to structure this code.
 # The phase space formalism needs
