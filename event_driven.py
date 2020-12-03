@@ -158,24 +158,31 @@ class Simulation:
         plt.show()
         return 0
 
-    def generate_matrix_gen(self):
+    def generate_matrix_gen(self, max_gens):
+        # TODO add extinction book-keeping
         gens = len(self.gen_collection)
+        gens = max_gens
         matrix = np.zeros((2, gens))
         s = 1
         m = 1
-        for gen in self.gen_collection.keys():
+        s_max = 1
+        for gen in range(max_gens): #{0: 1, 1: 12, 14, 2: 16, 42, ....
             matrix[0][gen] = m
             matrix[1][gen] = s
             try:
                 m = len(self.gen_collection[gen + 1])  # num infected in gen g
                 s += m
+                s_max = s
             except KeyError:
-                continue
+                # make m=0 and s=the last s for the rest of the "time series"
+                s = s_max
+                m = 0
         return matrix
 
     def intervene(self, T):
         print('intervention')
         # TODO intervention code in this method
+        # Check for bugs?
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
         # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
         N = len(self.Lambda[0])

@@ -71,7 +71,7 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     # Given transmissibility T
     maxk = 100
     p_k = degree_distrb
-    p_LK = np.zeros((maxk, maxk))
+    p_LK = np.zeros((400, 400))
 
     for k in range(0, maxk):
         for l in range(0, k + 1):
@@ -84,6 +84,17 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     G0_with_T = pdf_of(p_l)
     G1_with_T = g1_of(
         G0_with_T)  # Question for Mariah: Is this correct, or do we need to re-compute p_L USING G1, and then use that?
+
+    # pLk_second = np.zeros((400, 400))
+    # p_k_second = g1_of(p_k)
+    # for k in range(0, maxk):
+    #     for l in range(0, k + 1):
+    #         p_LgivenK = p_k_second[k] * (
+    #                 math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T ** (l) * (1 - T) ** (k - l))
+    #         pLk_second[k][l] = p_LgivenK
+    # p_l_second = np.sum(pLk_second, axis=0)
+    # p_l_second = p_l_second / (np.sum(p_l_second))
+    # G1_with_T = pdf_of(p_l_second)
     return G1_with_T, G0_with_T
 
 
@@ -101,10 +112,21 @@ def constructMatrixM(g_0, g_1):
         M_1[row] = convol
         newDist = M_1[row]
 
+    M_1[0][0]=1
     return (M_0, M_1)
 
 
-def computeLittlePsi(s, m, prevGenPsi, M):
+def computeLittlePsi2(s, m, prevGenPsi, M, g):
+    # TODO backfill the probability of extinction
+    if m==0 and g>1 and s<=g:
+        newPsi = np.sum(prevGenPsi[s])
+    else:
+        s_prime = s - m
+        newPsi = prevGenPsi[s_prime].dot(M[:, m])
+    return newPsi
+
+def computeLittlePsi(s, m, prevGenPsi, M, g):
+    # TODO backfill the probability of extinction
     s_prime = s - m
     newPsi = prevGenPsi[s_prime].dot(M[:, m])
     return newPsi
@@ -116,13 +138,14 @@ def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, interv
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
 
-    original_degree_distrb = power_law_degree_distrb(100)
+    original_degree_distrb = power_law_degree_distrb(400)
+    try_this_g1 = g1_of(original_degree_distrb)
     g1, g0 = gen_functions_with_transmissibility(original_degree_distrb,
                                                  initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
     M_0, M_1 = constructMatrixM(g0, g1)
     for s_g1 in range(max_s):
         for m_g1 in range(max_m):
-            allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
+            allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0, 1)
 
     for g in range(2, num_gens):
         # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
@@ -133,7 +156,10 @@ def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, interv
             M_1 = new_M[1]
         for s in range(max_s):
             for m in range(max_m):
-                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1, g)
+        psi_g = allPsi[g]
+        psi_g = psi_g/np.sum(psi_g)
+        allPsi[g] = psi_g
     return allPsi
 
 
@@ -149,10 +175,11 @@ def phaseSpace(num_gens, num_nodes):
     # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
     all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
-    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    # all_psi_results = all_psi_results/np.sum(all_psi_results)
+    # all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
     fig, ax = plt.subplots()
     inverted_s_m = all_psi_results[5].T  # example for gen 5
-    ax.imshow(inverted_s_m[:num_nodes][:, :num_nodes], cmap=cm)  # gen 5
+    ax.imshow(inverted_s_m[:80][:, :300], cmap='binary')  # gen 5
     ax.invert_yaxis()
     plt.title('Phase Space at Generation 5 of Power Law Network')
     plt.ylabel('$m$')
@@ -160,44 +187,47 @@ def phaseSpace(num_gens, num_nodes):
     plt.savefig('draft_phase_space.png')
     plt.show()
 
-    fig, ax = plt.subplots()
-    inverted_s_m = all_psi_results_with_intervention[5].T  # example for gen 5
-    ax.imshow(inverted_s_m[:num_nodes][:, :num_nodes], cmap=cm)  # gen 5
-    ax.invert_yaxis()
-    plt.title('Phase Space at Generation 5 with Intervention at Gen 3')
-    plt.ylabel('$m$')
-    plt.xlabel('$s$')
-    plt.savefig('draft_phase_space_with_intervention.png')
-    plt.show()
+    # fig, ax = plt.subplots()
+    # inverted_s_m = all_psi_results_with_intervention[5].T  # example for gen 5
+    # ax.imshow(inverted_s_m[:num_nodes][:, :num_nodes], cmap=cm)  # gen 5
+    # ax.invert_yaxis()
+    # plt.title('Phase Space at Generation 5 with Intervention at Gen 3')
+    # plt.ylabel('$m$')
+    # plt.xlabel('$s$')
+    # plt.savefig('draft_phase_space_with_intervention.png')
+    # plt.show()
     return all_psi_results
 
 def outbreak_size_curves(num_gens, num_nodes):
     initProb = 1
     all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
     all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
-    color_key = {4: 'blue', 6: 'red', 11: 'orange'}
-    for gen in [4, 6, 11]:
+    color_key = {2: 'blue', 6: 'red', 11: 'orange'}
+    for gen in [2, 6, 11]:
         inverted_s_m = all_psi_results[gen].T
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
         ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
         label='$g='+str(gen)+'$'
         color = color_key[gen]
-        plt.plot(ps_g_analytical, label=label, color=color, linestyle='-')
+        plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='-')
         # plt.title('No intervention')
     # plt.show()
 
-    for gen in [4, 6, 11]:
+    for gen in [2, 6, 11]:
         inverted_s_m = all_psi_results_with_intervention[gen].T
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
         ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
         label='$g='+str(gen)+'$'
         color = color_key[gen]
-        plt.plot(ps_g_analytical, label=label, color=color, linestyle='--')
+        plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='--')
         plt.title('No vs Yes intervention')
     plt.xlabel('$s$- number nodes infected at generation $g$')
     plt.ylabel('$p_s^g$')
     plt.legend(loc='upper right')
+    plt.semilogy()
+    plt.ylim(.0001, .1)
     plt.show()
+    print('done')
 
 
 

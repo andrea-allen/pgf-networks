@@ -6,21 +6,21 @@ import matplotlib.pyplot as plt
 
 def compare_rounds_with_without_intervention():
     degree_distrb = power_law_degree_distrb()
-    s_sizes_no_intervention, size_distrb_per_gen_no_intervention = outbreak_size_distrb_per_gen(degree_distrb, 50000, 500)
+    s_sizes_no_intervention, size_distrb_per_gen_no_intervention = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000)
     np.savetxt('size_distrb_per_gen_no_int.txt', size_distrb_per_gen_no_intervention, delimiter=',')
     for gen in [2, 6, 11]:
-        plt.plot(s_sizes_no_intervention[1:200], size_distrb_per_gen_no_intervention[gen][1:200], label='$g=$' + str(gen))
+        plt.plot(s_sizes_no_intervention[2:300], size_distrb_per_gen_no_intervention[gen][2:300], label='$g=$' + str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
     plt.semilogy()
     plt.savefig('p_s_g_distribution_no_intervention.png')
-    # plt.show()
+    plt.show()
 
-    s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, 50000, 500, 3, 0.4)
+    s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, 10000, 1000, 3, 0.4)
     np.savetxt('size_distrb_per_gen_int.txt', size_distrb_per_gen_intervention, delimiter=',')
     for gen in [2, 6, 11]:
-        plt.plot(s_sizes_intervention[1:200], size_distrb_per_gen_intervention[gen][1:200], label='$int g=$' + str(gen))
+        plt.plot(s_sizes_intervention[2:300], size_distrb_per_gen_intervention[gen][2:300], label='$int g=$' + str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
@@ -75,7 +75,7 @@ def ensemble(num_sims=10, N=1000):
     gen_results = np.zeros((int(N / 2), N, N))
     for i in range(num_sims):
         sm_matrix = simulate_noel(N, 0, 0, 0, 0)
-        for g in range(len(sm_matrix[0])):
+        for g in range(len(sm_matrix[0])): #currently this is the length of the highest generation
             gen_s = int(sm_matrix[1][g])
             gen_m = int(sm_matrix[0][g])
             gen_results[g][gen_m][gen_s] += 1
@@ -177,7 +177,7 @@ def simulate():
             Lambda[i][j] = .5
     sim = event_driven.Simulation(N * 5, G, Lambda, Gamma, pos)
     sim.run_sim()
-    sm_matrix = sim.generate_matrix_gen()
+    sm_matrix = sim.generate_matrix_gen(20)
     return sm_matrix
 
 
@@ -186,7 +186,7 @@ def simulate_noel(G, pos, Lambda, Gamma, current, intervention_gen = -1, interve
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim(intervention_gen, intervention_T)
-    sm_matrix = sim.generate_matrix_gen()
+    sm_matrix = sim.generate_matrix_gen(20)
     return sm_matrix
 
 
