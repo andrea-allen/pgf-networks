@@ -9,4 +9,4 @@ if __name__ == '__main__':
     # probMatrix = pgf_formalism.phaseSpace(20, 400)
     # pgf_formalism.outbreak_size_curves(20, 400)
     pgf_formalism.plot_sims_vs_analytical_outbreak_sizes()
-    # SIR_sims.run()
+    SIR_sims.run()

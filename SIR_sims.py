@@ -4,15 +4,37 @@ import math
 import event_driven
 import matplotlib.pyplot as plt
 
-def compare_rounds_with_without_intervention():
+def run():
+    # Manipulate-able method for running whatever simulations and plotting we want
+    read_back_data()
+    # plt.show()
+    # Original degree distribution:
     degree_distrb = power_law_degree_distrb()
-    s_sizes_no_intervention, size_distrb_per_gen_no_intervention = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000, 0.8, 0.001)
-    np.savetxt('size_distrb_per_gen_no_int_g3_full.txt', size_distrb_per_gen_no_intervention, delimiter=',')
-    # s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen(degree_distrb, 500, 500, 0.01)
-    s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, 10000, 1000, 3, 0.4, 0.8, 0.001)
-    np.savetxt('size_distrb_per_gen_int_g3_full.txt', size_distrb_per_gen_intervention, delimiter=',')
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb)
+    print('done')
+    degree_distrb = power_law_degree_distrb()
+    s_sizes, size_distrb_per_gen = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000)
+    np.savetxt('size_distrb_per_gen.txt', size_distrb_per_gen, delimiter=',')
+    for gen in [2, 6, 11, 30]:
+        plt.plot(s_sizes[1:350], size_distrb_per_gen[gen][1:350], label='$g=$' + str(gen))
+    plt.legend(loc='upper right')
+    plt.xlabel('$s$')
+    plt.ylabel('$p_s^g$')
+    plt.semilogy()
+    plt.savefig('p_s_g_distribution.png')
+    plt.show()
 
 
+def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, num_sims=10000, num_nodes=1000, init_T=0.8, gen_intervene=3, T_intervene=0.4, recover_rate=.001):
+    # Comment if no need to run or save results:
+    # WITH NO intervention
+    s_sizes_no_intervention, size_distrb_per_gen_no_intervention = outbreak_size_distrb_per_gen(degree_distrb, num_sims, num_nodes, init_T, recover_rate)
+    np.savetxt('size_distrb_per_gen_no_int_full.txt', size_distrb_per_gen_no_intervention, delimiter=',')
+    # WITH intervention
+    s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims, num_nodes, gen_intervene, T_intervene, init_T, recover_rate)
+    np.savetxt('size_distrb_per_gen_int_full.txt', size_distrb_per_gen_intervention, delimiter=',')
+
+    # Plotting results against one another
     for gen in [2, 6, 11]:
         plt.plot(s_sizes_no_intervention[2:350], size_distrb_per_gen_no_intervention[gen][2:350], label='$g=$' + str(gen))
     plt.legend(loc='upper right')
@@ -21,7 +43,6 @@ def compare_rounds_with_without_intervention():
     plt.semilogy()
     # plt.savefig('p_s_g_distribution_no_intervention.png')
     # plt.show()
-
 
     for gen in [2, 6, 11, 18]:
         plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
@@ -33,8 +54,8 @@ def compare_rounds_with_without_intervention():
     plt.show()
 
 def read_back_data():
-    print('results')
-    #TODO make sure to be able to read in and plot data
+    # Manipulatable method for reading back data and plotting desired results
+
     data = np.loadtxt('size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
     data_int = np.loadtxt('size_distrb_per_gen_int_g3_full.txt', delimiter=',')
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18:'black'}
@@ -55,42 +76,6 @@ def read_back_data():
     return data
 
 
-
-def run():
-    print('running')
-    read_back_data()
-    # plt.show()
-    compare_rounds_with_without_intervention()
-    print('done')
-    degree_distrb = power_law_degree_distrb()
-    s_sizes, size_distrb_per_gen = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000)
-    np.savetxt('size_distrb_per_gen.txt', size_distrb_per_gen, delimiter=',')
-    for gen in [2, 6, 11, 30]:
-        plt.plot(s_sizes[1:350], size_distrb_per_gen[gen][1:350], label='$g=$' + str(gen))
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
-    plt.savefig('p_s_g_distribution.png')
-    plt.show()
-
-    results = ensemble(20)
-    # TODO ^ fix this
-    still_has_next = True
-    while still_has_next:
-        for i in range(len(results) - 1):
-            fig, ax = plt.subplots()
-            ax.imshow(results[i][:100][:, :100], cmap='autumn')
-            ax.invert_yaxis()
-            plt.xlabel('s nodes infected')
-            plt.ylabel('m nodes infected in gen g')
-            # plt.legend(loc='upper right')
-            plt.title('Generation g=' + str(i))
-            plt.savefig('gen' + str(i) + 'samplefig_noel.png')
-            plt.show()
-            still_has_next = np.sum(results[i + 1]) > 0
-
-
 def power_law_degree_distrb():
     degree_dist = np.zeros(40)
     for k in range(1, len(degree_dist)):
@@ -99,26 +84,8 @@ def power_law_degree_distrb():
     return degree_dist
 
 
-def ensemble(num_sims=10, N=1000):
-    # ensemble of simulations to produce s,m phase space
-    gen_results = np.zeros((int(N / 2), N, N))
-    for i in range(num_sims):
-        sm_matrix = simulate_noel(N, 0, 0, 0, 0)
-        for g in range(len(sm_matrix[0])): #currently this is the length of the highest generation
-            gen_s = int(sm_matrix[1][g])
-            gen_m = int(sm_matrix[0][g])
-            gen_results[g][gen_m][gen_s] += 1
-
-    # averaging:
-    for gen in range(int(N / 2)):
-        gen_matrix = gen_results[gen]
-        gen_matrix = gen_matrix / num_sims
-        gen_results[gen] = gen_matrix
-    return gen_results
-    # Want: One set of matrices per simulation:
-
-
 def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamma=0.1):
+    # Generates the empirical s-slice for results of proportion of simulations that resulted in exactly s nodes infected at generation g
     beta = -(gamma*T)/(T-1)
     s_sizes = np.arange(N)
     outbreak_size_distrb_per_gen_matrix = np.zeros((100, N))
@@ -126,12 +93,14 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
     N = len(G.nodes())
     Lambda = np.zeros((N, N))
     Gamma = np.zeros(N)
+    # Construct recovery values and transmissibility matrix
     for n in range(N):
         Gamma[n] = gamma
         for j in range(N):
             Lambda[n][j] = beta
+    # Run simulations, new graph every 500 simulations
     for i in range(num_sims):
-        if i % 1000 == 0:
+        if i % 500 == 0:
             G, pos = generate_graph(N, degree_distrb)
             N_resized = len(G.nodes())
             Lambda = np.zeros((N_resized, N_resized))
@@ -140,11 +109,11 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta
-        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i)
+        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
         for g in range(len(sm_matrix[0])):
             gen_s = int(sm_matrix[1][g])
             try:
-                outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1
+                outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1 #Add to mass of that result
             except IndexError:
                 print('Index error for g: ', g, ', gen_s: ', gen_s)
                 continue
@@ -156,6 +125,8 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
 def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, intervention_T=0.0, initial_T=0.8, gamma=0.1):
+    # Generates the empirical s-slice for results of proportion of simulations that resulted in exactly s nodes infected at generation g
+    # Includes steps for doing so with an intervention step
     beta_init = -(gamma * initial_T) / (initial_T - 1)
     beta_interv = -(gamma*intervention_T)/(intervention_T-1)
     s_sizes = np.arange(N)
@@ -169,7 +140,7 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
         for j in range(N):
             Lambda[n][j] = beta_init
     for i in range(num_sims):
-        if i % 400 == 0:
+        if i % 500 == 0:
             G, pos = generate_graph(N, degree_distrb)
             N_resized = len(G.nodes())
             Lambda = np.zeros((N_resized, N_resized))
@@ -232,16 +203,13 @@ def generate_graph(N, deg_dist):
     graphical = nx.is_graphical(degree_sequence)
     # print('Degree sequence is graphical: ', graphical)
     if not graphical:
-        # print('Adding node of degree 1')
         degree_sequence.append(1)
-    # print("Configuration model")
     G = nx.configuration_model(degree_sequence)
     # Remove self-loops and parallel edges
-    # DONT DO self loops for now, its slowing evertyhing down, maybe audit later
-    # try:
-    #     G.remove_edges_from(nx.selfloop_edges(G))
-    # except RuntimeError:
-    #     print('No self loops to remove')
+    try:
+        G.remove_edges_from(nx.selfloop_edges(G))
+    except RuntimeError:
+        print('No self loops to remove')
     pos = nx.spring_layout(G)
     # nx.draw_networkx_nodes(G, pos=pos, with_labels=True)
     # nx.draw_networkx_labels(G, pos=pos, with_labels=True)
