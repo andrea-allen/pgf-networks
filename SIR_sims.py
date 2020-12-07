@@ -11,22 +11,22 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb)
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law')
 
     # Sims with a negative binomial degree distribution: TODO
     degree_distrb = power_law_degree_distrb() #TBD
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb)
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law')
     print('done')
 
 
-def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, num_sims=10000, num_nodes=1000, init_T=0.8, gen_intervene=3, T_intervene=0.4, recover_rate=.001):
+def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, base_file_name='sim_results', num_sims=10000, num_nodes=1000, init_T=0.8, gen_intervene=3, T_intervene=0.4, recover_rate=.001):
     # Comment if no need to run or save results:
     # WITH NO intervention
     s_sizes_no_intervention, size_distrb_per_gen_no_intervention = outbreak_size_distrb_per_gen(degree_distrb, num_sims, num_nodes, init_T, recover_rate)
-    np.savetxt('size_distrb_per_gen_no_int_full.txt', size_distrb_per_gen_no_intervention, delimiter=',')
+    np.savetxt(base_file_name+'_size_distrb_per_gen_no_interv.txt', size_distrb_per_gen_no_intervention, delimiter=',')
     # WITH intervention
     s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims, num_nodes, gen_intervene, T_intervene, init_T, recover_rate)
-    np.savetxt('size_distrb_per_gen_int_full.txt', size_distrb_per_gen_intervention, delimiter=',')
+    np.savetxt(base_file_name+'_size_distrb_per_gen_with_interv.txt', size_distrb_per_gen_intervention, delimiter=',')
 
     # Plotting results against one another
     for gen in [2, 6, 11]:
