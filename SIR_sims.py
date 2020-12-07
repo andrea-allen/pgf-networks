@@ -56,8 +56,8 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, nu
 def read_back_data():
     # Manipulatable method for reading back data and plotting desired results
 
-    data = np.loadtxt('size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
-    data_int = np.loadtxt('size_distrb_per_gen_int_g3_full.txt', delimiter=',')
+    data = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
+    data_int = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_int_g3_full.txt', delimiter=',')
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18:'black'}
     for gen in [2, 6, 11]:
         time_series = data[gen][2:200]

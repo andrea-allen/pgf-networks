@@ -197,7 +197,7 @@ def plot_sims_vs_analytical_outbreak_sizes():
     plt.ylim(.0001, .1)
     # plt.show()
     for gen in [2, 6, 11, 18]:
-        psi_g = np.loadtxt('allPsiT8_'+str(gen)+'_int.txt', delimiter=',')
+        psi_g = np.loadtxt('../pgf-nets-data/allPsiT8_'+str(gen)+'_int.txt', delimiter=',')
         inverted_s_m = psi_g.T
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
         ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
