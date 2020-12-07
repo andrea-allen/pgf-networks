@@ -3,6 +3,7 @@ import numpy as np
 import math
 import matplotlib as m
 import matplotlib.colors as colors
+import SIR_sims
 
 
 def pdf_of(degree_list):
@@ -144,6 +145,20 @@ def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, interv
 
 
 def phaseSpace(num_gens, num_nodes):
+    # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
+    initProb = 1
+    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
+    # all_psi_results = all_psi_results/np.sum(all_psi_results)
+    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    for gen in [2, 6, 11, 18]:
+        inverted_s_m = all_psi_results[gen].T  # example for gen 5
+        plot_psi(inverted_s_m, gen)
+        inverted_s_m = all_psi_results_with_intervention[gen].T  # example for gen 5
+        plot_psi(inverted_s_m, gen)
+
+    return all_psi_results
+
+def plot_psi(psi_g, gen):
     cdict = {
         'red': ((0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
         'green': ((0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
@@ -151,38 +166,57 @@ def phaseSpace(num_gens, num_nodes):
     }
     cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 4096)
 
-    # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
-    initProb = 1
-    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
-    # all_psi_results = all_psi_results/np.sum(all_psi_results)
-    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
     fig, ax = plt.subplots()
-    inverted_s_m = all_psi_results[5].T  # example for gen 5
-    ax.imshow(inverted_s_m[:80][:, :150], cmap=cm, norm=colors.PowerNorm(gamma=0.5))  # gen 5
+    ax.imshow(psi_g[:80][:, :150], cmap=cm, norm=colors.PowerNorm(gamma=0.5))  # gen 5
     ax.invert_yaxis()
-    plt.title('Phase Space at Generation 5 of Power Law Network')
+    plt.title('Phase Space at Generation '+str(gen)+' of Power Law Network')
     plt.ylabel('$m$')
     plt.xlabel('$s$')
     plt.savefig('draft_phase_space.png')
     plt.show()
 
-    fig, ax = plt.subplots()
-    inverted_s_m = all_psi_results_with_intervention[5].T  # example for gen 5
-    ax.imshow(inverted_s_m[:80][:, :150], cmap=cm, norm=colors.PowerNorm(gamma=0.5))  # gen 5
-    ax.invert_yaxis()
-    plt.title('Phase Space at Generation 5 with Intervention at Gen 3')
-    plt.ylabel('$m$')
-    plt.xlabel('$s$')
-    plt.savefig('draft_phase_space_with_intervention.png')
+def sims_vs_analytical(num_gens, num_nodes):
+    # data = np.loadtxt('size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
+    data_int = np.loadtxt('size_distrb_per_gen_int_g3_full.txt', delimiter=',')
+    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
+    for gen in [2, 6, 11, 18]:
+        # time_series = data[gen][2:300]
+        time_series_int = data_int[gen][2:200]
+        # for t in range(len(time_series)):
+        #     if time_series[t] <= .0001:
+        #         time_series[t] = time_series[t-1]
+        # plt.plot(np.arange(2, 300), time_series, color=color_key[gen], alpha=0.95, ls='--', lw=.4)
+        plt.plot(time_series_int, color=color_key[gen], ls='--', alpha=0.5)
+    initProb = 1
+    # all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    # np.savetxt('allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
+    # np.savetxt('allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
+    # np.savetxt('allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
+    # np.savetxt('allPsiT8_18_int.txt', all_psi_results_with_intervention[18], delimiter=',')
+    plt.semilogy()
+    plt.ylim(.0001, .1)
+    # plt.show()
+    for gen in [2, 6, 11, 18]:
+        psi_g = np.loadtxt('allPsiT8_'+str(gen)+'_int.txt', delimiter=',')
+        inverted_s_m = psi_g.T
+        ps_g_analytical = np.sum(inverted_s_m, axis=0)
+        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
+        label='$g='+str(gen)+'$'
+        color = color_key[gen]
+        plt.plot(np.arange(2, 200), ps_g_analytical[2:200], label=label, color=color, linestyle='-')
+    plt.semilogy()
+    plt.ylim(.0001, .1)
+    plt.legend(loc='upper right')
+    plt.xlabel('$s$- number nodes infected at generation $g$')
+    plt.ylabel('$p_s^g$')
     plt.show()
-    return all_psi_results
 
 def outbreak_size_curves(num_gens, num_nodes):
     initProb = 1
     all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
-    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
-    color_key = {2: 'blue', 6: 'red', 11: 'orange'}
-    for gen in [2, 6, 11]:
+    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.04)
+    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
+    for gen in [2, 6, 11, 18]:
         inverted_s_m = all_psi_results[gen].T
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
         ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
@@ -191,8 +225,14 @@ def outbreak_size_curves(num_gens, num_nodes):
         plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='-')
         # plt.title('No intervention')
     # plt.show()
+    plt.semilogy()
+    plt.ylim(.0001, .1)
+    plt.legend(loc='upper right')
+    plt.xlabel('$s$- number nodes infected at generation $g$')
+    plt.ylabel('$p_s^g$')
+    # plt.show()
 
-    for gen in [2, 6, 11]:
+    for gen in [2, 6, 11, 18]:
         inverted_s_m = all_psi_results_with_intervention[gen].T
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
         ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
@@ -207,11 +247,6 @@ def outbreak_size_curves(num_gens, num_nodes):
     plt.ylim(.0001, .1)
     plt.show()
     print('done')
-
-def read_back_data():
-    print('results')
-    #TODO make sure to be able to read in and plot data
-
 
 
 # How to structure this code.

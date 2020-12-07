@@ -4,25 +4,26 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-def draw_tau():
-    tau = random.expovariate(1.0)
+def draw_tau(sum_of_rates):
+    tau = np.random.exponential(1/sum_of_rates)
     return tau
 
 
-def draw_event_class(V_IS, V_I):
+def draw_event_class(V_IS, V_I): #[list of IS edges] [list of infected nodes]
     recovery_rate = 0
     infection_rate = 0
-    for node in V_I:  # infected nodes
-        recovery_rate += node.event_rate
-    for edge in V_IS:
-        infection_rate += edge.event_rate
+    for node in V_I:  # infected nodes #6 infected nodes
+        recovery_rate += node.event_rate # = 6 * gamma = .006
+    for edge in V_IS: # 12 IS edges
+        infection_rate += edge.event_rate # 12 * T = 12*.8 = 10
+    # [r r r r i i i i i i i i i i i i i i i i i]
     r_start = 0
     r_end = recovery_rate
     i_end = r_end + infection_rate
-    random_draw = random.uniform(r_start, i_end)
-    if random_draw < r_end:
+    random_draw = random.uniform(r_start, i_end) #interval (0, 10.006)
+    if random_draw < r_end: # less than .006
         return 2  # for recovery event
-    elif (random_draw >= r_end) & (random_draw < i_end):
+    elif (random_draw >= r_end) & (random_draw < i_end): #less than 10 greater than .006
         return 1  # for infection event
 
 
@@ -31,11 +32,20 @@ def draw_specific_event(max_rate, event_list):
     random_event = None
     while not accepted:
         random_event = random.choice(event_list)
-        accept_rate = random_event.event_rate / max_rate
+        accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2
+        #[AB:.1, AC:.1, AD:.1] choose AC
         random_draw = random.uniform(0, 1)
         if random_draw < accept_rate:
             accepted = True
     return random_event
+
+def determine_draw_tau(V_IS, V_I, beta, gamma):
+    # if there's 3 infected nodes: 2+2+4 * T
+    v_is_count = len(V_IS)
+    v_i_count = len(V_I)
+    sum_of_rates = v_is_count*beta + v_i_count*gamma
+    return sum_of_rates
+
 
 
 class Simulation:
@@ -43,6 +53,8 @@ class Simulation:
         self.sim_time = total_sim_time
         self.current_sim_time = 0
         self.G = G
+        self.beta = 0
+        self.gamma = 0
         self.A = None
         self.Lambda = Lambda
         self.Gamma = Gamma
@@ -55,10 +67,14 @@ class Simulation:
         self.nodes = []
         self.highest_gen = 0
         self.intervened = False
+        self.total_num_timesteps = 0
         # add number infected at gen g total?
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
+        self.beta = np.mean(self.Lambda)
+        self.gamma = np.mean(self.Gamma)
+        print('starting beta is, ', self.beta)
         p_zero_idx = random.randint(0, len(self.A[0]) - 1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
         self.nodes.append(patient_zero)
@@ -72,7 +88,7 @@ class Simulation:
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
 
-    def run_sim(self, intervention_gen=-1, intervention_T=0, visualize=False):
+    def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
         self.intialize()
         while self.current_sim_time < self.sim_time:
             if visualize:
@@ -91,10 +107,12 @@ class Simulation:
             # intervention if applicable:
             if (not self.intervened) & (intervention_gen > 0):
                 if self.highest_gen >= intervention_gen:
-                    self.intervene(intervention_T)
+                    self.intervene(beta_interv)
                     self.intervened = True
 
-            tau = draw_tau()
+            sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
+            tau = draw_tau(sum_of_rates)
+            # print(self.current_sim_time)
             event_class = draw_event_class(self.V_IS, self.V_I)
             if event_class == 1:
                 infection_event = draw_specific_event(np.max(self.Lambda), self.V_IS)
@@ -112,9 +130,11 @@ class Simulation:
             if event_class == 2:
                 recovery_event = draw_specific_event(np.max(self.Gamma), self.V_I)
                 self.V_I.remove(recovery_event)
+                recovery_event.recover()
                 self.update_IS_edges()
                 self.V_R.append(recovery_event)
             self.current_sim_time += tau
+            self.total_num_timesteps += 1
             if len(self.V_IS) == 0:
                 break
 
@@ -137,7 +157,7 @@ class Simulation:
     def update_IS_edges(self):
         updated_V_IS = []
         for edge in self.V_IS:
-            if (edge.i.state == 1) & (edge.j.state == 0):
+            if (edge.i.state == 1) and (edge.j.state == 0):
                 updated_V_IS.append(edge)
         self.V_IS = updated_V_IS
 
@@ -179,7 +199,7 @@ class Simulation:
                 m = 0
         return matrix
 
-    def intervene(self, T):
+    def intervene(self, beta_interv):
         print('intervention')
         # TODO intervention code in this method
         # Check for bugs?
@@ -189,8 +209,13 @@ class Simulation:
         new_Lambda = np.zeros((N, N))
         for i in range(N):
             for j in range(N):
-                new_Lambda[i][j] = T
+                new_Lambda[i][j] = beta_interv
         self.Lambda = new_Lambda
+        self.beta = beta_interv
+        print('new beta', self.beta)
+        # change event rate for each existing edge pair
+        for edge in self.V_IS:
+            edge.event_rate = self.Lambda[edge.i.i][edge.j.i]
 
 
 class Node:
