@@ -8,21 +8,15 @@ def run():
     # Manipulate-able method for running whatever simulations and plotting we want
     read_back_data()
     # plt.show()
-    # Original degree distribution:
+
+    # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
     simulate_and_compare_rounds_with_with_without_intervention(degree_distrb)
+
+    # Sims with a negative binomial degree distribution: TODO
+    degree_distrb = power_law_degree_distrb() #TBD
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb)
     print('done')
-    degree_distrb = power_law_degree_distrb()
-    s_sizes, size_distrb_per_gen = outbreak_size_distrb_per_gen(degree_distrb, 10000, 1000)
-    np.savetxt('size_distrb_per_gen.txt', size_distrb_per_gen, delimiter=',')
-    for gen in [2, 6, 11, 30]:
-        plt.plot(s_sizes[1:350], size_distrb_per_gen[gen][1:350], label='$g=$' + str(gen))
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
-    plt.savefig('p_s_g_distribution.png')
-    plt.show()
 
 
 def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, num_sims=10000, num_nodes=1000, init_T=0.8, gen_intervene=3, T_intervene=0.4, recover_rate=.001):
