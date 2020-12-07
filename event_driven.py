@@ -3,49 +3,46 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 
+class Node:
+    def __init__(self, i, gen, state, recover_rate):
+        self.gen = gen
+        self.label = i
+        self.state = state
+        self.event_rate = recover_rate
 
-def draw_tau(sum_of_rates):
-    tau = np.random.exponential(1/sum_of_rates)
-    return tau
+    def infect(self):
+        self.state = 1
+
+    def recover(self):
+        self.state = 2
+
+    def set_gen(self, g):
+        self.gen = g
+
+    def display_info(self):
+        print('Node index: ', self.label, ' state: ', self.state, ' event_rate: ', self.event_rate, ' gen: ', self.gen)
+
+    def equals(self, node):
+        if self.label == node.label:
+            return True
+        else:
+            return False
 
 
-def draw_event_class(V_IS, V_I): #[list of IS edges] [list of infected nodes]
-    recovery_rate = 0
-    infection_rate = 0
-    for node in V_I:  # infected nodes #6 infected nodes
-        recovery_rate += node.event_rate # = 6 * gamma = .006
-    for edge in V_IS: # 12 IS edges
-        infection_rate += edge.event_rate # 12 * T = 12*.8 = 10
-    # [r r r r i i i i i i i i i i i i i i i i i]
-    r_start = 0
-    r_end = recovery_rate
-    i_end = r_end + infection_rate
-    random_draw = random.uniform(r_start, i_end) #interval (0, 10.006)
-    if random_draw < r_end: # less than .006
-        return 2  # for recovery event
-    elif (random_draw >= r_end) & (random_draw < i_end): #less than 10 greater than .006
-        return 1  # for infection event
+class Edge:
+    def __init__(self, i, j, infect_rate):
+        self.i = i  # not just an index, this is a whole Node object
+        self.j = j
+        self.event_rate = infect_rate
 
+    def infect(self):
+        self.j.infect()
+        self.j.set_gen(self.i.gen + 1)
 
-def draw_specific_event(max_rate, event_list):
-    accepted = False
-    random_event = None
-    while not accepted:
-        random_event = random.choice(event_list)
-        accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2
-        #[AB:.1, AC:.1, AD:.1] choose AC
-        random_draw = random.uniform(0, 1)
-        if random_draw < accept_rate:
-            accepted = True
-    return random_event
-
-def determine_draw_tau(V_IS, V_I, beta, gamma):
-    # if there's 3 infected nodes: 2+2+4 * T
-    v_is_count = len(V_IS)
-    v_i_count = len(V_I)
-    sum_of_rates = v_is_count*beta + v_i_count*gamma
-    return sum_of_rates
-
+    def display_info(self):
+        print('Edge with event rate: ', self.event_rate, ' nodes:')
+        self.i.display_info()
+        self.j.display_info()
 
 
 class Simulation:
@@ -68,7 +65,6 @@ class Simulation:
         self.highest_gen = 0
         self.intervened = False
         self.total_num_timesteps = 0
-        # add number infected at gen g total?
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
@@ -120,11 +116,11 @@ class Simulation:
                 self.V_IS.remove(infection_event)
                 self.V_I.append(infection_event.j)
                 try:
-                    self.gen_collection[infection_event.j.gen].append(infection_event.j.i)
+                    self.gen_collection[infection_event.j.gen].append(infection_event.j.label)
                 except KeyError:
-                    self.gen_collection[infection_event.j.gen] = [infection_event.j.i]
+                    self.gen_collection[infection_event.j.gen] = [infection_event.j.label]
                     self.highest_gen += 1
-                self.has_been_infected_labels.append(infection_event.j.i)
+                self.has_been_infected_labels.append(infection_event.j.label)
                 self.update_IS_edges()
                 self.add_IS_edges(infection_event.j)
             if event_class == 2:
@@ -139,12 +135,12 @@ class Simulation:
                 break
 
     def add_IS_edges(self, infected_node):
-        for j in range(0, len(self.A[infected_node.i])):
-            if self.A[infected_node.i][j] == 1:
+        for j in range(0, len(self.A[infected_node.label])):
+            if self.A[infected_node.label][j] == 1:
                 candidate_node = Node(j, -1, 0, self.Gamma[j])
                 neighbor_node = self.existing_node(candidate_node)
                 if neighbor_node.state == 0:
-                    edge_ij = Edge(infected_node, neighbor_node, self.Lambda[infected_node.i][j])
+                    edge_ij = Edge(infected_node, neighbor_node, self.Lambda[infected_node.label][j])
                     self.V_IS.append(edge_ij)
 
     def existing_node(self, candidate_node):
@@ -179,8 +175,6 @@ class Simulation:
         return 0
 
     def generate_matrix_gen(self, max_gens):
-        # TODO add extinction book-keeping
-        gens = len(self.gen_collection)
         gens = max_gens
         matrix = np.zeros((2, gens))
         s = 1
@@ -201,8 +195,6 @@ class Simulation:
 
     def intervene(self, beta_interv):
         print('intervention')
-        # TODO intervention code in this method
-        # Check for bugs?
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
         # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
         N = len(self.Lambda[0])
@@ -215,46 +207,44 @@ class Simulation:
         print('new beta', self.beta)
         # change event rate for each existing edge pair
         for edge in self.V_IS:
-            edge.event_rate = self.Lambda[edge.i.i][edge.j.i]
+            edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
+
+def draw_tau(sum_of_rates):
+    tau = np.random.exponential(1/sum_of_rates)
+    return tau
 
 
-class Node:
-    def __init__(self, i, gen, state, recover_rate):
-        self.gen = gen
-        self.i = i
-        self.state = state
-        self.event_rate = recover_rate
-
-    def infect(self):
-        self.state = 1
-
-    def recover(self):
-        self.state = 2
-
-    def set_gen(self, g):
-        self.gen = g
-
-    def display_info(self):
-        print('Node index: ', self.i, ' state: ', self.state, ' event_rate: ', self.event_rate, ' gen: ', self.gen)
-
-    def equals(self, node):
-        if self.i == node.i:
-            return True
-        else:
-            return False
+def draw_event_class(V_IS, V_I): #[list of IS edges] [list of infected nodes]
+    recovery_rate = 0
+    infection_rate = 0
+    for node in V_I:
+        recovery_rate += node.event_rate
+    for edge in V_IS:
+        infection_rate += edge.event_rate
+    r_start = 0
+    r_end = recovery_rate
+    i_end = r_end + infection_rate
+    random_draw = random.uniform(r_start, i_end)
+    if random_draw < r_end:
+        return 2  # for recovery event
+    elif (random_draw >= r_end) & (random_draw < i_end):
+        return 1  # for infection event
 
 
-class Edge:
-    def __init__(self, i, j, infect_rate):
-        self.i = i  # not just an index, this is a whole Node object
-        self.j = j
-        self.event_rate = infect_rate
+def draw_specific_event(max_rate, event_list):
+    accepted = False
+    random_event = None
+    while not accepted:
+        random_event = random.choice(event_list)
+        accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2
+        random_draw = random.uniform(0, 1)
+        if random_draw < accept_rate:
+            accepted = True
+    return random_event
 
-    def infect(self):
-        self.j.infect()
-        self.j.set_gen(self.i.gen + 1)
+def determine_draw_tau(V_IS, V_I, beta, gamma):
+    v_is_count = len(V_IS)
+    v_i_count = len(V_I)
+    sum_of_rates = v_is_count*beta + v_i_count*gamma
+    return sum_of_rates
 
-    def display_info(self):
-        print('Edge with event rate: ', self.event_rate, ' nodes:')
-        self.i.display_info()
-        self.j.display_info()

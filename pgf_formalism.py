@@ -75,6 +75,7 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     p_k = degree_distrb
     p_LK = np.zeros((400, 400))
 
+    # Generates pgf in variable l as probabilities of infection of l neighbors given the original degree distribution and transmission prob T
     for k in range(0, maxk):
         for l in range(0, k + 1):
             p_LgivenK = p_k[k] * (
@@ -90,6 +91,7 @@ def gen_functions_with_transmissibility(degree_distrb, T):
 
 
 def constructMatrixM(g_0, g_1):
+    # Constructs the matrix of pgfs for G0_with transmission convolved to every mth power
     N_0 = len(g_0)
     N_1 = len(g_1)
     M_0 = np.zeros((N_0, N_0))
@@ -107,20 +109,18 @@ def constructMatrixM(g_0, g_1):
     return (M_0, M_1)
 
 def computeLittlePsi(s, m, prevGenPsi, M):
-    # TODO backfill the probability of extinction
     s_prime = s - m
     newPsi = prevGenPsi[s_prime].dot(M[:, m])
     return newPsi
 
 
 def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, intervention_T=0.5):
-    # The number of people that are infective is important for the k values of the matrix
-    # The matrix should by and s By m, so the k values should line up with the s values
+    # 3-d matrix with one matrix per generation of Psi_g
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
 
+    # Assign initial degree distribution here
     original_degree_distrb = power_law_degree_distrb(400)
-    try_this_g1 = g1_of(original_degree_distrb)
     g1, g0 = gen_functions_with_transmissibility(original_degree_distrb,
                                                  initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
     M_0, M_1 = constructMatrixM(g0, g1)
@@ -145,15 +145,15 @@ def Psi(initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, interv
 
 
 def phaseSpace(num_gens, num_nodes):
-    # need to construct the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
+    # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
     all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
-    # all_psi_results = all_psi_results/np.sum(all_psi_results)
     all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    # Plotting some sample generations phase space:
     for gen in [2, 6, 11, 18]:
-        inverted_s_m = all_psi_results[gen].T  # example for gen 5
+        inverted_s_m = all_psi_results[gen].T
         plot_psi(inverted_s_m, gen)
-        inverted_s_m = all_psi_results_with_intervention[gen].T  # example for gen 5
+        inverted_s_m = all_psi_results_with_intervention[gen].T
         plot_psi(inverted_s_m, gen)
 
     return all_psi_results
@@ -175,16 +175,16 @@ def plot_psi(psi_g, gen):
     plt.savefig('draft_phase_space.png')
     plt.show()
 
-def sims_vs_analytical(num_gens, num_nodes):
+def plot_sims_vs_analytical_outbreak_sizes():
+    # Rough method for plotting simulations vs analytical probabilities of outbreak size.
+    # Modify as needed for existing files or re-generation of probability results
+
     # data = np.loadtxt('size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
-    data_int = np.loadtxt('size_distrb_per_gen_int_g3_full.txt', delimiter=',')
+    data_int = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_int_g3_full.txt', delimiter=',')
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
     for gen in [2, 6, 11, 18]:
         # time_series = data[gen][2:300]
         time_series_int = data_int[gen][2:200]
-        # for t in range(len(time_series)):
-        #     if time_series[t] <= .0001:
-        #         time_series[t] = time_series[t-1]
         # plt.plot(np.arange(2, 300), time_series, color=color_key[gen], alpha=0.95, ls='--', lw=.4)
         plt.plot(time_series_int, color=color_key[gen], ls='--', alpha=0.5)
     initProb = 1
@@ -211,10 +211,13 @@ def sims_vs_analytical(num_gens, num_nodes):
     plt.ylabel('$p_s^g$')
     plt.show()
 
-def outbreak_size_curves(num_gens, num_nodes):
+def outbreak_size_curves(num_gens, num_nodes, T=0.8):
+    print('Analytical probability of total number infectives s at generations g with and without intervention')
+    # Method for s-slices of the total phase space
     initProb = 1
-    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8)
-    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.04)
+    all_psi_results = Psi(initProb, num_gens, num_nodes, num_nodes, T)
+    # Specify intervention parameters for gen_intervene and T_intervene after initial T:
+    all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, T, 3, 0.04)
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
     for gen in [2, 6, 11, 18]:
         inverted_s_m = all_psi_results[gen].T
@@ -249,7 +252,8 @@ def outbreak_size_curves(num_gens, num_nodes):
     print('done')
 
 
-# How to structure this code.
+# Convolution code below:
+# Used in methods generating the phase space pgf's
 # The phase space formalism needs
 # 1) Need the G_{g-1} formalism (This includes the double sum formula) **DONE
 # 2) Need to put together the matrix that Andrea is drawing,
