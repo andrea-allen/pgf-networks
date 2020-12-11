@@ -22,7 +22,7 @@ def run():
     plt.xlabel('Degree $k$', fontsize=14)
     plt.ylabel('$p_k[k]$', fontsize=14)
     plt.show()
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3', 50000, 1000, 0.8, 3, 0.4, .001)
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3', 50000, 1000, 0.8, 3, 0.4, .001)
 
     # degree_distrb = power_law_degree_distrb()
     # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
@@ -147,9 +147,9 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta
-        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
-        for g in range(len(sm_matrix[0])):
-            gen_s = int(sm_matrix[1][g])
+        results = simulate_noel(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
+        for g in range(len(results[0])):
+            gen_s = int(results[1][g]) # Second vector is total infections over time in s
             try:
                 outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1 #Add to mass of that result
             except IndexError:
@@ -187,9 +187,9 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta_init
-        sm_matrix = simulate_noel(G, pos, Lambda, Gamma, i, intervention_gen, beta_interv)
-        for g in range(len(sm_matrix[0])):
-            gen_s = int(sm_matrix[1][g])
+        results = simulate_noel(G, pos, Lambda, Gamma, i, intervention_gen, beta_interv)
+        for g in range(len(results[0])):
+            gen_s = int(results[1][g])
             try:
                 outbreak_size_distrb_per_gen_matrix[g][gen_s] += 1
             except IndexError:
@@ -216,8 +216,8 @@ def simulate():
             Lambda[i][j] = .5
     sim = event_driven.Simulation(N * 5, G, Lambda, Gamma, pos)
     sim.run_sim()
-    sm_matrix = sim.generate_matrix_gen(20)
-    return sm_matrix
+    results = sim.total_infect_over_all_gens(20)
+    return results
 
 
 def simulate_noel(G, pos, Lambda, Gamma, current, intervention_gen = -1, beta_interv=-1):
@@ -225,9 +225,9 @@ def simulate_noel(G, pos, Lambda, Gamma, current, intervention_gen = -1, beta_in
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim(intervention_gen, beta_interv)
-    sm_matrix = sim.generate_matrix_gen(20)
+    results = sim.total_infect_over_all_gens(20)
     print('total timesteps', sim.total_num_timesteps)
-    return sm_matrix
+    return results
 
 
 def generate_graph(N, deg_dist):

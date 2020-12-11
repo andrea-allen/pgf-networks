@@ -1,7 +1,40 @@
 # pgf-networks
 
+# Files included in this repo
 
-Andrea's addition to the README demo
+## event_driven.py
+This file contains the necessary classes and methods to run a single, event-driven,
+SIR simulation, with customizable parameters. 
+
+### Entry point:
+We recommend understanding `event_driven.py` functionality by observing the class
+`Simulation`, and its arguments in its constructor. Once a Simulation object is created,
+one need only call `Simulation.run_sim()` with its respective arguments to run one realization
+of the simulation. Results are then stored in the object itself and can be accessed by calling
+`Simulation.generate_matrix_gen(num_gens)` to obtain a 2-row list of `s` and `m` per generation,
+the number `s` infected overall during that generation and the number `m` infected only during the most
+recent generation. 
+
+Suggested use:
+TODO rename matrix method
+```
+G = #must be a networkX graph
+sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
+    sim.run_sim(intervention_gen, beta_interv)
+    sm_matrix = sim.generate_matrix_gen(20)
+```
+
+There are many more intricacies in the `event_driven.py` file, which will be documented 
+at a future date. Most of them can be inferred from their usage in the code.
+
+## SIR_sims.py
+
+## pgf_formalism.py
+
+## main.py
+Driver for calling methods from the repository to run simulations, read back
+data, produce figures, etc. 
+
 
 
 Given: Network adjacency matrix

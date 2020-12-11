@@ -174,15 +174,15 @@ class Simulation:
         plt.show()
         return 0
 
-    def generate_matrix_gen(self, max_gens):
+    def total_infect_over_all_gens(self, max_gens):
         gens = max_gens
-        matrix = np.zeros((2, gens))
+        results_vec = np.zeros((2, gens))
         s = 1
         m = 1
         s_max = 1
         for gen in range(max_gens): #{0: 1, 1: 12, 14, 2: 16, 42, ....
-            matrix[0][gen] = m
-            matrix[1][gen] = s
+            results_vec[0][gen] = m
+            results_vec[1][gen] = s
             try:
                 m = len(self.gen_collection[gen + 1])  # num infected in gen g
                 s += m
@@ -191,7 +191,7 @@ class Simulation:
                 # make m=0 and s=the last s for the rest of the "time series"
                 s = s_max
                 m = 0
-        return matrix
+        return results_vec
 
     def intervene(self, beta_interv):
         print('intervention')
