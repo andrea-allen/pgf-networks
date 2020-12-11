@@ -198,26 +198,8 @@ def phaseSpace_from_data(fname, gen, plot_title):
     # plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
 
 def plot_psi(psi_g, gen, title_label):
-    cdict = {'red': ((0.0, 1.0, 1.0),
-                     (0.1, 1.0, 1.0),  # red
-                     (0.4, 1.0, 1.0),  # violet
-                     (1.0, 0.0, 0.0)),  # blue
-
-             'green': ((0.0, 0.0, 0.0),
-                       (1.0, 0.0, 0.0)),
-
-             'blue': ((0.0, 0.0, 0.0),
-                      (0.1, 0.0, 0.0),  # red
-                      (0.4, 1.0, 1.0),  # violet
-                      (1.0, 1.0, 0.0))  # blue
-             }
-    cm = m.colors.LinearSegmentedColormap('my_colormap', cdict, 4096)
-
     cmap = plt.cm.hot(np.linspace(1, 0, 100000))
     cmap = m.colors.ListedColormap(cmap[:, :-1])
-
-    # colors = [(1.0, 1.0, 1.0), (0, 0.0, 0.0)]  # Experiment with this
-    # cm = m.colors.LinearSegmentedColormap.from_list('test', colors, N=4096)
 
     fig, ax = plt.subplots()
     # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5

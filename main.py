@@ -16,7 +16,7 @@ if __name__ == '__main__':
     pgf_formalism.phaseSpace_from_data('../pgf-nets-data/allPsiT8_6_int.txt', 6, 'Power Law Degree Distribution')
     pgf_formalism.phaseSpace_from_data('../pgf-nets-data/allPsiT8_11_int.txt', 11, 'Power Law Degree Distribution')
     pgf_formalism.phaseSpace_from_data('../pgf-nets-data/allPsiT8_18_int.txt', 18, 'Power Law Degree Distribution')
-    # probMatrix = pgf_formalism.phaseSpace(20, 400)
+    probMatrix = pgf_formalism.phaseSpace(20, 400)
     # pgf_formalism.outbreak_size_curves(20, 400)
     pgf_formalism.plot_sims_vs_analytical_outbreak_sizes()
     # SIR_sims.run()
