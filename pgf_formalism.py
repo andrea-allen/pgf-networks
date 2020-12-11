@@ -88,9 +88,12 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     # Generates pgf in variable l as probabilities of infection of l neighbors given the original degree distribution and transmission prob T
     for k in range(0, maxk):
         for l in range(0, k + 1):
-            p_LgivenK = p_k[k] * (
+            try:
+                p_LgivenK = p_k[k] * (
                     math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T ** (l) * (1 - T) ** (k - l))
-            p_LK[k][l] = p_LgivenK
+                p_LK[k][l] = p_LgivenK
+            except OverflowError:
+                p_LK[k][l] = 0
     p_l = np.sum(p_LK, axis=0)
     p_l = p_l / (np.sum(p_l))
 
@@ -167,26 +170,26 @@ def phaseSpace(num_gens, num_nodes):
         plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
         inverted_s_m = all_psi_results_with_intervention[gen].T
         plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_18_int.txt', all_psi_results_with_intervention[18], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_2_reg.txt', all_psi_results[2], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_6_reg.txt', all_psi_results[6], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_11_reg.txt', all_psi_results[11], delimiter=',')
-    np.savetxt('../pgf-nets-data/binom_allPsiT8_18_reg.txt', all_psi_results[18], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_int.txt', all_psi_results_with_intervention[18], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_2_reg.txt', all_psi_results[2], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_6_reg.txt', all_psi_results[6], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_11_reg.txt', all_psi_results[11], delimiter=',')
+    # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_reg.txt', all_psi_results[18], delimiter=',')
 
 
     initProb = 1
-    # power_law = power_law_degree_distrb(400)
-    # all_psi_results = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8)
-    # all_psi_results_with_intervention = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
+    power_law = power_law_degree_distrb(400)
+    all_psi_results = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8)
+    all_psi_results_with_intervention = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
     # Plotting some sample generations phase space:
-    # for gen in [2, 6, 11, 18]:
-    #     inverted_s_m = all_psi_results[gen].T
-    #     plot_psi(inverted_s_m, gen)
-    #     inverted_s_m = all_psi_results_with_intervention[gen].T
-    #     plot_psi(inverted_s_m, gen)
+    for gen in [2, 6, 11, 18]:
+        inverted_s_m = all_psi_results[gen].T
+        plot_psi(inverted_s_m, gen)
+        inverted_s_m = all_psi_results_with_intervention[gen].T
+        plot_psi(inverted_s_m, gen)
 
     return all_psi_results
 
@@ -264,10 +267,10 @@ def outbreak_size_curves(num_gens, num_nodes, T=0.8):
     # Method for s-slices of the total phase space
     initProb = 1
     power_law_degree_dist = power_law_degree_distrb(400)
-    binomial_degree_dist = binomial_degree_distb(1000)
-    all_psi_results = Psi(binomial_degree_dist, initProb, num_gens, num_nodes, num_nodes, T)
+    # binomial_degree_dist = binomial_degree_distb(1000)
+    all_psi_results = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T)
     # Specify intervention parameters for gen_intervene and T_intervene after initial T:
-    all_psi_results_with_intervention = Psi(binomial_degree_dist, initProb, num_gens, num_nodes, num_nodes, T, 3, 0.04)
+    all_psi_results_with_intervention = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T, 3, 0.4)
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
     for gen in [2, 6, 11, 18]:
         inverted_s_m = all_psi_results[gen].T

@@ -7,7 +7,7 @@ from scipy import stats
 
 def run():
     # Manipulate-able method for running whatever simulations and plotting we want
-    read_back_data()
+    # read_back_data()
     # plt.show()
 
     # Sims with a power law degree distribution:
