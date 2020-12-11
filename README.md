@@ -28,6 +28,54 @@ There are many more intricacies in the `event_driven.py` file, which will be doc
 at a future date. Most of them can be inferred from their usage in the code.
 
 ## SIR_sims.py
+This is the driver for running ensembles of simulations, saving and plotting the results,
+producing figures, etc. Most of the code in this file is configurable for the user's
+desired results, making it difficult to annotate without explicitly pointing out where
+certain parameters and filenames are specific to the original uses. 
+
+The method `run()` is just a driver for whatever internal methods the user wishes to call to run and save or plot simulation data.
+
+The method `generate_graph(N, deg_dist)` will return a NetworkX object, G, and 
+a drawing position `pos` in order that the same position be saved for drawing
+purposes during visualization in the evnt-driven simulations. 
+Input the `generate_graph` is `N`, the number of nodes, and the degree 
+distribution as a proper probability distribution of any length. Graphs
+will then be randomly drawn using the configuration model and the provided
+degree distribution. 
+
+The method `simulate(G, pos, Lambda, Gamma, current, intervention_gen, beta_interv)`
+is the driving method to return a two-tier vector of results, where there are
+`g` generation columns and 2 rows per column, encoding the `m` number of infected
+nodes during that generation, and the `s` total number infected at that generation
+in the simulation. `Lambda` is an `N x N` matrix encoding the infection probability `beta_i,j` for 
+every pair of nodes `i,j`, and can be configured any way the user wants before passing it in.
+`Gamma` similarly is a length `N` list of the indiviudal recovery rates for every node.
+In the classic SIR models, we keep `Lambda` and `Gamma` values completely
+regular for all nodes and node pairs. However, the configurability makes it possible
+for the user to classify different nodes and node pairs by different infection
+and recovery rates. 
+
+The methods `outbreak_size_distrb_per_gen(...)` and `outbreak_size_distrb_per_gen_with_intervention(...)`
+are by and large the same, they run an ensemble of simulations using the
+`simulate()` method and the given configurations and then return
+a probability distribution, for each generation, of the total outbreak size (`s`)
+at that generation. The format of the returned matrix is in `g` rows, each row is a distribution
+over `s`, the values of the columns. Arguments required by this method are the
+degree distribution, the number of simulations for the ensemble, the number of nodes `N`, the transmission
+probability over an edge (`T`) and recovery probability `gamma` from which `beta` will be inferred automatically.
+
+The method `read_back_data()` is another configurable method purely for the user
+to organize what data they want to read back after it has been saved for the purposes
+of visualization. Some example usage is shown.
+
+The method `simulate_and_compare_rounds_with_with_without_intervention()` similarly is a placeholder
+that is configurable, used for our original purposes to run specific simulations.
+
+
+
+
+
+
 
 ## pgf_formalism.py
 

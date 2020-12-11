@@ -12,41 +12,19 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    mean_degree = 0
-    for k in range(len(degree_distrb)):
-        mean_degree+= k*degree_distrb[k]
-    mean_degree = np.round(mean_degree, 1)
-    plt.plot(degree_distrb[:15], label='$\\langle k \\rangle ='+str(mean_degree)+'$', color='r', lw=2, alpha=0.75)
-    # plt.title('Power law degree distb')
-    plt.legend(loc='upper right')
-    plt.xlabel('Degree $k$', fontsize=14)
-    plt.ylabel('$p_k[k]$', fontsize=14)
-    plt.show()
     simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3', 50000, 1000, 0.8, 3, 0.4, .001)
 
-    # degree_distrb = power_law_degree_distrb()
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
+    # Runs 50,000 simulations with a power law degree distribution
+    degree_distrb = power_law_degree_distrb()
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
 
-    # Sims with a negative binomial degree distribution: TODO
-    # using r_0 = T * z_2/z_1, dispersion
-    # Use same T and T_intervention
-    # mean degree around same as power law network, or Poisson degree distribution
+
     degree_distrb = binomial_degree_distb(1000)
-    mean_degree = 0
-    for k in range(len(degree_distrb)):
-        mean_degree+= k*degree_distrb[k]
-    mean_degree = np.round(mean_degree, 1)
-    plt.plot(degree_distrb[:15], label='$\\langle k \\rangle ='+str(mean_degree)+'$', color='r', lw=2, alpha=0.75)
-    # plt.title('Power law degree distb')
-    plt.legend(loc='upper right')
-    plt.xlabel('Degree $k$', fontsize=14)
-    plt.ylabel('$p_k[k]$', fontsize=14)
-    plt.show()
-    # plt.title('Binomial degree distb')
-    plt.show()
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen3', 50000, 1000, 0.2, 3, 0.1, .001)
 
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen4', 50000, 1000, 0.2, 4, 0.1, .001)
+    # Runs 50,000 simulations with binomial degree distribution, saves results
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen3', 50000, 1000, 0.2, 3, 0.1, .001)
+
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen4', 50000, 1000, 0.2, 4, 0.1, .001)
     print('done')
 
 
@@ -118,10 +96,6 @@ def binomial_degree_distb(N):
         degree_dist[k] = p_k
     return degree_dist
 
-def generalized_binomial(x,y):
-    return math.gamma(x+1) / (math.gamma(y+1) * math.gamma(x-y+1))
-
-
 def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamma=0.1):
     # Generates the empirical s-slice for results of proportion of simulations that resulted in exactly s nodes infected at generation g
     beta = -(gamma*T)/(T-1)
@@ -147,7 +121,7 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta
-        results = simulate_noel(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
+        results = simulate(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
         for g in range(len(results[0])):
             gen_s = int(results[1][g]) # Second vector is total infections over time in s
             try:
@@ -187,7 +161,7 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta_init
-        results = simulate_noel(G, pos, Lambda, Gamma, i, intervention_gen, beta_interv)
+        results = simulate(G, pos, Lambda, Gamma, i, intervention_gen, beta_interv)
         for g in range(len(results[0])):
             gen_s = int(results[1][g])
             try:
@@ -203,30 +177,12 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
 
-def simulate():
-    # A sample function for event driven simulation use
-    degree_dist = [0, .20, .20, .15, .05, .35, .02, .02, .01]
-    N = 30
-    G, pos = generate_graph(N, degree_dist)
-    Lambda = np.zeros((N, N))
-    Gamma = np.zeros(N)
-    for i in range(N):
-        Gamma[i] = .05
-        for j in range(N):
-            Lambda[i][j] = .5
-    sim = event_driven.Simulation(N * 5, G, Lambda, Gamma, pos)
-    sim.run_sim()
-    results = sim.total_infect_over_all_gens(20)
-    return results
-
-
-def simulate_noel(G, pos, Lambda, Gamma, current, intervention_gen = -1, beta_interv=-1):
+def simulate(G, pos, Lambda, Gamma, current, intervention_gen = -1, beta_interv=-1):
     print('current sim ' + str(current))
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim(intervention_gen, beta_interv)
     results = sim.total_infect_over_all_gens(20)
-    print('total timesteps', sim.total_num_timesteps)
     return results
 
 
