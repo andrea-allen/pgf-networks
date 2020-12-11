@@ -3,6 +3,7 @@ import numpy as np
 import math
 import event_driven
 import matplotlib.pyplot as plt
+from scipy import stats
 
 def run():
     # Manipulate-able method for running whatever simulations and plotting we want
@@ -11,11 +12,41 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law')
+    mean_degree = 0
+    for k in range(len(degree_distrb)):
+        mean_degree+= k*degree_distrb[k]
+    mean_degree = np.round(mean_degree, 1)
+    plt.plot(degree_distrb[:15], label='$\\langle k \\rangle ='+str(mean_degree)+'$', color='r', lw=2, alpha=0.75)
+    # plt.title('Power law degree distb')
+    plt.legend(loc='upper right')
+    plt.xlabel('Degree $k$', fontsize=14)
+    plt.ylabel('$p_k[k]$', fontsize=14)
+    plt.show()
+    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3', 50000, 1000, 0.8, 3, 0.4, .001)
+
+    # degree_distrb = power_law_degree_distrb()
+    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
 
     # Sims with a negative binomial degree distribution: TODO
-    degree_distrb = power_law_degree_distrb() #TBD
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law')
+    # using r_0 = T * z_2/z_1, dispersion
+    # Use same T and T_intervention
+    # mean degree around same as power law network, or Poisson degree distribution
+    degree_distrb = binomial_degree_distb(1000)
+    mean_degree = 0
+    for k in range(len(degree_distrb)):
+        mean_degree+= k*degree_distrb[k]
+    mean_degree = np.round(mean_degree, 1)
+    plt.plot(degree_distrb[:15], label='$\\langle k \\rangle ='+str(mean_degree)+'$', color='r', lw=2, alpha=0.75)
+    # plt.title('Power law degree distb')
+    plt.legend(loc='upper right')
+    plt.xlabel('Degree $k$', fontsize=14)
+    plt.ylabel('$p_k[k]$', fontsize=14)
+    plt.show()
+    # plt.title('Binomial degree distb')
+    plt.show()
+    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen3', 50000, 1000, 0.2, 3, 0.1, .001)
+
+    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen4', 50000, 1000, 0.2, 4, 0.1, .001)
     print('done')
 
 
@@ -29,29 +60,31 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, ba
     np.savetxt(base_file_name+'_size_distrb_per_gen_with_interv.txt', size_distrb_per_gen_intervention, delimiter=',')
 
     # Plotting results against one another
-    for gen in [2, 6, 11]:
-        plt.plot(s_sizes_no_intervention[2:350], size_distrb_per_gen_no_intervention[gen][2:350], label='$g=$' + str(gen))
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
+    # for gen in [2, 6, 11]:
+    #     plt.plot(s_sizes_no_intervention[2:350], size_distrb_per_gen_no_intervention[gen][2:350], label='$g=$' + str(gen))
+    # plt.legend(loc='upper right')
+    # plt.xlabel('$s$')
+    # plt.ylabel('$p_s^g$')
+    # plt.semilogy()
     # plt.savefig('p_s_g_distribution_no_intervention.png')
     # plt.show()
 
-    for gen in [2, 6, 11, 18]:
-        plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
-    plt.savefig('p_s_g_distribution_intervention.png')
-    plt.show()
+    # for gen in [2, 6, 11, 18]:
+    #     plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
+    # plt.legend(loc='upper right')
+    # plt.xlabel('$s$')
+    # plt.ylabel('$p_s^g$')
+    # plt.semilogy()
+    # plt.savefig('p_s_g_distribution_intervention.png')
+    # plt.show()
 
 def read_back_data():
     # Manipulatable method for reading back data and plotting desired results
 
-    data = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
-    data_int = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_int_g3_full.txt', delimiter=',')
+    # data = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
+    data = np.loadtxt('binomial_02_01_gen3_size_distrb_per_gen_no_interv.txt', delimiter=',')
+    # data_int = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_int_g3_full.txt', delimiter=',')
+    data_int = np.loadtxt('binomial_02_01_gen3_size_distrb_per_gen_with_interv.txt', delimiter=',')
     color_key = {2: 'blue', 6: 'red', 11: 'orange', 18:'black'}
     for gen in [2, 6, 11]:
         time_series = data[gen][2:200]
@@ -61,7 +94,7 @@ def read_back_data():
     plt.legend(loc='upper right')
     plt.xlabel('number infected $s$ at generation $g$')
     plt.ylabel('$p_s^g$')
-    plt.title('Effects of simulations with intervention from $T=.8$ to $T=.4$ at $g=3$')
+    plt.title('Effects of simulations with intervention from $T=.2$ to $T=.1$ at $g=3$ on Binomial Degree Distribution Network')
     plt.semilogy()
     plt.ylim(.0001, .1)
     # plt.title('Created from saved data')
@@ -76,6 +109,17 @@ def power_law_degree_distrb():
         p_k = (k ** (-2)) * (math.e ** (-k / 5))
         degree_dist[k] = p_k
     return degree_dist
+
+def binomial_degree_distb(N):
+    degree_dist = np.zeros(40)
+    p = 6/N
+    for k in range(0, len(degree_dist)):
+        p_k = (p**k)*((1-p)**(N-k))*math.comb(N, k)
+        degree_dist[k] = p_k
+    return degree_dist
+
+def generalized_binomial(x,y):
+    return math.gamma(x+1) / (math.gamma(y+1) * math.gamma(x-y+1))
 
 
 def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamma=0.1):
