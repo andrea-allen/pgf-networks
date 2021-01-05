@@ -1,9 +1,10 @@
 import networkx as nx
 import numpy as np
 import math
-import event_driven
+from src import event_driven
 import matplotlib.pyplot as plt
-from scipy import stats
+import time
+
 
 def run():
     # Manipulate-able method for running whatever simulations and plotting we want
@@ -177,16 +178,17 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
 
-def simulate(G, pos, Lambda, Gamma, current, intervention_gen = -1, beta_interv=-1):
+def simulate(G, pos, Lambda, Gamma, current, intervention_gen=-1, beta_interv=-1.0):
     print('current sim ' + str(current))
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
     sim.run_sim(intervention_gen, beta_interv)
-    results = sim.total_infect_over_all_gens(20)
+    results = sim.total_infect_over_all_gens(50)
     return results
 
 
 def generate_graph(N, deg_dist):
+    start_time_1 = time.time()
     number_of_nodes = N * np.array(deg_dist)
     degree_sequence = []
     for i in range(int(math.floor(len(number_of_nodes)))):
@@ -204,7 +206,11 @@ def generate_graph(N, deg_dist):
         G.remove_edges_from(nx.selfloop_edges(G))
     except RuntimeError:
         print('No self loops to remove')
-    pos = nx.spring_layout(G)
+    pos = None
+    print("--- %s seconds to create graph ---" % (time.time() - start_time_1))
+    start_time_2 = time.time()
+    # pos = nx.spring_layout(G)
+    # print("--- %s seconds to create pos---" % (time.time() - start_time_2))
     # nx.draw_networkx_nodes(G, pos=pos, with_labels=True)
     # nx.draw_networkx_labels(G, pos=pos, with_labels=True)
     # nx.draw_networkx_edges(G, pos=pos)

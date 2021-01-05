@@ -3,9 +3,7 @@ import numpy as np
 import math
 import matplotlib as m
 import matplotlib.colors as colors
-import SIR_sims
 import matplotlib.patches as mpatches
-from matplotlib import cm
 
 
 def pdf_of(degree_list):
@@ -157,6 +155,73 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
         allPsi[g] = psi_g
     return allPsi
 
+def newFigure():
+    s = 400
+    g = 100
+    T = 0.8
+    heatmap_m = np.zeros((g, s))
+    heatmap_s = np.zeros((g, s))
+    # x-axis gens g
+    # y axis: s, number cumulative infections
+    # each (s,g) square corresponds to: probability that s are infected at generation g, as a number
+    # instead of a curve you get a heat map column
+    # TODO
+    # Plot the whole psi matrix for each generation
+    # compute the s-marginal (using the code for the slice distribution)
+    # using each distribution which is 1 g, over all s, then make that one row of the matrix for row 'g'
+    initProb = 1
+    power_law_degree_dist = power_law_degree_distrb(s)
+    # binomial_degree_dist = binomial_degree_distb(1000)
+    all_psi_results = Psi(power_law_degree_dist, initProb, g, s, s, T)
+    # Specify intervention parameters for gen_intervene and T_intervene after initial T:
+    # all_psi_results_with_intervention = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T, 3, 0.4)
+    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
+    for gen in range(1, g):
+        inverted_s_m = all_psi_results[gen].T
+        s_marginal = np.sum(inverted_s_m, axis=0)
+        m_marginal = np.sum(inverted_s_m, axis=1)
+        s_marginal = s_marginal/np.sum(s_marginal) #normalize
+        m_marginal = m_marginal/np.sum(m_marginal) #normalize
+        heatmap_m[gen] = m_marginal
+        heatmap_s[gen] = s_marginal
+        # label='$g='+str(gen)+'$'
+        # color = color_key[gen]
+        # plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='-')
+        # plt.title('No intervention')
+    # plt.show()
+
+
+
+    cmap = plt.cm.hot(np.linspace(1, 0, 100000))
+    cmap = m.colors.ListedColormap(cmap[:, :-1])
+
+    fig, ax = plt.subplots()
+    ax.axis('equal')
+    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
+    ax.imshow(heatmap_m.T, cmap=cmap, norm = plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000), aspect='auto')
+    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
+    ax.invert_yaxis()
+    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
+    plt.ylabel('$m$', fontsize=16)
+    plt.xlabel('$gen$', fontsize=16)
+    plt.xticks(np.arange(0, g, 10), np.arange(0, g, 10))
+    # plt.legend(loc='upper right')
+    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
+    plt.show()
+
+    fig, ax = plt.subplots()
+    ax.axis('equal')
+    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
+    ax.imshow(heatmap_s.T, cmap=cmap, norm = plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000), aspect='auto')
+    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
+    ax.invert_yaxis()
+    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
+    plt.ylabel('$s$', fontsize=16)
+    plt.xlabel('$gen$', fontsize=16)
+    plt.xticks(np.arange(0, g, 10), np.arange(0, g, 10))
+    # plt.legend(loc='upper right')
+    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
+    plt.show()
 
 def phaseSpace(num_gens, num_nodes):
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
@@ -315,7 +380,6 @@ def outbreak_size_curves(num_gens, num_nodes, T=0.8):
 # 4) The value from the convolution will then lead to the Psi matrix
 
 # This is the convolution code
-from scipy.stats import binom
 
 
 def find_pairs(m, len_dist_1, len_dist_2):
