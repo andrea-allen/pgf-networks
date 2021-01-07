@@ -198,10 +198,10 @@ class Simulation:
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
         # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
         N = len(self.Lambda[0])
-        new_Lambda = np.zeros((N, N))
-        for i in range(N):
-            for j in range(N):
-                new_Lambda[i][j] = beta_interv
+        new_Lambda = np.full((N, N), beta_interv)
+        # for i in range(N):
+        #     for j in range(N):
+        #         new_Lambda[i][j] = beta_interv
         self.Lambda = new_Lambda
         self.beta = beta_interv
         print('new beta', self.beta)
