@@ -13,8 +13,11 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 10, 10000, 0.8, 3, 0.4, .001)
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 1000, 5000, 0.8, 3, 0.4, .001)
 
+    # 17 secds for 5000 nodes that "take off"
+    # make a distribution of simulation times?
+    
     # Runs 50,000 simulations with a power law degree distribution
     degree_distrb = power_law_degree_distrb()
     # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
@@ -46,16 +49,16 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, ba
     plt.ylabel('$p_s^g$')
     plt.semilogy()
     plt.savefig('p_s_g_distribution_no_intervention.png')
-    plt.show()
-
-    # for gen in [2, 6, 11, 18]:
-    #     plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
-    # plt.legend(loc='upper right')
-    # plt.xlabel('$s$')
-    # plt.ylabel('$p_s^g$')
-    # plt.semilogy()
-    # plt.savefig('p_s_g_distribution_intervention.png')
     # plt.show()
+
+    for gen in [2, 6, 11, 18]:
+        plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
+    plt.legend(loc='upper right')
+    plt.xlabel('$s$')
+    plt.ylabel('$p_s^g$')
+    plt.semilogy()
+    plt.savefig('p_s_g_distribution_intervention.png')
+    plt.show()
 
 def read_back_data():
     # Manipulatable method for reading back data and plotting desired results
@@ -117,15 +120,7 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
     for i in range(num_sims):
         if i % 5 == 0:
             G, pos = generate_graph(N, degree_distrb)
-            N_resized = len(G.nodes())
-            # Lambda = np.zeros((N_resized, N_resized))
-            Lambda = np.full((N_resized, N_resized), beta)
-            Gamma = np.full(N_resized, gamma)
-            # for n in range(N_resized):
-            #     Gamma[n] = gamma
-            #     for j in range(N_resized):
-            #         Lambda[n][j] = beta
-        results = simulate(G, pos, Lambda, Gamma, i) #results for time series of s and m nodes infected
+        results = simulate(G, pos, beta, gamma, i) #results for time series of s and m nodes infected
         for g in range(len(results[0])):
             gen_s = int(results[1][g]) # Second vector is total infections over time in s
             try:
@@ -165,7 +160,7 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
                 Gamma[n] = gamma
                 for j in range(N_resized):
                     Lambda[n][j] = beta_init
-        results = simulate(G, pos, Lambda, Gamma, i, intervention_gen, beta_interv)
+        results = simulate(G, pos, beta_init, gamma, i, intervention_gen, beta_interv)
         for g in range(len(results[0])):
             gen_s = int(results[1][g])
             try:
@@ -181,11 +176,11 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
 
-def simulate(G, pos, Lambda, Gamma, current, intervention_gen=-1, beta_interv=-1.0):
+def simulate(G, pos, beta, gamma, current, intervention_gen=-1, beta_interv=-1.0):
     print('current sim ' + str(current))
     start_time = time.time()
     # With intervention into the simulation code
-    sim = event_driven.Simulation(1000000, G, Lambda, Gamma, pos)
+    sim = event_driven.Simulation(1000000, G, beta, gamma, pos)
     sim.run_sim(intervention_gen, beta_interv)
     results = sim.total_infect_over_all_gens(50)
     print("--- %s seconds to run simulation---" % (time.time() - start_time))

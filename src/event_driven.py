@@ -46,15 +46,15 @@ class Edge:
 
 
 class Simulation:
-    def __init__(self, total_sim_time, G, Lambda, Gamma, pos):
+    def __init__(self, total_sim_time, G, beta, gamma, pos):
         self.sim_time = total_sim_time
         self.current_sim_time = 0
         self.G = G
-        self.beta = 0
-        self.gamma = 0
+        self.beta = beta
+        self.gamma = gamma
         self.A = None
-        self.Lambda = Lambda
-        self.Gamma = Gamma
+        self.Lambda = None
+        self.Gamma = None
         self.V_IS = []
         self.V_I = []
         self.has_been_infected_labels = []
@@ -68,8 +68,11 @@ class Simulation:
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
-        self.beta = np.mean(self.Lambda)
-        self.gamma = np.mean(self.Gamma)
+        # self.beta = np.mean(self.Lambda)
+        # self.gamma = np.mean(self.Gamma)
+        N = len(self.A)
+        self.Lambda = np.full((N, N), self.beta)
+        self.Gamma = np.full(N, self.gamma)
         print('starting beta is, ', self.beta)
         p_zero_idx = random.randint(0, len(self.A[0]) - 1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
@@ -84,52 +87,45 @@ class Simulation:
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
 
+    def single_step(self, visualize=False):
+        if visualize:  # todo put into single step
+            self.visualize_network()
+        sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
+        tau = draw_tau(sum_of_rates)
+        # print(self.current_sim_time)
+        event_class = draw_event_class(self.V_IS, self.V_I)
+        if event_class == 1:
+            infection_event = draw_specific_event(np.max(self.Lambda), self.V_IS)
+            infection_event.infect()
+            self.V_IS.remove(infection_event)
+            self.V_I.append(infection_event.j)
+            try:
+                self.gen_collection[infection_event.j.gen].append(infection_event.j.label)
+            except KeyError:
+                self.gen_collection[infection_event.j.gen] = [infection_event.j.label]
+                self.highest_gen += 1
+            self.has_been_infected_labels.append(infection_event.j.label)
+            self.update_IS_edges()
+            self.add_IS_edges(infection_event.j)
+        if event_class == 2:
+            recovery_event = draw_specific_event(np.max(self.Gamma), self.V_I)
+            self.V_I.remove(recovery_event)
+            recovery_event.recover()
+            self.update_IS_edges()
+            self.V_R.append(recovery_event)
+        self.current_sim_time += tau
+
     def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
         self.intialize()
         while self.current_sim_time < self.sim_time:
-            if visualize:
-                self.visualize_network()
-            # print('time: ', self.current_sim_time)
-            # print('Current IS edges: ')
-            # for edge in self.V_IS:
-            #     edge.display_info()
-            # print('Current Infected nodes: ')
-            # for node in self.V_I:
-            #     node.display_info()
-            # print('Current Recovered nodes: ')
-            # for node in self.V_R:
-            #     node.display_info()
-
             # intervention if applicable:
             if (not self.intervened) & (intervention_gen > 0):
                 if self.highest_gen >= intervention_gen:
                     self.intervene(beta_interv)
                     self.intervened = True
+            # Run one step
+            self.single_step()
 
-            sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
-            tau = draw_tau(sum_of_rates)
-            # print(self.current_sim_time)
-            event_class = draw_event_class(self.V_IS, self.V_I)
-            if event_class == 1:
-                infection_event = draw_specific_event(np.max(self.Lambda), self.V_IS)
-                infection_event.infect()
-                self.V_IS.remove(infection_event)
-                self.V_I.append(infection_event.j)
-                try:
-                    self.gen_collection[infection_event.j.gen].append(infection_event.j.label)
-                except KeyError:
-                    self.gen_collection[infection_event.j.gen] = [infection_event.j.label]
-                    self.highest_gen += 1
-                self.has_been_infected_labels.append(infection_event.j.label)
-                self.update_IS_edges()
-                self.add_IS_edges(infection_event.j)
-            if event_class == 2:
-                recovery_event = draw_specific_event(np.max(self.Gamma), self.V_I)
-                self.V_I.remove(recovery_event)
-                recovery_event.recover()
-                self.update_IS_edges()
-                self.V_R.append(recovery_event)
-            self.current_sim_time += tau
             self.total_num_timesteps += 1
             if len(self.V_IS) == 0:
                 break
