@@ -4,9 +4,9 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 class Node:
-    def __init__(self, i, gen, state, recover_rate):
+    def __init__(self, label, gen, state, recover_rate):
         self.gen = gen
-        self.label = i
+        self.label = label
         self.state = state
         self.event_rate = recover_rate
 
@@ -87,6 +87,21 @@ class Simulation:
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
 
+    def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
+        self.intialize()
+        while self.current_sim_time < self.sim_time:
+            # intervention if applicable:
+            if (not self.intervened) & (intervention_gen > 0):
+                if self.highest_gen >= intervention_gen:
+                    self.intervene(beta_interv)
+                    self.intervened = True
+            # Run one step
+            self.single_step()
+
+            self.total_num_timesteps += 1
+            if len(self.V_IS) == 0:
+                break
+
     def single_step(self, visualize=False):
         if visualize:  # todo put into single step
             self.visualize_network()
@@ -114,21 +129,6 @@ class Simulation:
             self.update_IS_edges()
             self.V_R.append(recovery_event)
         self.current_sim_time += tau
-
-    def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
-        self.intialize()
-        while self.current_sim_time < self.sim_time:
-            # intervention if applicable:
-            if (not self.intervened) & (intervention_gen > 0):
-                if self.highest_gen >= intervention_gen:
-                    self.intervene(beta_interv)
-                    self.intervened = True
-            # Run one step
-            self.single_step()
-
-            self.total_num_timesteps += 1
-            if len(self.V_IS) == 0:
-                break
 
     def add_IS_edges(self, infected_node):
         for j in range(0, len(self.A[infected_node.label])):
@@ -204,6 +204,14 @@ class Simulation:
         # change event rate for each existing edge pair
         for edge in self.V_IS:
             edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
+
+    def display_info(self):
+        print('V_IS edges: ')
+        for edge in self.V_IS:
+            edge.display_info()
+        print('Infected nodes: ')
+        for node in self.V_I:
+            node.display_info()
 
 def draw_tau(sum_of_rates):
     tau = np.random.exponential(1/sum_of_rates)

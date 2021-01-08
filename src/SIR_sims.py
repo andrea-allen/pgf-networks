@@ -13,11 +13,11 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 1000, 5000, 0.8, 3, 0.4, .001)
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 10, 10000, 0.8, 3, 0.4, .001)
 
-    # 17 secds for 5000 nodes that "take off"
+    # 17 secds for 5000 nodes that "take off", 155 secs for 10,000 nodes
     # make a distribution of simulation times?
-    
+
     # Runs 50,000 simulations with a power law degree distribution
     degree_distrb = power_law_degree_distrb()
     # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
