@@ -2,6 +2,9 @@ import unittest
 import numpy as np
 from src.event_driven import *
 from src.SIR_sims import *
+import networkx as nx
+import timeit
+import time
 
 class TestGeneral(unittest.TestCase):
     def test_array_fills(self):
@@ -53,11 +56,12 @@ class TestEdge(unittest.TestCase):
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
-        N = 100
+        N = 10
         self.beta = 0.99
         self.gamma = 0.0001
         dd = power_law_degree_distrb()
         graph, pos = generate_graph(N, dd)
+        graph = nx.generators.complete_graph(N)
         self.Lambda = np.full((N, N), self.beta)
         self.Gamma = np.full(N, self.gamma)
         self.graph = graph
@@ -101,6 +105,27 @@ class TestSimulation(unittest.TestCase):
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, new_beta)
+
+    @unittest.skip('Used for timing scratchwork')
+    def test_timing_event_list(self):
+        sample_edge = Edge(Node(13, 0, 1, .01), Node(14, -1, 0, .01), .8)
+        event_list = []
+        for i in range(10000):
+            event_list.append(sample_edge)
+        total_time_1 = 0
+        for l in range(1000):
+            start_time = time.time()
+            choice = np.random.choice(event_list)
+            total_time_1 += time.time() - start_time
+        total_time_2 = 0
+        for j in range(1000):
+            start_time = time.time()
+            L = len(event_list)
+            idx = np.random.randint(0, L)
+            choice = event_list[idx]
+            total_time_2 += time.time() - start_time
+        print('total time random choice: ', total_time_1)
+        print('total time random int: ', total_time_2)
 
 
 if __name__ == '__main__':

@@ -13,9 +13,11 @@ def run():
 
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 10, 10000, 0.8, 3, 0.4, .001)
+    #TODO still need to find out why always slightly less than w the intervention
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 100, 10000, 0.8, 3, 0.4, .001)
 
-    # 17 secds for 5000 nodes that "take off", 155 secs for 10,000 nodes
+    # 1.5 secs to initialize a 10000 node simulation
+    # 17 secds for 10000 nodes that "take off"
     # make a distribution of simulation times?
 
     # Runs 50,000 simulations with a power law degree distribution
@@ -182,8 +184,8 @@ def simulate(G, pos, beta, gamma, current, intervention_gen=-1, beta_interv=-1.0
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, beta, gamma, pos)
     sim.run_sim(intervention_gen, beta_interv)
-    results = sim.total_infect_over_all_gens(50)
     print("--- %s seconds to run simulation---" % (time.time() - start_time))
+    results = sim.total_infect_over_all_gens(50)
     return results
 
 

@@ -2,6 +2,7 @@ import random
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import time
 
 class Node:
     def __init__(self, label, gen, state, recover_rate):
@@ -65,14 +66,14 @@ class Simulation:
         self.highest_gen = 0
         self.intervened = False
         self.total_num_timesteps = 0
+        self.max_beta = 0
 
     def intialize(self):
         self.A = np.array(nx.adjacency_matrix(self.G).todense())
-        # self.beta = np.mean(self.Lambda)
-        # self.gamma = np.mean(self.Gamma)
         N = len(self.A)
         self.Lambda = np.full((N, N), self.beta)
         self.Gamma = np.full(N, self.gamma)
+        self.max_beta = np.max(self.Lambda)
         print('starting beta is, ', self.beta)
         p_zero_idx = random.randint(0, len(self.A[0]) - 1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
@@ -107,13 +108,13 @@ class Simulation:
             self.visualize_network()
         sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
         tau = draw_tau(sum_of_rates)
-        # print(self.current_sim_time)
         event_class = draw_event_class(self.V_IS, self.V_I)
         if event_class == 1:
-            infection_event = draw_specific_event(np.max(self.Lambda), self.V_IS)
+            infection_event = draw_specific_event(self.max_beta, self.V_IS)
             infection_event.infect()
             self.V_IS.remove(infection_event)
             self.V_I.append(infection_event.j)
+
             try:
                 self.gen_collection[infection_event.j.gen].append(infection_event.j.label)
             except KeyError:
@@ -195,9 +196,6 @@ class Simulation:
         # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
         N = len(self.Lambda[0])
         new_Lambda = np.full((N, N), beta_interv)
-        # for i in range(N):
-        #     for j in range(N):
-        #         new_Lambda[i][j] = beta_interv
         self.Lambda = new_Lambda
         self.beta = beta_interv
         print('new beta', self.beta)
@@ -238,8 +236,10 @@ def draw_event_class(V_IS, V_I): #[list of IS edges] [list of infected nodes]
 def draw_specific_event(max_rate, event_list):
     accepted = False
     random_event = None
+    L = len(event_list)
     while not accepted:
-        random_event = random.choice(event_list)
+        random_idx = np.random.randint(0, L)
+        random_event = event_list[random_idx]
         accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2
         random_draw = random.uniform(0, 1)
         if random_draw < accept_rate:
