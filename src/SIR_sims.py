@@ -16,6 +16,7 @@ def run():
     #TODO still need to find out why always slightly less than w the intervention
     #TODO need to bring down initialization time from 1.5 secs to much quicker, look into sparse matrix lookups
     #TODO make results easily returnable
+    #TODO deal with display and pos, which won't work or be solved for large networks
     simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 500, 10000, 0.8, 3, 0.4, .001)
 
     # 1.5 secs to initialize a 10000 node simulation
@@ -114,7 +115,6 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
     N = len(A[0])
     Lambda = np.full((N, N), beta)
     Gamma = np.full(N, gamma)
-    # Construct recovery values and transmissibility matrix
     for i in range(num_sims):
         if i % 100 == 0:
             G, pos = generate_graph(N, degree_distrb)
@@ -149,12 +149,6 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     N = len(A[0])
     Lambda = np.full((N, N), beta_init)
     Gamma = np.full(N, gamma)
-    # Lambda = np.zeros((N, N))
-    # Gamma = np.zeros(N)
-    # for n in range(N):
-    #     Gamma[n] = gamma
-    #     for j in range(N):
-    #         Lambda[n][j] = beta_init
     for i in range(1, num_sims+1):
         if i % 100 == 0:
             G, pos = generate_graph(N, degree_distrb)
@@ -162,13 +156,6 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
             N = len(A[0])
             Lambda = np.full((N, N), beta_init)
             Gamma = np.full(N, gamma)
-            # N_resized = len(G.nodes())
-            # Lambda = np.zeros((N_resized, N_resized))
-            # Gamma = np.zeros(N_resized)
-            # for n in range(N_resized):
-            #     Gamma[n] = gamma
-            #     for j in range(N_resized):
-            #         Lambda[n][j] = beta_init
         results = simulate(G, A, pos, beta_init, gamma, Lambda, Gamma, i, intervention_gen, beta_interv)
         for g in range(len(results[0])):
             gen_s = int(results[1][g])
@@ -204,7 +191,6 @@ def generate_graph(N, deg_dist):
         number_with_that_degree = number_of_nodes[i]
         for k in range(int(math.floor(number_with_that_degree))):
             degree_sequence.append(i)
-    # z = [5, 3, 3, 3, 3, 2, 2, 2, 1, 1, 1]
     graphical = nx.is_graphical(degree_sequence)
     # print('Degree sequence is graphical: ', graphical)
     if not graphical:

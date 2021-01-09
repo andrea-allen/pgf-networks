@@ -70,15 +70,9 @@ class Simulation:
 
     def intialize(self):
         start_time = time.time()
-        # self.A = np.array(nx.adjacency_matrix(self.G).todense())
-        # adj_mat_time = time.time() - start_time
-        # print('Time to make adjacency matrix is ', adj_mat_time)
-        N = len(self.A)
-        # self.Lambda = np.full((N, N), self.beta)
-        # self.Gamma = np.full(N, self.gamma)
         self.max_beta = np.max(self.Lambda)
-        print('Time to make lambda gamma is ', time.time() - start_time)
         print('starting beta is, ', self.beta)
+        N = len(self.A[0])
         p_zero_idx = random.randint(0, N-1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
         self.nodes.append(patient_zero)
@@ -92,7 +86,6 @@ class Simulation:
                 self.nodes.append(neighbor)
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
-        print('Time spent making VIS initial edges is ', time.time() - start_time_2)
         print('Total time to initialize is ', time.time() - start_time)
 
     def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
