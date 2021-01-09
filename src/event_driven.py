@@ -79,7 +79,7 @@ class Simulation:
         self.max_beta = np.max(self.Lambda)
         print('Time to make lambda gamma is ', time.time() - start_time)
         print('starting beta is, ', self.beta)
-        p_zero_idx = random.randint(0, N)
+        p_zero_idx = random.randint(0, N-1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
         self.nodes.append(patient_zero)
         self.gen_collection[0] = [p_zero_idx]
