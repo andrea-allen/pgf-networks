@@ -47,15 +47,15 @@ class Edge:
 
 
 class Simulation:
-    def __init__(self, total_sim_time, G, beta, gamma, pos):
+    def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A):
         self.sim_time = total_sim_time
         self.current_sim_time = 0
         self.G = G
         self.beta = beta
         self.gamma = gamma
-        self.A = None
-        self.Lambda = None
-        self.Gamma = None
+        self.A = A
+        self.Lambda = Lambda
+        self.Gamma = Gamma
         self.V_IS = []
         self.V_I = []
         self.has_been_infected_labels = []
@@ -69,24 +69,31 @@ class Simulation:
         self.max_beta = 0
 
     def intialize(self):
-        self.A = np.array(nx.adjacency_matrix(self.G).todense())
+        start_time = time.time()
+        # self.A = np.array(nx.adjacency_matrix(self.G).todense())
+        # adj_mat_time = time.time() - start_time
+        # print('Time to make adjacency matrix is ', adj_mat_time)
         N = len(self.A)
-        self.Lambda = np.full((N, N), self.beta)
-        self.Gamma = np.full(N, self.gamma)
+        # self.Lambda = np.full((N, N), self.beta)
+        # self.Gamma = np.full(N, self.gamma)
         self.max_beta = np.max(self.Lambda)
+        print('Time to make lambda gamma is ', time.time() - start_time)
         print('starting beta is, ', self.beta)
-        p_zero_idx = random.randint(0, len(self.A[0]) - 1)
+        p_zero_idx = random.randint(0, N)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
         self.nodes.append(patient_zero)
         self.gen_collection[0] = [p_zero_idx]
         self.V_I.append(patient_zero)
         self.has_been_infected_labels.append(p_zero_idx)
+        start_time_2 = time.time()
         for j in range(0, len(self.A[0])):
             if self.A[p_zero_idx, j] == 1:
                 neighbor = Node(j, -1, 0, self.Gamma[j])
                 self.nodes.append(neighbor)
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
+        print('Time spent making VIS initial edges is ', time.time() - start_time_2)
+        print('Total time to initialize is ', time.time() - start_time)
 
     def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
         self.intialize()
@@ -198,6 +205,7 @@ class Simulation:
         new_Lambda = np.full((N, N), beta_interv)
         self.Lambda = new_Lambda
         self.beta = beta_interv
+        self.max_beta = np.max(self.Lambda)
         print('new beta', self.beta)
         # change event rate for each existing edge pair
         for edge in self.V_IS:

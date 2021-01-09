@@ -14,7 +14,9 @@ def run():
     # Sims with a power law degree distribution:
     degree_distrb = power_law_degree_distrb()
     #TODO still need to find out why always slightly less than w the intervention
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 100, 10000, 0.8, 3, 0.4, .001)
+    #TODO need to bring down initialization time from 1.5 secs to much quicker, look into sparse matrix lookups
+    #TODO make results easily returnable
+    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 500, 10000, 0.8, 3, 0.4, .001)
 
     # 1.5 secs to initialize a 10000 node simulation
     # 17 secds for 10000 nodes that "take off"
@@ -44,8 +46,8 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, ba
     np.savetxt(base_file_name+'_size_distrb_per_gen_with_interv.txt', size_distrb_per_gen_intervention, delimiter=',')
 
     # Plotting results against one another
-    for gen in [2, 6, 11]:
-        plt.plot(s_sizes_no_intervention[2:350], size_distrb_per_gen_no_intervention[gen][2:350], label='$g=$' + str(gen))
+    for gen in [2, 6, 11, 18, 40]:
+        plt.plot(s_sizes_no_intervention[2:1000], size_distrb_per_gen_no_intervention[gen][2:1000], label='$g=$' + str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
@@ -53,8 +55,8 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, ba
     plt.savefig('p_s_g_distribution_no_intervention.png')
     # plt.show()
 
-    for gen in [2, 6, 11, 18]:
-        plt.plot(s_sizes_intervention[2:350], size_distrb_per_gen_intervention[gen][2:350], label='$int g=$' + str(gen))
+    for gen in [2, 6, 11, 18, 40]:
+        plt.plot(s_sizes_intervention[2:1000], size_distrb_per_gen_intervention[gen][2:1000], label='$int g=$' + str(gen))
     plt.legend(loc='upper right')
     plt.xlabel('$s$')
     plt.ylabel('$p_s^g$')
@@ -108,21 +110,19 @@ def outbreak_size_distrb_per_gen(degree_distrb, num_sims=10, N=1000, T=0.8, gamm
     s_sizes = np.arange(N)
     outbreak_size_distrb_per_gen_matrix = np.zeros((100, N))
     G, pos = generate_graph(N, degree_distrb)
-    N = len(G.nodes())
-    Lambda = np.zeros((N, N))
-    Gamma = np.zeros(N)
-    # Construct recovery values and transmissibility matrix
+    A = np.array(nx.adjacency_matrix(G).todense())
+    N = len(A[0])
     Lambda = np.full((N, N), beta)
     Gamma = np.full(N, gamma)
-    # for n in range(N):
-    #     Gamma[n] = gamma
-    #     for j in range(N):
-    #         Lambda[n][j] = beta
-    # Run simulations, new graph every 500 simulations
+    # Construct recovery values and transmissibility matrix
     for i in range(num_sims):
-        if i % 5 == 0:
+        if i % 100 == 0:
             G, pos = generate_graph(N, degree_distrb)
-        results = simulate(G, pos, beta, gamma, i) #results for time series of s and m nodes infected
+            A = np.array(nx.adjacency_matrix(G).todense())
+            N = len(A[0])
+            Lambda = np.full((N, N), beta)
+            Gamma = np.full(N, gamma)
+        results = simulate(G, A, pos, beta, gamma, Lambda, Gamma, i) #results for time series of s and m nodes infected
         for g in range(len(results[0])):
             gen_s = int(results[1][g]) # Second vector is total infections over time in s
             try:
@@ -145,24 +145,31 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     s_sizes = np.arange(N)
     outbreak_size_distrb_per_gen_matrix = np.zeros((100, N))
     G, pos = generate_graph(N, degree_distrb)
-    N = len(G.nodes())
-    Lambda = np.zeros((N, N))
-    Gamma = np.zeros(N)
-    for n in range(N):
-        Gamma[n] = gamma
-        for j in range(N):
-            Lambda[n][j] = beta_init
+    A = np.array(nx.adjacency_matrix(G).todense())
+    N = len(A[0])
+    Lambda = np.full((N, N), beta_init)
+    Gamma = np.full(N, gamma)
+    # Lambda = np.zeros((N, N))
+    # Gamma = np.zeros(N)
+    # for n in range(N):
+    #     Gamma[n] = gamma
+    #     for j in range(N):
+    #         Lambda[n][j] = beta_init
     for i in range(1, num_sims+1):
-        if i % 500 == 0:
+        if i % 100 == 0:
             G, pos = generate_graph(N, degree_distrb)
-            N_resized = len(G.nodes())
-            Lambda = np.zeros((N_resized, N_resized))
-            Gamma = np.zeros(N_resized)
-            for n in range(N_resized):
-                Gamma[n] = gamma
-                for j in range(N_resized):
-                    Lambda[n][j] = beta_init
-        results = simulate(G, pos, beta_init, gamma, i, intervention_gen, beta_interv)
+            A = np.array(nx.adjacency_matrix(G).todense())
+            N = len(A[0])
+            Lambda = np.full((N, N), beta_init)
+            Gamma = np.full(N, gamma)
+            # N_resized = len(G.nodes())
+            # Lambda = np.zeros((N_resized, N_resized))
+            # Gamma = np.zeros(N_resized)
+            # for n in range(N_resized):
+            #     Gamma[n] = gamma
+            #     for j in range(N_resized):
+            #         Lambda[n][j] = beta_init
+        results = simulate(G, A, pos, beta_init, gamma, Lambda, Gamma, i, intervention_gen, beta_interv)
         for g in range(len(results[0])):
             gen_s = int(results[1][g])
             try:
@@ -178,11 +185,11 @@ def outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims=10, N
     return s_sizes, outbreak_size_distrb_per_gen_matrix
 
 
-def simulate(G, pos, beta, gamma, current, intervention_gen=-1, beta_interv=-1.0):
+def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1, beta_interv=-1.0):
     print('current sim ' + str(current))
     start_time = time.time()
     # With intervention into the simulation code
-    sim = event_driven.Simulation(1000000, G, beta, gamma, pos)
+    sim = event_driven.Simulation(1000000, G, beta, gamma, Lambda, Gamma, pos, A)
     sim.run_sim(intervention_gen, beta_interv)
     print("--- %s seconds to run simulation---" % (time.time() - start_time))
     results = sim.total_infect_over_all_gens(50)

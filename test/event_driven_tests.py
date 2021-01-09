@@ -68,7 +68,7 @@ class TestSimulation(unittest.TestCase):
 
     # @unittest.skip('Need to fix test to account for new IS edges')
     def test_IS_edges_are_updated_after_single_step(self):
-        simulation = Simulation(100000, self.graph, self.beta, self.gamma, None)
+        simulation = Simulation(100000, self.graph, self.beta, self.gamma, None, None)
         simulation.intialize()
         print('before single step')
         simulation.display_info()
@@ -126,6 +126,28 @@ class TestSimulation(unittest.TestCase):
             total_time_2 += time.time() - start_time
         print('total time random choice: ', total_time_1)
         print('total time random int: ', total_time_2)
+
+    def test_adj_list_vs_matrix(self):
+        dd = power_law_degree_distrb()
+        graph = generate_graph(10000, dd)
+        start_time = time.time()
+        adjacency_matrix = np.array(nx.adjacency_matrix(graph).todense())
+        adjacency_m_time = time.time() - start_time
+        print('Ajacency matrix time is ', adjacency_m_time)
+
+    def test_time_length_list(self):
+        dd = power_law_degree_distrb()
+        graph, pos = generate_graph(10000, dd)
+        adjacency_matrix = np.array(nx.adjacency_matrix(graph).todense())
+        start_time_1 = time.time()
+        len(graph.nodes())
+        print('Counting nodes took ', time.time() - start_time_1)
+        start_time_2 = time.time()
+        len(adjacency_matrix[0])
+        print('Counting matrix length took ', time.time() - start_time_2)
+        start_time_3 = time.time()
+        adjacency_matrix.size()
+        print('Counting matrix size took ', time.time()-start_time_3)
 
 
 if __name__ == '__main__':
