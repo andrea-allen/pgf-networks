@@ -104,10 +104,30 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
         new_beta = 0.8
-        simulation.intervene(new_beta)
+        simulation.intervene(new_beta, True)
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, new_beta)
+
+        simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
+                                adjacency_matrix)
+        simulation.intialize()
+        starting_IS_list_length = len(simulation.V_IS)
+        self.assertGreaterEqual(starting_IS_list_length, 1)
+        self.assertEqual(len(simulation.V_I), 1)
+        self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
+        new_beta = 0.8
+        simulation.intervene(new_beta, False)
+        self.assertGreaterEqual(starting_IS_list_length, 1)
+        self.assertEqual(len(simulation.V_I), 1)
+        self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
+
+    #TODO write a test that tests if intervention happens at the correct time, need to modify the code structure for this
+
+    def test_intervention_occurs_correctly(self):
+        #TODO use mocks
+        # assert that when intervene is called, only one generation member of that gen is exists
+        self.assertFalse(True)
 
 
 if __name__ == '__main__':

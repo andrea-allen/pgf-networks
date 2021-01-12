@@ -71,7 +71,7 @@ class Simulation:
     def intialize(self):
         start_time = time.time()
         self.max_beta = np.max(self.Lambda)
-        print('starting beta is, ', self.beta)
+        # print('starting beta is, ', self.beta)
         N = len(self.A[0])
         p_zero_idx = random.randint(0, N-1)
         patient_zero = Node(p_zero_idx, 0, 1, self.Gamma[p_zero_idx])
@@ -86,7 +86,7 @@ class Simulation:
                 self.nodes.append(neighbor)
                 edge_ij = Edge(patient_zero, neighbor, self.Lambda[p_zero_idx, j])
                 self.V_IS.append(edge_ij)
-        print('Total time to initialize is ', time.time() - start_time)
+        # print('Total time to initialize is ', time.time() - start_time)
 
     def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
         self.intialize()
@@ -190,8 +190,7 @@ class Simulation:
                 m = 0
         return results_vec
 
-    def intervene(self, beta_interv):
-        print('intervention')
+    def intervene(self, beta_interv, reduce_current_edges=False):
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
         # in the future, can hand-select which Lambda to change (vaccinating a fraction of the population)
         N = len(self.Lambda[0])
@@ -199,10 +198,10 @@ class Simulation:
         self.Lambda = new_Lambda
         self.beta = beta_interv
         self.max_beta = np.max(self.Lambda)
-        print('new beta', self.beta)
         # change event rate for each existing edge pair
-        for edge in self.V_IS:
-            edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
+        if reduce_current_edges:
+            for edge in self.V_IS:
+                edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
 
     def display_info(self):
         print('V_IS edges: ')
