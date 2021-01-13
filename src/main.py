@@ -2,11 +2,25 @@ from matplotlib import rc
 from src import pgf_formalism
 from src import sandbox
 from src import SIR_sims
+from src import analysis
 
 if __name__ == '__main__':
     rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
     rc('text', usetex=True)
     print('pgfs yay!')
+
+    # Sample usage:
+    analysis.graph_infection_size_distribution_by_gen([2, 3, 4, 6, 15], 250, '../../pgf-nets-data/',
+                                                          'power_law_08_to_06_gen3_size_distrb_per_gen_no_interv.txt',
+                                                      '../../pgf-nets-data/',
+                                                          'power_law_08_to_06_gen3_size_distrb_per_gen_with_interv.txt'
+                                                          )
+
+    analysis.graph_infection_size_distribution_by_gen([2, 3, 4, 6, 15], 250, '../../pgf-nets-data/',
+                                                          'power_law_08_to04_gen3_fast_size_distrb_per_gen_no_interv.txt',
+                                                      '../../pgf-nets-data/',
+                                                          'power_law_08_to04_gen3_fast_size_distrb_per_gen_with_interv.txt'
+                                                          )
 
     # sandbox.run_sandbox()
     # pgf_formalism.newFigure()

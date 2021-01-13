@@ -4,25 +4,23 @@ import math
 from src import event_driven
 import matplotlib.pyplot as plt
 import time
+import src.analysis
 
-#TODO this file should only be "do"
-#TODO make another file that's for "analyze" or "visualize"
-#TODO that file will contain stuff for both the theory and the empirical
-# have the pgf formalism file only contain "do" not visualize or analyze
+# TODO have the pgf formalism file only contain "do" not visualize or analyze
+
+# TODO make results easily returnable
+# TODO deal with display and pos, which won't work or be solved for large networks
 
 def run():
+
     # Manipulate-able method for running whatever simulations and plotting we want
 
-    # Sims with a power law degree distribution:
+    # Assign degree distribution:
     degree_distrb = power_law_degree_distrb()
     degree_distrb = binomial_degree_distb(100)
-    # done TODO still need to find out why always slightly less than w the intervention
-    # done TODO add toggle for the above logic that should be a feature of the model
-    # done TODO need to bring down initialization time from 1.5 secs to much quicker, look into sparse matrix lookups
-    # TODO make results easily returnable
-    # TODO deal with display and pos, which won't work or be solved for large networks
-    # done TODO index issue higher for higher generations?
-    simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to04_gen3_fast', 5000, 1000,
+
+    # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
+    simulate_intervention_effects(degree_distrb, 'power_law_08_to04_gen3_fast', 2000, 1000,
                                                                0.15, 4, 0.05, .001)
 
     # Runs 50,000 simulations with a power law degree distribution
@@ -38,11 +36,13 @@ def run():
     print('done')
 
 
-def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, base_file_name='sim_results',
+def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                                                num_sims=10000, num_nodes=1000, init_T=0.8,
                                                                gen_intervene=3, T_intervene=0.4, recover_rate=.001):
-    # TODO this file should be split into the run section and the analyze section
-    # Comment if no need to run or save results:
+    """
+
+    :rtype: void
+    """
     # WITH NO intervention
     start_time = time.time()
     size_distrb_per_gen_no_intervention = simulate_ensemble(degree_distrb, num_sims, num_nodes,
@@ -51,76 +51,24 @@ def simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, ba
           ' number of simulations.')
     np.savetxt(base_file_name + '_size_distrb_per_gen_no_interv.txt', size_distrb_per_gen_no_intervention,
                delimiter=',')
+
     # WITH intervention
     start_time = time.time()
-    # REAL ONE
-    # when initi_T=intervene_T, you get "matching" curves. something's going wrong with the intervention itself possibly, why we need tests
-    # s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen_with_intervention(degree_distrb, num_sims, num_nodes, gen_intervene, T_intervene, init_T, recover_rate)
     size_distrb_per_gen_intervention = simulate_ensemble(degree_distrb, num_sims, num_nodes,
                                                                                gen_intervene, T_intervene, init_T,
                                                                                recover_rate)
-    # TEST with also no intervention
-    # s_sizes_intervention, size_distrb_per_gen_intervention = outbreak_size_distrb_per_gen(degree_distrb, num_sims, num_nodes, init_T, recover_rate)
     print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
           ' number of simulations.')
     np.savetxt(base_file_name + '_size_distrb_per_gen_with_interv.txt', size_distrb_per_gen_intervention, delimiter=',')
 
-    s_sizes_x_axis = np.arange(len(size_distrb_per_gen_intervention))
-    # Plotting results against one another
-    color_key = {1: 'blue', 2: 'red', 3: 'orange', 5: 'black', 7: 'pink', 4: 'teal', 20: 'magenta'}
-    # for gen in [2, 6, 11, 18, 40]:
-    for gen in [2, 4, 7, 20]:
-        plt.plot(s_sizes_x_axis[2:100], size_distrb_per_gen_no_intervention[gen][2:100],
-                 label='$g=$' + str(gen), color=color_key[gen], alpha=0.75, ls='-', lw=1)
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
-    # plt.savefig('p_s_g_distribution_no_intervention.png')
-    # plt.show()
-
-    # for gen in [2, 6, 11, 18, 40]:
-    for gen in [2, 4, 7, 20]:
-        plt.plot(s_sizes_x_axis[2:100], size_distrb_per_gen_intervention[gen][2:100], label='$int g=$' + str(gen),
-                 color=color_key[gen], alpha=0.75, ls='--', lw=1)
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$')
-    plt.ylabel('$p_s^g$')
-    plt.semilogy()
-    plt.savefig('p_s_g_distribution_intervention.png')
-    plt.show()
-
-    # TODO add an inset plot with total number of infections?
-
-
-def read_back_data():
-    # Manipulatable method for reading back data and plotting desired results
-
-    # data = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_no_int_g3_full.txt', delimiter=',')
-    data = np.loadtxt('binomial_02_01_gen3_size_distrb_per_gen_no_interv.txt', delimiter=',')
-    # data_int = np.loadtxt('../pgf-nets-data/size_distrb_per_gen_int_g3_full.txt', delimiter=',')
-    data_int = np.loadtxt('binomial_02_01_gen3_size_distrb_per_gen_with_interv.txt', delimiter=',')
-    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
-    for gen in [2, 6, 11]:
-        time_series = data[gen][2:200]
-        time_series_int = data_int[gen][2:200]
-        plt.plot(time_series, label='$g=$' + str(gen), color=color_key[gen], alpha=0.5, lw=1)
-        plt.plot(time_series_int, color=color_key[gen], alpha=0.75, ls='--', lw=1)
-    plt.legend(loc='upper right')
-    plt.xlabel('number infected $s$ at generation $g$')
-    plt.ylabel('$p_s^g$')
-    plt.title(
-        'Effects of simulations with intervention from $T=.2$ to $T=.1$ at $g=3$ on Binomial Degree Distribution Network')
-    plt.semilogy()
-    plt.ylim(.0001, .1)
-    # plt.title('Created from saved data')
-    # plt.savefig('p_s_g_distribution_intervention.png')
-    plt.show()
-    return data
-
 
 def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, intervention_T=0.0, initial_T=0.8,
                       gamma=0.1):
+
+    """
+
+    :rtype: bytearray
+    """
     # If intervention_gen is set to -1, no intervention will occur
     # Generates the empirical s-slice for results of proportion of simulations that resulted in exactly s nodes infected at generation g
     # Includes steps for doing so with an intervention step

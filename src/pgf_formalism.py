@@ -156,6 +156,7 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
     return allPsi
 
 def newFigure():
+    # TODO move into "do" in this file, "visualize" in next file so it saves results locally and then can be easily played with
     s = 400
     g = 100
     T = 0.8
@@ -224,6 +225,7 @@ def newFigure():
     plt.show()
 
 def phaseSpace(num_gens, num_nodes):
+    # TODO toggle saving results
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
     binom = binomial_degree_distb(1000)
@@ -245,6 +247,7 @@ def phaseSpace(num_gens, num_nodes):
     # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_reg.txt', all_psi_results[18], delimiter=',')
 
 
+    # TODO move plotting to analysis.py
     initProb = 1
     power_law = power_law_degree_distrb(400)
     all_psi_results = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8)
@@ -284,6 +287,7 @@ def plot_psi(psi_g, gen, title_label):
     plt.show()
 
 def plot_sims_vs_analytical_outbreak_sizes():
+    # TODO go in analysis.py
     # Rough method for plotting simulations vs analytical probabilities of outbreak size.
     # Modify as needed for existing files or re-generation of probability results
 
