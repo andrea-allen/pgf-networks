@@ -104,7 +104,7 @@ class Simulation:
                 break
 
     def single_step(self, visualize=False):
-        if visualize:  # todo put into single step
+        if visualize:
             self.visualize_network()
         sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
         tau = draw_tau(sum_of_rates)
@@ -171,15 +171,14 @@ class Simulation:
         plt.show()
         return 0
 
-    def total_infect_over_all_gens(self, max_gens):
+    def tabulate_observables(self, max_gens):
         gens = max_gens
-        results_vec = np.zeros((2, gens))
+        total_infected_time_srs = np.zeros(gens)
         s = 1
         m = 1
         s_max = 1
         for gen in range(max_gens): #{0: 1, 1: 12, 14, 2: 16, 42, ....
-            results_vec[0][gen] = m
-            results_vec[1][gen] = s
+            total_infected_time_srs[gen] = s
             try:
                 m = len(self.gen_collection[gen + 1])  # num infected in gen g
                 s += m
@@ -188,7 +187,7 @@ class Simulation:
                 # make m=0 and s=the last s for the rest of the "time series"
                 s = s_max
                 m = 0
-        return results_vec
+        return total_infected_time_srs
 
     def intervene(self, beta_interv, reduce_current_edges=False):
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
@@ -251,4 +250,16 @@ def determine_draw_tau(V_IS, V_I, beta, gamma):
     v_i_count = len(V_I)
     sum_of_rates = v_is_count*beta + v_i_count*gamma
     return sum_of_rates
+
+#TODO
+# Note on Gillespie (from an LHD paper)
+# May help to cut down the computation time of choosing a random IS edge:
+# Infection attempt event : an infected node is chosen
+# proportionally to its degree. We then choose one of
+# its emanating stubs randomly and infect the node
+# at the other end point. If it is already infected, we
+# do nothing : this phantom process [50] corrects the
+# probability in order to make the process equivalent
+# to randomly choosing an edge among the set of all
+# susceptible-infected edges.
 

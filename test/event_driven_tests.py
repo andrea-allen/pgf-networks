@@ -124,6 +124,7 @@ class TestSimulation(unittest.TestCase):
 
     #TODO write a test that tests if intervention happens at the correct time, need to modify the code structure for this
 
+    @unittest.skip('Work in progress')
     def test_intervention_occurs_correctly(self):
         #TODO use mocks
         # assert that when intervene is called, only one generation member of that gen is exists
