@@ -1,8 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import math
-import matplotlib as m
-import matplotlib.colors as colors
 
 
 def pdf_of(degree_list):
@@ -48,16 +45,14 @@ def power_law_degree_distrb(maxk):
     p_k = p_k / np.sum(p_k)
     return p_k
 
+
 def binomial_degree_distb(N):
     degree_dist = np.zeros(40)
-    p = 6/N
+    p = 6 / N
     for k in range(0, len(degree_dist)):
-        p_k = (p**k)*((1-p)**(N-k))*math.comb(N, k)
+        p_k = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
         degree_dist[k] = p_k
     return degree_dist
-
-
-
 
 
 def gen_functions_with_transmissibility(degree_distrb, T):
@@ -72,7 +67,7 @@ def gen_functions_with_transmissibility(degree_distrb, T):
         for l in range(0, k + 1):
             try:
                 p_LgivenK = p_k[k] * (
-                    math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T ** (l) * (1 - T) ** (k - l))
+                        math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T ** (l) * (1 - T) ** (k - l))
                 p_LK[k][l] = p_LgivenK
             except OverflowError:
                 p_LK[k][l] = 0
@@ -100,8 +95,9 @@ def constructMatrixM(g_0, g_1):
         M_1[row] = convol
         newDist = M_1[row]
 
-    M_1[0][0]=1
+    M_1[0][0] = 1
     return (M_0, M_1)
+
 
 def computeLittlePsi(s, m, prevGenPsi, M):
     s_prime = s - m
@@ -124,7 +120,7 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
             allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
 
     for g in range(2, num_gens):
-        print('working on gen '+str(g))
+        print('working on gen ' + str(g))
         # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
         if g == intervention_gen:
             new_T = intervention_T
@@ -135,104 +131,39 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
             for m in range(max_m):
                 allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
         psi_g = allPsi[g]
-        psi_g = psi_g/np.sum(psi_g)
+        psi_g = psi_g / np.sum(psi_g)
         allPsi[g] = psi_g
     return allPsi
 
-def newFigure():
-    # TODO move into "do" in this file, "visualize" in next file so it saves results locally and then can be easily played with
-    s = 400
-    g = 100
-    T = 0.8
-    heatmap_m = np.zeros((g, s))
-    heatmap_s = np.zeros((g, s))
-    # x-axis gens g
-    # y axis: s, number cumulative infections
-    # each (s,g) square corresponds to: probability that s are infected at generation g, as a number
-    # instead of a curve you get a heat map column
-    # TODO
-    # Plot the whole psi matrix for each generation
-    # compute the s-marginal (using the code for the slice distribution)
-    # using each distribution which is 1 g, over all s, then make that one row of the matrix for row 'g'
-    initProb = 1
-    power_law_degree_dist = power_law_degree_distrb(s)
-    # binomial_degree_dist = binomial_degree_distb(1000)
-    all_psi_results = Psi(power_law_degree_dist, initProb, g, s, s, T)
-    # Specify intervention parameters for gen_intervene and T_intervene after initial T:
-    # all_psi_results_with_intervention = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T, 3, 0.4)
-    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
-    for gen in range(1, g):
-        inverted_s_m = all_psi_results[gen].T
-        s_marginal = np.sum(inverted_s_m, axis=0)
-        m_marginal = np.sum(inverted_s_m, axis=1)
-        s_marginal = s_marginal/np.sum(s_marginal) #normalize
-        m_marginal = m_marginal/np.sum(m_marginal) #normalize
-        heatmap_m[gen] = m_marginal
-        heatmap_s[gen] = s_marginal
-        # label='$g='+str(gen)+'$'
-        # color = color_key[gen]
-        # plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='-')
-        # plt.title('No intervention')
-    # plt.show()
 
-
-
-    cmap = plt.cm.hot(np.linspace(1, 0, 100000))
-    cmap = m.colors.ListedColormap(cmap[:, :-1])
-
-    fig, ax = plt.subplots()
-    ax.axis('equal')
-    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
-    ax.imshow(heatmap_m.T, cmap=cmap, norm = plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000), aspect='auto')
-    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
-    ax.invert_yaxis()
-    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
-    plt.ylabel('$m$', fontsize=16)
-    plt.xlabel('$gen$', fontsize=16)
-    plt.xticks(np.arange(0, g, 10), np.arange(0, g, 10))
-    # plt.legend(loc='upper right')
-    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
-    plt.show()
-
-    fig, ax = plt.subplots()
-    ax.axis('equal')
-    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
-    ax.imshow(heatmap_s.T, cmap=cmap, norm = plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000), aspect='auto')
-    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
-    ax.invert_yaxis()
-    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
-    plt.ylabel('$s$', fontsize=16)
-    plt.xlabel('$gen$', fontsize=16)
-    plt.xticks(np.arange(0, g, 10), np.arange(0, g, 10))
-    # plt.legend(loc='upper right')
-    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
-    plt.show()
-
-def phaseSpace(num_gens, num_nodes):
-    # TODO toggle saving results
+def phaseSpace(num_gens, num_nodes, degree_distribution, transmissibility,
+               save_results=True, gens_to_save=None,
+               file_fmt_to_save='phase_space/generation_{0}', intervention_gen=-1, intervention_trans=None):
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
-    binom = binomial_degree_distb(1000)
-    all_psi_results = Psi(binom, initProb, num_gens, num_nodes, num_nodes, 0.2)
-    all_psi_results_with_intervention = Psi(binom, initProb, num_gens, num_nodes, num_nodes, 0.2, 3, 0.1)
+    all_psi_results = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes, transmissibility)
 
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_int.txt', all_psi_results_with_intervention[18], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_2_reg.txt', all_psi_results[2], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_6_reg.txt', all_psi_results[6], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_11_reg.txt', all_psi_results[11], delimiter=',')
-    # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_reg.txt', all_psi_results[18], delimiter=',')
+    if save_results:
+        try:
+            for gen in gens_to_save:
+                np.savetxt(file_fmt_to_save.format(gen) + '.txt', all_psi_results[gen], delimiter=',')
+        except Exception:
+            print('Must provide gens_to_save in arguments as list')
+            # todo add a while loop and a text reader and let users type in the gens to save if they forgot to?
 
-
-    initProb = 1
-    power_law = power_law_degree_distrb(400)
-    all_psi_results = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8)
-    all_psi_results_with_intervention = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
-    # TODO save all the results and return
-
-    return all_psi_results
+    if intervention_gen > 0 and intervention_trans is not None:
+        all_psi_results_with_intervention = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes,
+                                                transmissibility, intervention_gen, intervention_trans)
+        if save_results:
+            try:
+                for gen in gens_to_save:
+                    np.savetxt(file_fmt_to_save.format(gen) + '_intv.txt', all_psi_results_with_intervention[gen],
+                           delimiter=',')
+            except Exception:
+                print('Must provide gens_to_save in arguments as list')
+    else:
+        all_psi_results_with_intervention = np.zeros((2, 2))
+    return all_psi_results, all_psi_results_with_intervention
 
 
 # Convolution code below:
@@ -281,6 +212,7 @@ def convolve_dists(X, Y):
             new_prob = new_prob + X[l_pair[0]] * Y[l_pair[1]]
         new_dist[m] = new_prob
     return new_dist
+
 
 def generating_function_metrics(gen_func_g0, gen_func_g1):
     # Placeholder function for computing outbreak size and other metrics on generating functions

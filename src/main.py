@@ -9,6 +9,7 @@ if __name__ == '__main__':
     print('pgfs yay!')
 
     # Sample usage:
+    analysis.distribution_heatmap(100, 400, pgf_formalism.power_law_degree_distrb(400), 0.5)
     analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', '../../pgf-nets-data/allPsiT8_{0}_int.txt', same_plot=True)
     analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', None, same_plot=True)
     analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', '../../pgf-nets-data/allPsiT8_{0}_int.txt', same_plot=False)
@@ -51,7 +52,8 @@ if __name__ == '__main__':
     analysis.phaseSpace_from_data('../../pgf-nets-data/allPsiT8_18_int.txt', 18, 'Gen 18')
 
 
-    # pgf_formalism.newFigure()
-    # probMatrix = pgf_formalism.phaseSpace(20, 400)
+    power_law_dd = pgf_formalism.power_law_degree_distrb(400)
+    pgf_formalism.phaseSpace(20, 400, power_law_dd, 0.8)
+    # TODO add local tests for pgf_formalism to compute correct values, and ensure the saving and reading locally works
     # SIR_sims.run()
 

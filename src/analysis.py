@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib as m
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
+import src.pgf_formalism
 
+# TODO need to edit some of the captions and titles to be customizable/more descriptive
 
 def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filepath, filename, intervention_filepath=None,
                                              intervention_filename=None):
@@ -51,18 +53,14 @@ def plot_psi(psi_g, gen, title_label):
     cmap = m.colors.ListedColormap(cmap[:, :-1])
 
     fig, ax = plt.subplots()
-    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
     ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000),
               label='$gen=' + str(gen) + '$')  # gen 5
     red_patch = mpatches.Patch(color='white', alpha=0.001, label='$gen=' + str(gen) + '$')
     plt.legend(handles=[red_patch], loc='upper right')
-    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
     ax.invert_yaxis()
-    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
+    plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
     plt.ylabel('$m$', fontsize=16)
     plt.xlabel('$s$', fontsize=16)
-    # plt.legend(loc='upper right')
-    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
     plt.show()
 
 
@@ -70,6 +68,55 @@ def phaseSpace_from_data(fname, gen, plot_title):
     psi_g = np.loadtxt(fname, delimiter=',')
     inverted_s_m = psi_g.T
     plot_psi(inverted_s_m, gen, plot_title)
+
+def distribution_heatmap(num_gens, s_lim, degree_distribution, transmissibility):
+    # This is both a computational and visualization function
+    # Since the full matrix results for all generations from 0 to num_gens is required, and cumbersome to save a single
+    # file for each generation, the entire phase space is computed here in memory and plotted.
+    heatmap_m = np.zeros((num_gens, s_lim))
+    heatmap_s = np.zeros((num_gens, s_lim))
+
+    initProb = 1
+    # If desired, specify intervention parameters below to obtain the phase space with intervention:
+    all_psi_results = src.pgf_formalism.Psi(degree_distribution, initProb, num_gens, s_lim, s_lim, transmissibility, 4, 0.001)
+
+    for gen in range(1, num_gens):
+        inverted_s_m = all_psi_results[gen].T
+        s_marginal = np.sum(inverted_s_m, axis=0)
+        m_marginal = np.sum(inverted_s_m, axis=1)
+        s_marginal = s_marginal / np.sum(s_marginal)  # normalize
+        m_marginal = m_marginal / np.sum(m_marginal)  # normalize
+        heatmap_m[gen] = m_marginal
+        heatmap_s[gen] = s_marginal
+
+    # FIRST FIGURE:
+    # x-axis: generations, y-axis: m, number infected during that generation
+    # Heat map encodes probability distributions over m for each generation g, as a verticle bar from yellow to red
+    cmap = plt.cm.hot(np.linspace(1, 0, 100000))
+    cmap = m.colors.ListedColormap(cmap[:, :-1])
+
+    fig, ax = plt.subplots()
+    ax.axis('equal')
+    ax.imshow(heatmap_m.T, cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000),
+              aspect='auto')
+    ax.invert_yaxis()
+    plt.ylabel('$m$', fontsize=16)
+    plt.xlabel('$gen$', fontsize=16)
+    plt.xticks(np.arange(0, num_gens, 10), np.arange(0, num_gens, 10))
+    plt.show()
+
+    # SECOND FIGURE:
+    # x-axis: generations, y-axis: s, total number infected BY that generation
+    # Heat map encodes probability distributions over s for each generation g, as a verticle bar from yellow to red
+    fig, ax = plt.subplots()
+    ax.axis('equal')
+    ax.imshow(heatmap_s.T, cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000),
+              aspect='auto')
+    ax.invert_yaxis()
+    plt.ylabel('$s$', fontsize=16)
+    plt.xlabel('$gen$', fontsize=16)
+    plt.xticks(np.arange(0, num_gens, 10), np.arange(0, num_gens, 10))
+    plt.show()
 
 
 def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format, fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False):

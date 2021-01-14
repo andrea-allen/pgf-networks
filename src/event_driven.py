@@ -251,15 +251,3 @@ def determine_draw_tau(V_IS, V_I, beta, gamma):
     sum_of_rates = v_is_count*beta + v_i_count*gamma
     return sum_of_rates
 
-#TODO
-# Note on Gillespie (from an LHD paper)
-# May help to cut down the computation time of choosing a random IS edge:
-# Infection attempt event : an infected node is chosen
-# proportionally to its degree. We then choose one of
-# its emanating stubs randomly and infect the node
-# at the other end point. If it is already infected, we
-# do nothing : this phantom process [50] corrects the
-# probability in order to make the process equivalent
-# to randomly choosing an edge among the set of all
-# susceptible-infected edges.
-
