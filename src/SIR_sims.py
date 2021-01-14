@@ -4,35 +4,7 @@ import math
 from src import event_driven
 import time
 
-# TODO have the pgf formalism file only contain "do" not visualize or analyze
-
-# TODO make results easily returnable
 # TODO deal with display and pos, which won't work or be solved for large networks
-
-def run():
-
-    # Manipulate-able method for running whatever simulations and plotting we want
-
-    # Assign degree distribution:
-    degree_distrb = power_law_degree_distrb()
-    degree_distrb = binomial_degree_distb(100)
-
-    # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
-    simulate_intervention_effects(degree_distrb, 'power_law_08_to04_gen3_fast', 2000, 1000,
-                                                               0.15, 4, 0.05, .001)
-
-    # Runs 50,000 simulations with a power law degree distribution
-    degree_distrb = power_law_degree_distrb()
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'power_law_08_to_06_gen3', 50000, 1000, 0.8, 3, 0.6, .001)
-
-    degree_distrb = binomial_degree_distb(1000)
-
-    # Runs 50,000 simulations with binomial degree distribution, saves results
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen3', 50000, 1000, 0.2, 3, 0.1, .001)
-
-    # simulate_and_compare_rounds_with_with_without_intervention(degree_distrb, 'binomial_02_01_gen4', 50000, 1000, 0.2, 4, 0.1, .001)
-    print('done')
-
 
 def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                                                num_sims=10000, num_nodes=1000, init_T=0.8,
@@ -47,6 +19,7 @@ def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                                                                      -1, 0.0, init_T, recover_rate)
     print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
           ' number of simulations.')
+    # TODO have the simulations writing to a file every 100 or so simulations instead of doing it all in memory, as a toggle option
     np.savetxt(base_file_name + '_size_distrb_per_gen_no_interv.txt', size_distrb_per_gen_no_intervention,
                delimiter=',')
 
@@ -107,28 +80,11 @@ def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1
     # With intervention into the simulation code
     sim = event_driven.Simulation(1000000, G, beta, gamma, Lambda, Gamma, pos, A)
     sim.run_sim(intervention_gen, beta_interv)
-    if current % 5 == 0:
+    if current % 50 == 0:
         print('current sim ' + str(current))
         print("--- %s seconds to run simulation---" % (time.time() - start_time))
     results = sim.tabulate_observables(100)
     return results
-
-
-def power_law_degree_distrb():
-    degree_dist = np.zeros(40)
-    for k in range(1, len(degree_dist)):
-        p_k = (k ** (-2)) * (math.e ** (-k / 5))
-        degree_dist[k] = p_k
-    return degree_dist
-
-
-def binomial_degree_distb(N):
-    degree_dist = np.zeros(40)
-    p = 6 / N
-    for k in range(0, len(degree_dist)):
-        p_k = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
-        degree_dist[k] = p_k
-    return degree_dist
 
 
 def generate_graph(N, deg_dist):

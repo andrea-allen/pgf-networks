@@ -37,24 +37,6 @@ def phase_space(g_0, g_1, g=10):
     return Psi_sm
 
 
-def power_law_degree_distrb(maxk):
-    p_k = np.empty(maxk)
-    p_k[0] = 0
-    for k in range(1, maxk):
-        p_k[k] = (k ** (-2)) * (math.e ** (-k / 5))
-    p_k = p_k / np.sum(p_k)
-    return p_k
-
-
-def binomial_degree_distb(N):
-    degree_dist = np.zeros(40)
-    p = 6 / N
-    for k in range(0, len(degree_dist)):
-        p_k = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
-        degree_dist[k] = p_k
-    return degree_dist
-
-
 def gen_functions_with_transmissibility(degree_distrb, T):
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
     # Given transmissibility T
@@ -146,10 +128,10 @@ def phaseSpace(num_gens, num_nodes, degree_distribution, transmissibility,
     if save_results:
         try:
             for gen in gens_to_save:
-                np.savetxt(file_fmt_to_save.format(gen) + '.txt', all_psi_results[gen], delimiter=',')
+                if gen < num_gens:
+                    np.savetxt(file_fmt_to_save.format(gen) + '.txt', all_psi_results[gen], delimiter=',')
         except Exception:
             print('Must provide gens_to_save in arguments as list')
-            # todo add a while loop and a text reader and let users type in the gens to save if they forgot to?
 
     if intervention_gen > 0 and intervention_trans is not None:
         all_psi_results_with_intervention = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes,
