@@ -3,7 +3,6 @@ import numpy as np
 import math
 import matplotlib as m
 import matplotlib.colors as colors
-import matplotlib.patches as mpatches
 
 
 def pdf_of(degree_list):
@@ -58,22 +57,7 @@ def binomial_degree_distb(N):
     return degree_dist
 
 
-def generating_function_metrics(gen_func_g0, gen_func_g1):
-    # Placeholder function for computing outbreak size and other metrics on generating functions
-    G1_func = gen_func_g1
-    #
-    G1_func[1] = G1_func[1] - 1
-    #
-    fun = np.poly1d(np.flip(gen_func_g1))
-    roots = np.roots(fun)
-    u = roots[(roots > 0) & (roots < 1)]
 
-    # Outbreak size, What is going on here with the imaginary numbers
-    if len(u) == 0:
-        S = 1
-    else:
-        S = 1 - np.polyval(np.flip(gen_func_g0), u[1])
-    print(S)
 
 
 def gen_functions_with_transmissibility(degree_distrb, T):
@@ -231,12 +215,7 @@ def phaseSpace(num_gens, num_nodes):
     binom = binomial_degree_distb(1000)
     all_psi_results = Psi(binom, initProb, num_gens, num_nodes, num_nodes, 0.2)
     all_psi_results_with_intervention = Psi(binom, initProb, num_gens, num_nodes, num_nodes, 0.2, 3, 0.1)
-    # Plotting some sample generations phase space:
-    for gen in [2, 6, 11, 18]:
-        inverted_s_m = all_psi_results[gen].T
-        plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
-        inverted_s_m = all_psi_results_with_intervention[gen].T
-        plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
+
     # np.savetxt('../pgf-nets-data/binom_allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
     # np.savetxt('../pgf-nets-data/binom_allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
     # np.savetxt('../pgf-nets-data/binom_allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
@@ -247,131 +226,13 @@ def phaseSpace(num_gens, num_nodes):
     # np.savetxt('../pgf-nets-data/binom_allPsiT8_18_reg.txt', all_psi_results[18], delimiter=',')
 
 
-    # TODO move plotting to analysis.py
     initProb = 1
     power_law = power_law_degree_distrb(400)
     all_psi_results = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8)
     all_psi_results_with_intervention = Psi(power_law, initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
-    # Plotting some sample generations phase space:
-    for gen in [2, 6, 11, 18]:
-        inverted_s_m = all_psi_results[gen].T
-        plot_psi(inverted_s_m, gen)
-        inverted_s_m = all_psi_results_with_intervention[gen].T
-        plot_psi(inverted_s_m, gen)
+    # TODO save all the results and return
 
     return all_psi_results
-
-def phaseSpace_from_data(fname, gen, plot_title):
-    psi_g = np.loadtxt(fname, delimiter=',')
-    inverted_s_m = psi_g.T
-    plot_psi(inverted_s_m, gen, plot_title)
-    # inverted_s_m = all_psi_results_with_intervention[gen].T
-    # plot_psi(inverted_s_m, gen, 'Binomial Degree Distribution')
-
-def plot_psi(psi_g, gen, title_label):
-    cmap = plt.cm.hot(np.linspace(1, 0, 100000))
-    cmap = m.colors.ListedColormap(cmap[:, :-1])
-
-    fig, ax = plt.subplots()
-    # ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=colors.PowerNorm(gamma=0.05, vmin=0, vmax=max(psi_g[0])), label='$gen='+str(gen)+'$')  # gen 5
-    ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm = plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000), label='$gen='+str(gen)+'$')  # gen 5
-    red_patch = mpatches.Patch(color='white', alpha=0.001, label='$gen='+str(gen)+'$')
-    plt.legend(handles=[red_patch], loc='upper right')
-    # ax.imshow(psi_g[:80][:, :150], cmap=cm)  # gen 5
-    ax.invert_yaxis()
-    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
-    plt.ylabel('$m$', fontsize=16)
-    plt.xlabel('$s$', fontsize=16)
-    # plt.legend(loc='upper right')
-    # plt.savefig(str(title_label)+str(gen)+'_phase_space.png')
-    plt.show()
-
-def plot_sims_vs_analytical_outbreak_sizes():
-    # TODO go in analysis.py
-    # Rough method for plotting simulations vs analytical probabilities of outbreak size.
-    # Modify as needed for existing files or re-generation of probability results
-
-    data = np.loadtxt('power_law_08_to04_gen3_size_distrb_per_gen_no_interv.txt', delimiter=',')
-    data_int = np.loadtxt('power_law_08_to04_gen3_size_distrb_per_gen_with_interv.txt', delimiter=',')
-    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
-    for gen in [2, 6, 11, 18]:
-        time_series = data[gen][2:200]
-        time_series_int = data_int[gen][2:200]
-        plt.plot(np.arange(2, 200), time_series, color=color_key[gen], alpha=0.95, ls='-', lw=.6)
-        plt.plot(np.arange(2, 200), time_series_int, color=color_key[gen], ls='--', alpha=0.95, lw=.6)
-    initProb = 1
-    # all_psi_results_with_intervention = Psi(initProb, num_gens, num_nodes, num_nodes, 0.8, 3, 0.4)
-    # np.savetxt('allPsiT8_2_int.txt', all_psi_results_with_intervention[2], delimiter=',')
-    # np.savetxt('allPsiT8_6_int.txt', all_psi_results_with_intervention[6], delimiter=',')
-    # np.savetxt('allPsiT8_11_int.txt', all_psi_results_with_intervention[11], delimiter=',')
-    # np.savetxt('allPsiT8_18_int.txt', all_psi_results_with_intervention[18], delimiter=',')
-    plt.semilogy()
-    plt.ylim(.0001, .1)
-    # plt.show()
-    for gen in [2, 6, 11, 18]:
-        psi_g_int = np.loadtxt('../pgf-nets-data/allPsiT8_'+str(gen)+'_int.txt', delimiter=',')
-        psi_g = np.loadtxt('../pgf-nets-data/allPsiT8_'+str(gen)+'.txt', delimiter=',')
-        inverted_s_m_int = psi_g_int.T
-        inverted_s_m = psi_g.T
-        ps_g_analytical_int = np.sum(inverted_s_m_int, axis=0)
-        ps_g_analytical = np.sum(inverted_s_m, axis=0)
-        ps_g_analytical_int = ps_g_analytical_int/np.sum(ps_g_analytical_int) #normalize
-        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
-        label='$g='+str(gen)+'$'
-        color = color_key[gen]
-        plt.plot(np.arange(2, 200), ps_g_analytical[2:200], label=label, color=color, linestyle='-', lw=.8)
-        plt.plot(np.arange(2, 200), ps_g_analytical_int[2:200], label=label+' intervention', color=color, linestyle='--', lw=.8)
-    plt.semilogy()
-    plt.ylim(.0001, .1)
-    plt.rcParams.update({'font.size': 12})
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$- number nodes infected at generation $g$', fontsize=12)
-    plt.ylabel('$p_s^g$', fontsize=12)
-    # plt.rcParams.update({'font.size': 12})
-    # plt.title('Effects of Intervention $T=0.2$ to $.1$ on Outbreak size distribution on Binomial Network', fontsize=10)
-    plt.show()
-
-def outbreak_size_curves(num_gens, num_nodes, T=0.8):
-    print('Analytical probability of total number infectives s at generations g with and without intervention')
-    # Method for s-slices of the total phase space
-    initProb = 1
-    power_law_degree_dist = power_law_degree_distrb(400)
-    # binomial_degree_dist = binomial_degree_distb(1000)
-    all_psi_results = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T)
-    # Specify intervention parameters for gen_intervene and T_intervene after initial T:
-    all_psi_results_with_intervention = Psi(power_law_degree_dist, initProb, num_gens, num_nodes, num_nodes, T, 3, 0.4)
-    color_key = {2: 'blue', 6: 'red', 11: 'orange', 18: 'black'}
-    for gen in [2, 6, 11, 18]:
-        inverted_s_m = all_psi_results[gen].T
-        ps_g_analytical = np.sum(inverted_s_m, axis=0)
-        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
-        label='$g='+str(gen)+'$'
-        color = color_key[gen]
-        plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='-')
-        # plt.title('No intervention')
-    # plt.show()
-    plt.semilogy()
-    plt.ylim(.0001, .1)
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$- number nodes infected at generation $g$')
-    plt.ylabel('$p_s^g$')
-    # plt.show()
-
-    for gen in [2, 6, 11, 18]:
-        inverted_s_m = all_psi_results_with_intervention[gen].T
-        ps_g_analytical = np.sum(inverted_s_m, axis=0)
-        ps_g_analytical = ps_g_analytical/np.sum(ps_g_analytical) #normalize
-        label='$g='+str(gen)+'$'
-        color = color_key[gen]
-        plt.plot(ps_g_analytical[2:], label=label, color=color, linestyle='--')
-        plt.title('No vs Yes intervention')
-    plt.xlabel('$s$- number nodes infected at generation $g$')
-    plt.ylabel('$p_s^g$')
-    plt.legend(loc='upper right')
-    plt.semilogy()
-    plt.ylim(.0001, .1)
-    plt.show()
-    print('done')
 
 
 # Convolution code below:
@@ -420,3 +281,20 @@ def convolve_dists(X, Y):
             new_prob = new_prob + X[l_pair[0]] * Y[l_pair[1]]
         new_dist[m] = new_prob
     return new_dist
+
+def generating_function_metrics(gen_func_g0, gen_func_g1):
+    # Placeholder function for computing outbreak size and other metrics on generating functions
+    G1_func = gen_func_g1
+    #
+    G1_func[1] = G1_func[1] - 1
+    #
+    fun = np.poly1d(np.flip(gen_func_g1))
+    roots = np.roots(fun)
+    u = roots[(roots > 0) & (roots < 1)]
+
+    # Outbreak size, What is going on here with the imaginary numbers
+    if len(u) == 0:
+        S = 1
+    else:
+        S = 1 - np.polyval(np.flip(gen_func_g0), u[1])
+    print(S)

@@ -2,9 +2,7 @@ import networkx as nx
 import numpy as np
 import math
 from src import event_driven
-import matplotlib.pyplot as plt
 import time
-import src.analysis
 
 # TODO have the pgf formalism file only contain "do" not visualize or analyze
 
