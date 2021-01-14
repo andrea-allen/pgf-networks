@@ -13,21 +13,23 @@ if __name__ == '__main__':
     # degree_distributions.power_law_degree_distrb()
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
     # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
-    SIR_sims.simulate_intervention_effects(power_law_dd, '../../sample/power_law_06_to04_gen4', 20000, 10000,
-                                                               0.6, 4, 0.4, .001)
-    pgf_formalism.phaseSpace(25, 400, power_law_dd, 0.8, True, [2, 4, 6, 10, 15, 20], '../../sample/phaseSpaceGen{0}')
+    # SIR_sims.simulate_intervention_effects(power_law_dd, '../../sample/power_law_06_to04_gen4', 20000, 10000,
+    #                                                            0.6, 4, 0.4, .001)
+    # pgf_formalism.phaseSpace(25, 400, power_law_dd, 0.6, True, [2, 4, 6, 10, 15, 20], '../../sample/phaseSpaceT6Gen{0}', 4, 0.4)
+    # pgf_formalism.phaseSpace(25, 400, power_law_dd, 0.6, True, [2, 4, 6, 10, 15, 20], '../../sample/phaseSpaceT6toT4Gen{0}', 4, 0.4)
     for g in [2, 4, 6, 10, 15, 20]:
-        analysis.phaseSpace_from_data('../../sample/phaseSpaceGen{0}.txt'.format(g), g, 'Power law DD phase space with T=0.8')
+        analysis.phaseSpace_from_data('../../sample/phaseSpaceT6toT4Gen{0}.txt'.format(g), g, 'Power law DD phase space with T=0.6')
+        analysis.phaseSpace_from_data('../../sample/phaseSpaceT6toT4Gen{0}_intv.txt'.format(g), g, 'Power law DD phase space with T=0.6 to T=0.4 at gen 4')
 
     # analysis.distribution_heatmap(100, 400, pgf_formalism.power_law_degree_distrb(400), 0.5)
-    analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', '../../pgf-nets-data/allPsiT8_{0}_int.txt', same_plot=True)
-    analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', None, same_plot=True)
-    analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', '../../pgf-nets-data/allPsiT8_{0}_int.txt', same_plot=False)
-    analysis.outbreak_size_curves([2, 6, 11, 18], 200, '../../pgf-nets-data/allPsiT8_{0}.txt', None, same_plot=False)
-    analysis.plot_sims_vs_analytical_multigens([2, 6, 11, 18], 200, '../../pgf-nets-data/power_law_08_to_06_gen3_size_distrb_per_gen_no_interv.txt',
-                                            '../../pgf-nets-data/allPsiT8_{0}.txt',
-                                               '../../pgf-nets-data/power_law_08_to_06_gen3_size_distrb_per_gen_with_interv.txt',
-                                               '../../pgf-nets-data/allPsiT8_{0}_int.txt',
+    analysis.outbreak_size_curves([2, 6, 10, 20], 200, '../../sample/phaseSpaceT6toT4Gen{0}.txt', '../../sample/phaseSpaceT6toT4Gen{0}_intv.txt', same_plot=True)
+    analysis.outbreak_size_curves([2, 6, 10, 20], 200, '../../sample/phaseSpaceT6toT4Gen{0}.txt', None, same_plot=True)
+    analysis.outbreak_size_curves([2, 6, 10, 20], 200, '../../sample/phaseSpaceT6toT4Gen{0}.txt', '../../sample/phaseSpaceT6toT4Gen{0}_intv.txt', same_plot=False)
+    analysis.outbreak_size_curves([2, 6, 10, 20], 200, '../../sample/phaseSpaceT6toT4Gen{0}.txt', None, same_plot=False)
+    analysis.plot_sims_vs_analytical_multigens([2, 6, 10, 20], 200, '../../sample/power_law_06_to04_gen4_size_distrb_per_gen_no_interv.txt',
+                                            '../../sample/phaseSpaceT6toT4Gen{0}.txt',
+                                               '../../sample/power_law_06_to04_gen4_size_distrb_per_gen_with_interv.txt',
+                                               '../../sample/phaseSpaceT6toT4Gen{0}_intv.txt',
                                                same_plot=True)
 
     analysis.plot_sims_vs_analytical_multigens([2, 6, 11, 18], 200, '../../pgf-nets-data/power_law_08_to_06_gen3_size_distrb_per_gen_no_interv.txt',
