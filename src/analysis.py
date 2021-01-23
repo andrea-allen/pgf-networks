@@ -4,6 +4,9 @@ import matplotlib as m
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 import src.pgf_formalism
+from src import degree_distributions
+from matplotlib.legend_handler import HandlerLine2D, HandlerTuple
+from matplotlib.lines import Line2D
 
 # TODO need to edit some of the captions and titles to be customizable/more descriptive
 
@@ -119,17 +122,28 @@ def distribution_heatmap(num_gens, s_lim, degree_distribution, transmissibility)
     plt.show()
 
 
-def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format, fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False):
+def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format,
+                                      fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
+                                      normalize_axis_x=False, plot_distribution_inset=False, grayscale=False):
     color_key = {}
     colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
+
+    style_key = {}
+    styles = [':', '-.', '--', '-']
 
     for i in range(len(list_of_gens)):
         gen = list_of_gens[i]
         color = np.random.choice(colors)
         colors.remove(color)
         color_key[gen] = color
+        style = styles[0]
+        styles.remove(style)
+        style_key[gen] = style
+
+
+    fig, ax1 = plt.subplots(figsize=(14,6))
 
     for gen in list_of_gens:
         fname_predict = fname_predict_format.format(gen)
@@ -140,59 +154,141 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         else:
             fname_sims_interv = None
             fname_predict_interv = None
-        plot_sims_vs_analytical_outbreak_sizes(gen, x_lim, fname_sims, fname_predict, fname_sims_interv,
-                                               fname_predict_interv, color_key, same_plot)
+        plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sims, fname_predict, fname_sims_interv,
+                                               fname_predict_interv, color_key, style_key, same_plot, normalize_axis_x, grayscale)
+
+    if plot_distribution_inset:
+        right, bottom, width, height = [0.6, 0.4, 0.25, 0.3]
+        ax2 = fig.add_axes([right, bottom, width, height])
+        power_law_dd = degree_distributions.power_law_degree_distrb(10000)
+        ax2.plot(power_law_dd[:15], color='black')
+        ax2.set_xlim(0,14)
+        ax2.set_xlabel('Degree $k$')
+        ax2.set_ylabel('Fraction of nodes')
+        # ax2.set_yticks(np.arange(0, 1, 0.25))
+        ax2.set_xticks([0, 1, 2, 3, 5, 10])
+        ax2.semilogy()
+
+    # TODO adjust for this particular figure
+    # ax1.text(0.0005, 0.001, '$g=2$')
+    # ax1.text(0.0019, 0.0008, '$g=5$')
+    # ax1.text(0.008, 0.0006, '$g=10$')
+    # ax1.text(0.009, 0.0005, '$g=20$')
+    intervention_color = '0.5'
+    regular_color = '0.1'
+    regular_patch = mpatches.Patch(color=regular_color,  label='No intervention')
+    intervention_patch = mpatches.Patch(color=intervention_color,  label='Intervention applied at gen 4')
+    # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.15, .85), frameon=False)
+
+    legend_elements = [Line2D([0], [0], color='black', lw=1, ls=style_key[2], label = 'Infections up to gen 2'),
+                       Line2D([0], [0], color='black', lw=1, ls=style_key[4], label='Infections up to gen 4'),
+                       Line2D([0], [0], color='black', lw=1, ls=style_key[10], label='Infections up to gen 10'),
+                       regular_patch, intervention_patch]
+    ax1.legend(handles=legend_elements, loc=(.1, .69), frameon=False)
+    plt.tight_layout()
     if same_plot:
         plt.show()
 
 
-def plot_sims_vs_analytical_outbreak_sizes(gen, x_lim, fname_sim_results, fname_predict, fname_sim_results_interv,
-                                           fname_predict_interv, color_key, same_plot=False):
+def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_results, fname_predict, fname_sim_results_interv,
+                                           fname_predict_interv, color_key, style_key, same_plot=False, normalize_axis_x=False, grayscale=False):
     # Rough method for plotting simulations vs analytical probabilities of outbreak size.
     # Modify as needed for existing files or re-generation of probability results
+
+    intervention_color = '0.5'
+    regular_color = '0.1'
+
+    ax1.set_xlim(0, x_lim)
+
     plot_intervention = False
     if fname_sim_results_interv is not None and fname_predict_interv is not None:
         plot_intervention = True
 
     data = np.loadtxt(fname_sim_results, delimiter=',')
-    time_series = data[gen][2:x_lim]
-    plt.plot(np.arange(2, x_lim), time_series, color=color_key[gen], alpha=0.95, ls='-', lw=.6)
+    time_series = data[gen][1:x_lim]
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim-2)/10))
+    if normalize_axis_x:
+        x_vals = x_vals/10000
+        x_ticks = x_ticks/10000
+        # ax1.set_xlim(2/10000, max(x_vals))
+        ax1.set_xlim(0, max(x_vals))
+    x_tick_labels = []
+    for x in x_ticks:
+        percent = np.round(x*100, 2)
+        str_percent = '${0}\\%$'.format(percent)
+        x_tick_labels.append(str_percent)
+    color = color_key[gen]
+    if grayscale:
+        color = regular_color
+    ax1.plot(x_vals, time_series, color=color,ls=style_key[gen], lw=1)
 
     if plot_intervention:
         data_int = np.loadtxt(fname_sim_results_interv, delimiter=',')
-        time_series_int = data_int[gen][2:x_lim]
-        plt.plot(np.arange(2, x_lim), time_series_int, color=color_key[gen], ls='--', alpha=0.95, lw=.6)
+        time_series_int = data_int[gen][1:x_lim]
+        x_vals = np.arange(1, x_lim)
+        if normalize_axis_x:
+            x_vals = x_vals / 10000
+        color = color_key[gen]
+        if grayscale:
+            color = intervention_color
+        ax1.plot(x_vals, time_series_int, color=color, ls=style_key[gen], lw=1)
 
-    plt.semilogy()
-    plt.ylim(.0001, .1)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    if normalize_axis_x:
+        plt.xticks(x_ticks, x_tick_labels)
+    # if normalize_axis_x:
+    #     plt.xlim(0, 1)
     # plt.show()
 
     psi_g = np.loadtxt(fname_predict, delimiter=',')
     inverted_s_m = psi_g.T
     ps_g_analytical = np.sum(inverted_s_m, axis=0)
     ps_g_analytical = ps_g_analytical / np.sum(ps_g_analytical)  # normalize
-    label = '$g=' + str(gen) + '$'
+    x_vals = np.arange(1, x_lim)
+    if normalize_axis_x:
+        x_vals = x_vals / 10000
+        #TODO fix labeling issue
+    label = 'Infections up to gen {0}'.format(gen)
     color = color_key[gen]
-    plt.plot(np.arange(2, x_lim), ps_g_analytical[2:x_lim], label=label, color=color, linestyle='-', lw=.8)
+    if grayscale:
+        color = regular_color
+    ax1.plot(x_vals, ps_g_analytical[1:x_lim], label=label, color=color, ls=style_key[gen], lw=1)
 
     if plot_intervention:
         psi_g_int = np.loadtxt(fname_predict_interv, delimiter=',')
         inverted_s_m_int = psi_g_int.T
         ps_g_analytical_int = np.sum(inverted_s_m_int, axis=0)
         ps_g_analytical_int = ps_g_analytical_int / np.sum(ps_g_analytical_int)  # normalize
-        label = '$g=' + str(gen) + '$'
+        x_vals = np.arange(1, x_lim)
+        if normalize_axis_x:
+            x_vals = x_vals / 10000
+        # label = '$g=' + str(gen) + '$'
         color = color_key[gen]
-        plt.plot(np.arange(2, x_lim), ps_g_analytical_int[2:x_lim], label=label + ' intervention', color=color,
-                 linestyle='--', lw=.8)
+        if grayscale:
+            color = intervention_color
+        ax1.plot(x_vals, ps_g_analytical_int[1:x_lim], color=color,
+                 ls=style_key[gen], lw=1)
 
-    plt.semilogy()
-    plt.ylim(.0001, .1)
     plt.rcParams.update({'font.size': 12})
-    plt.legend(loc='upper right')
-    plt.xlabel('$s$- number nodes infected at generation $g$', fontsize=12)
-    plt.ylabel('$p_s^g$', fontsize=12)
+    # ax1.add_artist(plt.legend(loc=(.002, .005)))
+    # ax1.add_artist(plt.legend(loc=(.15, .69), frameon=False, facecolor='white', framealpha=1))
+    # plt.legend(loc=(.15, .69), frameon=False, facecolor='white', framealpha=1)
+    # TODO remove boxes around legends
+    # regular_patch = mpatches.Patch(color=regular_color,  label='No intervention')
+    # intervention_patch = mpatches.Patch(color=intervention_color,  label='Intervention applied at gen 4')
+    # # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.15, .85), frameon=False)
+    #
+    # legend_elements = [Line2D([0], [0], color='black', lw=1, ls=style_key[gen], label=label),
+    #                    regular_patch, intervention_patch]
+    # ax1.legend(handles=legend_elements, loc=(.15, .69))
+    # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.1, .85))
+    # ax1.add_artist(extra_legend)
+    ax1.set_xlabel('Proportion of population cumulatively infected', fontsize=14)
+    ax1.set_ylabel('Probability', fontsize=14)
     # plt.rcParams.update({'font.size': 12})
-    plt.title('Effects of Intervention', fontsize=10)
+    # plt.title('Effects of Intervention', fontsize=10)
     if not same_plot:
         plt.show()
 
