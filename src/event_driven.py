@@ -239,7 +239,8 @@ def draw_specific_event(max_rate, event_list):
     while not accepted:
         random_idx = np.random.randint(0, L)
         random_event = event_list[random_idx]
-        accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2
+        # TODO maybe instead of doing it this way, do another partition interval here based on every event's personal rate
+        accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2 TODO need to assign max rate when intervention happens
         random_draw = random.uniform(0, 1)
         if random_draw < accept_rate:
             accepted = True

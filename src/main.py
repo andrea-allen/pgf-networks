@@ -3,18 +3,41 @@ from src import pgf_formalism
 from src import SIR_sims
 from src import analysis
 from src import degree_distributions
+import numpy as np
+import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
+    rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
     print('pgfs yay!')
 
     # Sample usage:
     # degree_distributions.power_law_degree_distrb()
-    power_law_dd = degree_distributions.power_law_degree_distrb(400)
+    power_law_dd = degree_distributions.power_law_degree_distrb(400, 2, 1000)
+    print('Mu 1000, Alpha 2 Threshold', degree_distributions.compute_T_threshold_powerlaw(power_law_dd, 1000))
+    plt.plot(power_law_dd[:15])
+    plt.semilogy()
+    # plt.show()
+    print('Mu 1000, Alpha 2 mean', degree_distributions.mean_degree(power_law_dd))
+
+    power_law_dd = degree_distributions.power_law_degree_distrb(400, 2, 5)
+    print('Mu 5 Alpha 2 Threshold', degree_distributions.compute_T_threshold_powerlaw(power_law_dd, 5))
+    plt.plot(power_law_dd[:15])
+    plt.semilogy()
+
+    power_law_dd = degree_distributions.power_law_degree_distrb(400, 1.1, 10)
+    print('Mu 10 Alpha 1.1 Mean degree', degree_distributions.mean_degree(power_law_dd))
+    print('Mu 10 Alpha 1.1 threshold', degree_distributions.compute_T_threshold_powerlaw(power_law_dd, 10))
+    plt.plot(power_law_dd[:15])
+
+    plt.show()
     #Note that power law simulations end up still with not many huge outbreaks even with networks 10x the size, is this expected result
     # TODO might need to have predictions go out further? ask team next week
-    binomial_dd = degree_distributions.binomial_degree_distb(10000)
+    print(degree_distributions.mean_degree(power_law_dd))
+    binomial_dd = degree_distributions.binomial_degree_distb(400)
+    print(degree_distributions.mean_degree(binomial_dd))
+    print('z1, should be same as mean', pgf_formalism.z1_of(binomial_dd))
+    print('Threshold ', degree_distributions.compute_T_threshold_binom(binomial_dd))
 
     # # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
     # SIR_sims.simulate_intervention_effects(power_law_dd, '../../sample/4fig_power_law_06_to04_gen4', 75000, 10000,
@@ -22,11 +45,11 @@ if __name__ == '__main__':
 
     # Theoretical predictions curves match better with the simulation data on the sims with 10k nodes as opposed
     # to 1k nodes. Probably because of the finite size effects. curves look better than they did in our paper, for example
-    analysis.plot_sims_vs_analytical_multigens([2, 4, 10], 230, '../../sample/4fig_power_law_06_to04_gen4_size_distrb_per_gen_no_interv.txt',
+    analysis.plot_sims_vs_analytical_multigens([4, 6, 15], 230, '../../sample/4fig_power_law_06_to04_gen4_size_distrb_per_gen_no_interv.txt',
                                             '../../sample/phaseSpaceT6toT4Gen{0}.txt',
                                                '../../sample/4fig_power_law_06_to04_gen4_size_distrb_per_gen_with_interv.txt',
                                                '../../sample/phaseSpaceT6toT4Gen{0}_intv.txt',
-                                               same_plot=True, normalize_axis_x=True, plot_distribution_inset=True, grayscale=True)
+                                               same_plot=True, normalize_axis_x=True, plot_distribution_inset=False, grayscale=False)
 
 
     # pgf_formalism.phaseSpace(25, 400, power_law_dd, 0.6, True, [2, 4, 6, 10, 15, 20], '../../sample/phaseSpaceT6Gen{0}', 4, 0.4)
@@ -76,14 +99,3 @@ if __name__ == '__main__':
     # analysis.phaseSpace_from_data('../../pgf-nets-data/allPsiT8_6_int.txt', 6, 'Gen 6')
     # analysis.phaseSpace_from_data('../../pgf-nets-data/allPsiT8_18.txt', 18, 'Gen 18')
     # analysis.phaseSpace_from_data('../../pgf-nets-data/allPsiT8_18_int.txt', 18, 'Gen 18')
-
-
-    # TODO add local tests for pgf_formalism to compute correct values, and ensure the saving and reading locally works
-
-# Steps to add a new type of simulation:
-# Theory: Create the appropriate functions in pgf_formalism
-# Empirical: Create new structure for simulations in SIR_sims
-# Create necessary features in event_driven.py
-# Create visualization method in analysis.py
-# From main.py, run new_sim_function on new functions in SIR_sims to get data, run on pgf_formalism to get theoretical
-# prediction, then run new methods in analysis to visualize.

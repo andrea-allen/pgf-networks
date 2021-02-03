@@ -175,16 +175,20 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     # ax1.text(0.008, 0.0006, '$g=10$')
     # ax1.text(0.009, 0.0005, '$g=20$')
     intervention_color = '0.5'
+    intervention_color = 'cornflowerblue'
     regular_color = '0.1'
+    regular_color = 'navy'
     regular_patch = mpatches.Patch(color=regular_color,  label='No intervention')
     intervention_patch = mpatches.Patch(color=intervention_color,  label='Intervention applied at gen 4')
     # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.15, .85), frameon=False)
 
-    legend_elements = [Line2D([0], [0], color='black', lw=1, ls=style_key[2], label = 'Infections up to gen 2'),
-                       Line2D([0], [0], color='black', lw=1, ls=style_key[4], label='Infections up to gen 4'),
-                       Line2D([0], [0], color='black', lw=1, ls=style_key[10], label='Infections up to gen 10'),
-                       regular_patch, intervention_patch]
-    ax1.legend(handles=legend_elements, loc=(.1, .69), frameon=False)
+    # TODO these legend elements are very particular to the static figure we made, change as needed
+    if grayscale:
+        legend_elements = [Line2D([0], [0], color='navy', lw=1, ls=style_key[2], label = 'Infections up to gen 2'),
+                           Line2D([0], [0], color='navy', lw=1, ls=style_key[4], label='Infections up to gen 4'),
+                           Line2D([0], [0], color='navy', lw=1, ls=style_key[10], label='Infections up to gen 10'),
+                           regular_patch, intervention_patch]
+        ax1.legend(handles=legend_elements, loc=(.1, .69), frameon=False)
     plt.tight_layout()
     if same_plot:
         plt.show()
@@ -196,7 +200,9 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     # Modify as needed for existing files or re-generation of probability results
 
     intervention_color = '0.5'
+    intervention_color = 'cornflowerblue'
     regular_color = '0.1'
+    regular_color = 'navy'
 
     ax1.set_xlim(0, x_lim)
 
@@ -230,9 +236,11 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         if normalize_axis_x:
             x_vals = x_vals / 10000
         color = color_key[gen]
+        alpha = 0.6
         if grayscale:
             color = intervention_color
-        ax1.plot(x_vals, time_series_int, color=color, ls=style_key[gen], lw=1)
+            alpha = 1
+        ax1.plot(x_vals, time_series_int, color=color, ls=style_key[gen], lw=1, alpha=alpha)
 
     ax1.semilogy()
     ax1.set_ylim(.00005, .1)
@@ -266,10 +274,12 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
             x_vals = x_vals / 10000
         # label = '$g=' + str(gen) + '$'
         color = color_key[gen]
+        alpha = 0.6
         if grayscale:
             color = intervention_color
+            alpha = 1
         ax1.plot(x_vals, ps_g_analytical_int[1:x_lim], color=color,
-                 ls=style_key[gen], lw=1)
+                 ls=style_key[gen], lw=1, alpha=alpha)
 
     plt.rcParams.update({'font.size': 12})
     # ax1.add_artist(plt.legend(loc=(.002, .005)))
