@@ -40,6 +40,7 @@ def phase_space(g_0, g_1, g=10):
 def gen_functions_with_transmissibility(degree_distrb, T):
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
     # Given transmissibility T
+    # TODO this is what will change depending on the intervention
     maxk = len(degree_distrb)
     p_k = degree_distrb
     p_LK = np.zeros((400, 400))

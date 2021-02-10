@@ -5,16 +5,27 @@ from src import analysis
 from src import degree_distributions
 import numpy as np
 import matplotlib.pyplot as plt
+from src import temporal_wip
+import time
 
 if __name__ == '__main__':
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
     print('pgfs yay!')
 
+    # # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
+    power_law_dd = degree_distributions.power_law_degree_distrb()
+    mytime = time.time()
+    # SIR_sims.simulate_intervention_effects(power_law_dd, '../../testing/4fig_power_law_06_to04_gen4', 500, 10000,
+    #                                                            0.6, 4, 0.4, .001)
+    print('Total, ', time.time()-mytime)
+
+    # Playing with interventions:
+    temporal_wip.simulate_two_layers()
+
     # Sample usage:
-    # degree_distributions.power_law_degree_distrb()
     power_law_dd = degree_distributions.power_law_degree_distrb(400, 2, 1000)
-    print('Mu 1000, Alpha 2 Threshold', degree_distributions.compute_T_threshold_powerlaw(power_law_dd, 1000))
+    # print('Mu 1000, Alpha 2 Threshold', degree_distributions.compute_T_threshold_powerlaw(power_law_dd, 1000))
     plt.plot(power_law_dd[:15])
     plt.semilogy()
     # plt.show()
@@ -40,8 +51,8 @@ if __name__ == '__main__':
     print('Threshold ', degree_distributions.compute_T_threshold_binom(binomial_dd))
 
     # # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
-    # SIR_sims.simulate_intervention_effects(power_law_dd, '../../sample/4fig_power_law_06_to04_gen4', 75000, 10000,
-    #                                                            0.6, 4, 0.4, .001)
+    SIR_sims.simulate_intervention_effects(power_law_dd, '../../testing/4fig_power_law_06_to04_gen4', 1000, 10000,
+                                                               0.6, 4, 0.4, .001)
 
     # Theoretical predictions curves match better with the simulation data on the sims with 10k nodes as opposed
     # to 1k nodes. Probably because of the finite size effects. curves look better than they did in our paper, for example

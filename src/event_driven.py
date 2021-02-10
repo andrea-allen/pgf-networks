@@ -45,7 +45,16 @@ class Edge:
         self.i.display_info()
         self.j.display_info()
 
+    def equals(self, other_edge):
+        # Imperative to use Node class equality here
+        if self.i.equals(other_edge.i) and self.j.equals(other_edge.j):
+            return True
+        else:
+            return False
 
+
+# TODO rename some of the confusing parameters
+# TODO rename everything called Lambda to be sum of rates, and actual lambda should be capital Beta, small lambdas? for particular event rates
 class Simulation:
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A):
         self.sim_time = total_sim_time
@@ -67,7 +76,13 @@ class Simulation:
         self.intervened = False
         self.total_num_timesteps = 0
         self.max_beta = 0
+        self.sum_of_rates_vector = []
+        self.tau_values = []
+        self.time_series = [0]
+        self.real_time_srs_infc = []
+        self.real_time_srs_rec = []
 
+    # TODO make this a proper init constructor instead of a function
     def intialize(self):
         start_time = time.time()
         self.max_beta = np.max(self.Lambda)
@@ -88,13 +103,21 @@ class Simulation:
                 self.V_IS.append(edge_ij)
         # print('Total time to initialize is ', time.time() - start_time)
 
-    def run_sim(self, intervention_gen=-1, beta_interv=0.0, visualize=False):
+    # Eventually make classes that extend this base class that can have interventions applied on top of them?
+    # def configure_interventions(self, ):
+    def run_sim(self, intervention_gen=-1, beta_interv=0.0, time_intervention = -1, modified_network = None, visualize=False):
         self.intialize()
         while self.current_sim_time < self.sim_time:
             # intervention if applicable:
-            if (not self.intervened) & (intervention_gen > 0):
+            if (not self.intervened) and (intervention_gen > 0):
                 if self.highest_gen >= intervention_gen:
                     self.intervene(beta_interv)
+                    self.intervened = True
+            # time-dependent intervention with modified network TODO will need to make this an option for generational modification too
+            # todo should it be for absolute time, or time steps?
+            if (not self.intervened) and time_intervention > 0:
+                if self.current_sim_time > time_intervention:
+                    self.network_modify(modified_network)
                     self.intervened = True
             # Run one step
             self.single_step()
@@ -108,6 +131,11 @@ class Simulation:
             self.visualize_network()
         sum_of_rates = determine_draw_tau(self.V_IS, self.V_I, self.beta, self.gamma)
         tau = draw_tau(sum_of_rates)
+        self.sum_of_rates_vector.append(sum_of_rates)
+        self.tau_values.append(tau)
+        self.time_series.append(self.time_series[-1]+tau)
+        self.real_time_srs_infc.append(len(self.V_I))
+        self.real_time_srs_rec.append(len(self.V_R))
         event_class = draw_event_class(self.V_IS, self.V_I)
         if event_class == 1:
             infection_event = draw_specific_event(self.max_beta, self.V_IS)
@@ -132,13 +160,15 @@ class Simulation:
         self.current_sim_time += tau
 
     def add_IS_edges(self, infected_node):
+        # todo need to figure out what to do if that node not in the network anymore
         for j in range(0, len(self.A[infected_node.label])):
             if self.A[infected_node.label][j] == 1:
                 candidate_node = Node(j, -1, 0, self.Gamma[j])
                 neighbor_node = self.existing_node(candidate_node)
                 if neighbor_node.state == 0:
                     edge_ij = Edge(infected_node, neighbor_node, self.Lambda[infected_node.label][j])
-                    self.V_IS.append(edge_ij)
+                    if not self.edge_list_contains(edge_ij):
+                        self.V_IS.append(edge_ij)
 
     def existing_node(self, candidate_node):
         for node in self.nodes:
@@ -153,6 +183,22 @@ class Simulation:
             if (edge.i.state == 1) and (edge.j.state == 0):
                 updated_V_IS.append(edge)
         self.V_IS = updated_V_IS
+
+    def prune_IS_edges(self):
+        for edge in self.V_IS:
+            try:
+                edge_exists_in_network = (self.A[edge.i.label][edge.j.label] == 1)
+                if not edge_exists_in_network:
+                    self.V_IS.remove(edge)
+            except IndexError:
+                self.V_IS.remove(edge) # This happens if the new network no longer contains that node, can remove them
+
+
+    def edge_list_contains(self, edge):
+        for e in self.V_IS:
+            if e.equals(edge):
+                return True
+        return False
 
     def visualize_network(self):
         val_map = {}
@@ -172,6 +218,8 @@ class Simulation:
         return 0
 
     def tabulate_observables(self, max_gens):
+        # todo would be good to also have a "real time" vector that gives the option to plot that version of a timeseries
+        # do this next in order to compare time intervention vs not, time steps and real time? just real time probably
         gens = max_gens
         total_infected_time_srs = np.zeros(gens)
         s = 1
@@ -188,6 +236,37 @@ class Simulation:
                 s = s_max
                 m = 0
         return total_infected_time_srs
+
+    def random_vacc(self, proportion, beta_redux, reduce_current_edges = True):
+        N = len(self.A[0])
+        frac_of_network = proportion*N
+        how_many = 1
+        if frac_of_network > 1:
+            how_many = int(np.round(frac_of_network, 0))
+        random_set = np.random.randint(0, N, how_many)
+        for node in random_set:
+            self.Lambda[node] = np.full(N, beta_redux)
+            # TODO column as well?
+            self.Lambda[:, node] = np.full(N, beta_redux).T
+        # change event rate for each existing edge pair
+        if reduce_current_edges:
+            for edge in self.V_IS:
+                edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
+        print(f'Randomly vaccinating {proportion} percent of nodes from beta value {self.beta} to {beta_redux}')
+
+    def network_modify(self, new_network_matrix):
+        # todo need to also modify lambda and gamma here
+        self.A = new_network_matrix
+        N = len(self.A[0])
+        new_Lambda = np.full((N, N), self.beta)
+        self.Lambda = new_Lambda
+        new_Gamma = np.full(N, self.gamma)
+        self.Gamma = new_Gamma
+        self.prune_IS_edges()
+        for node in self.V_I:
+            self.add_IS_edges(node)
+        self.update_IS_edges()
+        print('Modifying network')
 
     def intervene(self, beta_interv, reduce_current_edges=False):
         # Simplest intervention is just to re-assign Lambda with uniform the new T value
@@ -211,6 +290,7 @@ class Simulation:
             node.display_info()
 
 def draw_tau(sum_of_rates):
+    # print(sum_of_rates)
     tau = np.random.exponential(1/sum_of_rates)
     return tau
 
@@ -240,6 +320,7 @@ def draw_specific_event(max_rate, event_list):
         random_idx = np.random.randint(0, L)
         random_event = event_list[random_idx]
         # TODO maybe instead of doing it this way, do another partition interval here based on every event's personal rate
+        # TODO just make sure the math of this works out, compare to paper on gillespie prob
         accept_rate = random_event.event_rate / max_rate #ex. Edge.event_rate = .2 TODO need to assign max rate when intervention happens
         random_draw = random.uniform(0, 1)
         if random_draw < accept_rate:
