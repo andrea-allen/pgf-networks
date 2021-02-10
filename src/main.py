@@ -16,9 +16,16 @@ if __name__ == '__main__':
     # # Run two sets of ensembles: one base level with no intervention, one with intervention introduced by specified params
     power_law_dd = degree_distributions.power_law_degree_distrb()
     mytime = time.time()
-    # SIR_sims.simulate_intervention_effects(power_law_dd, '../../testing/4fig_power_law_06_to04_gen4', 500, 10000,
+    # SIR_sims.simulate_intervention_effects(power_law_dd, '../../testing/4fig_power_law_06_to04_gen4', 10000, 1000,
     #                                                            0.6, 4, 0.4, .001)
     print('Total, ', time.time()-mytime)
+    analysis.graph_infection_size_distribution_by_gen([2, 6, 15], 100, '../../testing/', '4fig_power_law_06_to04_gen4_size_distrb_per_gen_no_interv.txt',
+                                                      '../../testing/', '4fig_power_law_06_to04_gen4_size_distrb_per_gen_with_interv.txt')
+    analysis.plot_sims_vs_analytical_multigens([4, 6, 15], 230, '../../testing/4fig_power_law_06_to04_gen4_size_distrb_per_gen_no_interv.txt',
+                                            '../../sample/phaseSpaceT6toT4Gen{0}.txt',
+                                               '../../testing/4fig_power_law_06_to04_gen4_size_distrb_per_gen_with_interv.txt',
+                                               '../../sample/phaseSpaceT6toT4Gen{0}_intv.txt',
+                                               same_plot=True, normalize_axis_x=True, plot_distribution_inset=False, grayscale=False)
 
     # Playing with interventions:
     temporal_wip.simulate_two_layers()

@@ -84,6 +84,7 @@ def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1
         print('current sim ' + str(current))
         print("--- %s seconds to run simulation---" % (time.time() - start_time))
     results = sim.tabulate_observables(100)
+    # TODO can add a second set of results here that count for the time series of infectives
     return results
 
 

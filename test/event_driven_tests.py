@@ -72,7 +72,7 @@ class TestSimulation(unittest.TestCase):
         adjacency_matrix = np.array(nx.adjacency_matrix(self.graph).todense())
         simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
                                 adjacency_matrix)
-        simulation.intialize()
+        simulation.initialize()
         print('before single step')
         simulation.display_info()
         self.assertGreaterEqual(len(simulation.V_IS), 1)
@@ -98,27 +98,26 @@ class TestSimulation(unittest.TestCase):
 
     def test_intervention(self):
         adjacency_matrix = np.array(nx.adjacency_matrix(self.graph).todense())
-        simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix)
-        simulation.intialize()
+        new_beta = 0.8
+        simulation = UniversalInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix, 2, new_beta)
+        simulation.initialize()
         starting_IS_list_length = len(simulation.V_IS)
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
-        new_beta = 0.8
-        simulation.intervene(new_beta, reduce_current_edges=True)
+        simulation.intervene(reduce_current_edges=True)
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, new_beta)
 
-        simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
-                                adjacency_matrix)
-        simulation.intialize()
+        simulation = UniversalInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
+                                adjacency_matrix, 2, new_beta)
+        simulation.initialize()
         starting_IS_list_length = len(simulation.V_IS)
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
-        new_beta = 0.8
-        simulation.intervene(new_beta, reduce_current_edges=False)
+        simulation.intervene(reduce_current_edges=False)
         self.assertGreaterEqual(starting_IS_list_length, 1)
         self.assertEqual(len(simulation.V_I), 1)
         self.assertEqual(simulation.V_IS[0].event_rate, self.beta)
@@ -126,17 +125,22 @@ class TestSimulation(unittest.TestCase):
     def test_network_change_intervention(self):
         # Test that at the intervention point, the network switches over
         # May require adding a parameter so that the model can intervene in absolute time vs generational time
+        # Setup
         adjacency_matrix_layer1 = np.array(nx.adjacency_matrix(self.graph).todense())
-
-        simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix_layer1)
-        simulation.intialize()
+        adjacency_matrix_layer2 = np.array(nx.adjacency_matrix(self.graph).todense())  # TBD change something about this
+        simulation = AbsoluteTimeNetworkSwitchSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix_layer1, None, 2.0)
+        simulation.initialize()
         patient_zero_idx = simulation.V_I[0].label
+        adjacency_matrix_layer2[patient_zero_idx][patient_zero_idx + 1] = 0
+        simulation.A_modified = adjacency_matrix_layer2
         # Assert sample pair of nodes is connected, then will remove those for the intervention stage
         self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx+1], 1)
         self.assertEqual(len(simulation.V_IS), 9)
-        adjacency_matrix_layer2 = np.array(nx.adjacency_matrix(self.graph).todense())  # TBD change something about this
-        adjacency_matrix_layer2[patient_zero_idx][patient_zero_idx+1] = 0
-        simulation.network_modify(adjacency_matrix_layer2)
+
+        # Act
+        simulation.intervene()
+
+        # Assert
         self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx+1], 0)
         self.assertEqual(len(simulation.V_IS), 8)
 
@@ -144,14 +148,19 @@ class TestSimulation(unittest.TestCase):
 
     def test_random_vacc_scheme(self):
         # Note this test hinges on the small, complete graph set up in the set up of this test, otherwise counts will fail
+        # Setup
         adjacency_matrix = np.array(nx.adjacency_matrix(self.graph).todense())
-        simulation = Simulation(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix)
-        simulation.intialize()
+        simulation = RandomInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix, 2, .5, .15)
+        simulation.initialize()
         # Ensure original values are all same beta value
         for edge in simulation.V_IS:
             self.assertEqual(edge.event_rate, self.beta)
+
+        # Act
         # Then apply random vaccination
-        simulation.random_vacc(.15, 0.5, True) #15 percent should round up to two nodes, for a 10-node network
+        simulation.intervene(reduce_current_edges=True) #15 percent should round up to two nodes, for a 10-node network
+
+        # Assert
         # Observe status of the edges after random vaccination
         recorded_beta_values = []
         for edge in simulation.V_IS:
