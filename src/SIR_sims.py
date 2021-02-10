@@ -78,8 +78,13 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
 def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1, beta_interv=-1.0):
     start_time = time.time()
     # With intervention into the simulation code
-    sim = event_driven.Simulation(1000000, G, beta, gamma, Lambda, Gamma, pos, A)
-    sim.run_sim(intervention_gen, beta_interv)
+    sim = None
+    # If intervention is going to be applied then create a UniversalIntervention class
+    if intervention_gen > 0:
+        sim = event_driven.UniversalInterventionSim(1000000, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv)
+    else:
+        sim = event_driven.Simulation(1000000, G, beta, gamma, Lambda, Gamma, pos, A)
+    sim.run_sim()
     if current % 50 == 0:
         print('current sim ' + str(current))
         print("--- %s seconds to run simulation---" % (time.time() - start_time))
