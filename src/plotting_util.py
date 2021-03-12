@@ -5,7 +5,6 @@ import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 import src.pgf_formalism
 from src import degree_distributions
-from matplotlib.legend_handler import HandlerLine2D, HandlerTuple
 from matplotlib.lines import Line2D
 
 # TODO need to edit some of the captions and titles to be customizable/more descriptive
@@ -46,7 +45,7 @@ def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filepath, file
     plt.ylim(.0001, .1)
     # plt.title('Created from saved data')
     # plt.savefig('p_s_g_distribution_intervention.png')
-    plt.show()
+    # plt.show()
 
     # TODO add an inset plot option with total number of infections?
 
@@ -56,14 +55,17 @@ def plot_psi(psi_g, gen, title_label):
     cmap = m.colors.ListedColormap(cmap[:, :-1])
 
     fig, ax = plt.subplots()
-    ax.imshow(psi_g[:60][:, :100], cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000),
+    ax.imshow(psi_g[:50][:, :80], cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000),
               label='$gen=' + str(gen) + '$')  # gen 5
     red_patch = mpatches.Patch(color='white', alpha=0.001, label='$gen=' + str(gen) + '$')
-    plt.legend(handles=[red_patch], loc='upper right')
+    # plt.legend(handles=[red_patch], loc='upper right')
     ax.invert_yaxis()
-    plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
-    plt.ylabel('$m$', fontsize=16)
-    plt.xlabel('$s$', fontsize=16)
+    # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
+    plt.ylabel('$m$', fontsize=20)
+    plt.xlabel('$s$', fontsize=20)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.tight_layout()
     plt.show()
 
 
@@ -121,6 +123,7 @@ def distribution_heatmap(num_gens, s_lim, degree_distribution, transmissibility)
     plt.xticks(np.arange(0, num_gens, 10), np.arange(0, num_gens, 10))
     plt.show()
 
+# todo make this so you can add things to a plot, one method in order to plot analytical v sims or just sims
 
 def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format,
                                       fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
@@ -158,13 +161,13 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
                                                fname_predict_interv, color_key, style_key, same_plot, normalize_axis_x, grayscale)
 
     if plot_distribution_inset:
-        right, bottom, width, height = [0.6, 0.4, 0.25, 0.3]
+        right, bottom, width, height = [0.6, 0.5, 0.25, 0.3]
         ax2 = fig.add_axes([right, bottom, width, height])
         power_law_dd = degree_distributions.power_law_degree_distrb(10000)
         ax2.plot(power_law_dd[:15], color='black')
         ax2.set_xlim(0,14)
-        ax2.set_xlabel('Degree $k$')
-        ax2.set_ylabel('Fraction of nodes')
+        ax2.set_xlabel('Degree $k$', fontsize=20)
+        ax2.set_ylabel('Fraction of nodes', fontsize=20)
         # ax2.set_yticks(np.arange(0, 1, 0.25))
         ax2.set_xticks([0, 1, 2, 3, 5, 10])
         ax2.semilogy()
@@ -188,8 +191,9 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
                            Line2D([0], [0], color='navy', lw=1, ls=style_key[4], label='Infections up to gen 4'),
                            Line2D([0], [0], color='navy', lw=1, ls=style_key[10], label='Infections up to gen 10'),
                            regular_patch, intervention_patch]
-        ax1.legend(handles=legend_elements, loc=(.1, .69), frameon=False)
+        ax1.legend(handles=legend_elements, loc=(.1, .59), frameon=False, fontsize=18)
     plt.tight_layout()
+    plt.xticks(fontsize=18)
     if same_plot:
         plt.show()
 
@@ -295,8 +299,8 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     # ax1.legend(handles=legend_elements, loc=(.15, .69))
     # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.1, .85))
     # ax1.add_artist(extra_legend)
-    ax1.set_xlabel('Proportion of population cumulatively infected', fontsize=14)
-    ax1.set_ylabel('Probability', fontsize=14)
+    ax1.set_xlabel('Proportion of population cumulatively infected', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
     # plt.rcParams.update({'font.size': 12})
     # plt.title('Effects of Intervention', fontsize=10)
     if not same_plot:
