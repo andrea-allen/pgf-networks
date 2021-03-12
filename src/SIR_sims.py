@@ -4,7 +4,7 @@ import math
 from src import event_driven
 import time
 
-# TODO deal with display and pos, which won't work or be solved for large networks
+# Phasing out this file to make way for ensemble.py, which will call the external epintervene package
 
 def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                                                num_sims=10000, num_nodes=1000, init_T=0.8,

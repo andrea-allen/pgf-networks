@@ -9,10 +9,10 @@ from matplotlib.lines import Line2D
 
 # TODO need to edit some of the captions and titles to be customizable/more descriptive
 
-def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filepath, filename, intervention_filepath=None,
+def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename,
                                              intervention_filename=None):
     intervention_comparison_true = False
-    if intervention_filepath is not None:
+    if intervention_filename is not None:
         intervention_comparison_true = True
     color_key = {}
     colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
@@ -24,14 +24,14 @@ def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filepath, file
         colors.remove(color)
         color_key[gen] = color
 
-    data_no_intervention = np.loadtxt(filepath + filename, delimiter=',')
+    data_no_intervention = np.loadtxt(filename, delimiter=',')
 
     for gen in list_of_gens:
         time_series = data_no_intervention[gen][2:x_lim]
         plt.plot(time_series, label='$g=$' + str(gen), color=color_key[gen], alpha=0.5, lw=1)
 
     if intervention_comparison_true:
-        data_intervention = np.loadtxt(intervention_filepath + intervention_filename, delimiter=',')
+        data_intervention = np.loadtxt(intervention_filename, delimiter=',')
         for gen in list_of_gens:
             time_series_int = data_intervention[gen][2:x_lim]
             plt.plot(time_series_int, color=color_key[gen], alpha=0.75, ls='--', lw=1)
