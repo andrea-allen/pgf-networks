@@ -81,7 +81,9 @@ def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1
     sim = None
     # If intervention is going to be applied then create a UniversalIntervention class
     if intervention_gen > 0:
-        sim = event_driven.UniversalInterventionSim(1000000, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv)
+        # sim = event_driven.UniversalInterventionSim(1000000, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv)
+        # Example of random vaccination:
+        sim = event_driven.RandomInterventionSim(1000000, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv, 0.4)
     else:
         sim = event_driven.Simulation(1000000, G, beta, gamma, Lambda, Gamma, pos, A)
     sim.run_sim()
