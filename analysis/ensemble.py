@@ -9,6 +9,8 @@ import time
 def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                   num_sims=10000, num_nodes=1000, init_T=0.8,
                                   gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
+                                  intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
+                                  intervention_type="none",
                                   run_regular=True):
     # Runs both regular and intervention ensembles with the same starting parameters
 
@@ -16,7 +18,11 @@ def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
     if run_regular:
         start_time = time.time()
         size_distrb_per_gen_no_intervention = simulate_ensemble(degree_distrb, num_sims, num_nodes,
-                                                                -1, 0.0, init_T, recover_rate, prop_reduced)
+                                                                -1, 0.0, init_T, recover_rate, 0.0,
+                                                                intervention_gen_list=None, beta_redux_list=None,
+                                                                prop_reduced_list=None,
+                                                                intervention_type="none"
+                                                                )
         print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
               ' number of simulations.')
         np.savetxt(base_file_name + '_no_intervene.txt',
@@ -27,7 +33,11 @@ def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
     start_time = time.time()
     size_distrb_per_gen_intervention = simulate_ensemble(degree_distrb, num_sims, num_nodes,
                                                          gen_intervene, T_intervene, init_T,
-                                                         recover_rate, prop_reduced)
+                                                         recover_rate, prop_reduced,
+                                                         intervention_gen_list, beta_redux_list,
+                                                         prop_reduced_list,
+                                                         intervention_type
+                                                         )
     print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
           ' number of simulations.')
     np.savetxt(base_file_name + '_intervene.txt', size_distrb_per_gen_intervention,
@@ -36,7 +46,8 @@ def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
 
 # Simulate ensemble saves results for generational time series, as opposed to real time results. Those are TBD
 def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, intervention_T=0.0, initial_T=0.8,
-                      gamma=0.1, prop_reduced=0.0):
+                      gamma=0.1, prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
+             intervention_type="none"):
     # Configuring the parameters
     beta_init = -(gamma * initial_T) / (initial_T - 1)
     beta_interv = -(gamma * intervention_T) / (intervention_T - 1)
@@ -63,7 +74,8 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
             Beta = np.full((num_nodes_in_net, num_nodes_in_net), beta_init)
             Gamma = np.full(num_nodes_in_net, gamma)
         # Get results of type generational time series
-        results = simulate(A, Beta, Gamma, i, 'generation', intervention_gen, beta_interv, prop_reduced)
+        results = simulate(A, Beta, Gamma, i, 'generation', intervention_gen, beta_interv, prop_reduced,
+                           intervention_gen_list, beta_redux_list, prop_reduced_list, intervention_type)
         # Recording ensemble results
         for gen in range(len(results)):
             num_total_infctd = int(results[gen])
