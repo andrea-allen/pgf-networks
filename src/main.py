@@ -13,14 +13,28 @@ if __name__ == '__main__':
     rc('text', usetex=True)
     print('pgfs yay!')
 
-    # Run an ensemble simulation
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
 
-    # ensemble.run_ensemble_intervention_effects(power_law_dd, '../data/testing/multi_intervention_tiny', 20000, 2000,
-    #                                            init_T=0.6, intervention_gen_list=[3,4,5], beta_redux_list=[0.0, 0.0, 0.0],
-    #                                            prop_reduced_list=[.001, .01, .02], intervention_type="random-rollout", run_regular=True)
-    plotting_util.graph_infection_size_distribution_by_gen([2, 4, 6, 10], 110, '../data/testing/multi_intervention_tiny_no_intervene.txt'
-                                                      ,'../data/testing/multi_intervention_tiny_intervene.txt')
+    # pgf_formalism.compute_phase_space(16, 400, power_law_dd, 0.6, True, [2, 3, 4, 5, 6, 10, 15], '../data/random{0}',
+    #                          4, 0.0, 0.06, rollout_dict={3:0.01, 4:0.02, 5:0.03}, do_non_interv=True, do_interv=True, intervention_type="random")
+
+    # plotting_util.outbreak_size_curves([3, 4, 5, 6], 200, '../data/randomrollout{0}.txt', '../data/randomrollout{0}_intv.txt', same_plot=True)
+
+    # for g in [3, 4, 5, 6]:
+        # plotting_util.phaseSpace_from_data('../data/randomrollout{0}.txt'.format(g), g, 'Power law DD phase space with T=0.6')
+        # plotting_util.phaseSpace_from_data('../data/randomrollout{0}_intv.txt'.format(g), g, f'Random Rollout phase space get {g}')
+
+    # Run an ensemble simulation
+
+    ensemble.run_ensemble_intervention_effects(power_law_dd, '../data/testing/multi_intervention_tiny', 20000, 2000,
+                                               init_T=0.6, intervention_gen_list=[3,4,5], beta_redux_list=[0.0, 0.0, 0.0],
+                                               prop_reduced_list=[.001, .01, .02], intervention_type="random-rollout", run_regular=True)
+    # plotting_util.graph_infection_size_distribution_by_gen([2, 4, 6, 10], 110, '../data/testing/multi_intervention_tiny_no_intervene.txt'
+    #                                                   ,'../data/testing/multi_intervention_tiny_intervene.txt')
+
+    plotting_util.plot_sims_vs_analytical_multigens([3, 4, 5], 130,  '../data/testing/multi_intervention_tiny_no_intervene.txt', '../data/randomrollout{0}.txt',
+                                                    '../data/testing/multi_intervention_tiny_intervene.txt', '../data/randomrollout{0}_intv.txt',
+                                                    same_plot=True, normalize_axis_x=False)
     plt.show()
 
 

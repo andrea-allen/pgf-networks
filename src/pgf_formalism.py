@@ -7,8 +7,8 @@ import scipy.special
 def compute_phase_space(num_gens, num_nodes, degree_distribution, transmissibility,
                         save_results=True, gens_to_save=None,
                         file_fmt_to_save='phase_space/generation_{0}', intervention_gen=-1, intervention_trans=None,
-                        vacc_pop=.5,
-                        do_non_interv=True, do_interv=True):
+                        vacc_pop=.5, rollout_dict=None,
+                        do_non_interv=True, do_interv=True, intervention_type="none"):
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
 
@@ -27,7 +27,7 @@ def compute_phase_space(num_gens, num_nodes, degree_distribution, transmissibili
 
     if do_interv:
         all_psi_results_with_intervention = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes,
-                                                transmissibility, intervention_gen, intervention_trans, vacc_pop)
+                                                transmissibility, intervention_gen, intervention_trans, vacc_pop, rollout_dict, intervention_type)
         if save_results:
             try:
                 for gen in gens_to_save:
@@ -165,8 +165,9 @@ def computeLittlePsi(s, m, prevGenPsi, M):
 
 
 # COMPUTATION STARTS HERE
-def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, intervention_T=0.5,
-        prop_vacc=0.5):
+def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T,
+        intervention_gen=-1, intervention_T=0.5,
+        prop_vacc=0.5, rollout_dict=None, intervention_type="none"):
     # 3-d matrix with one matrix per generation of Psi_g
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
@@ -180,16 +181,39 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
         for m_g1 in range(max_m):
             allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
 
+    if intervention_type=="none":
+        allPsi = baseline(num_gens, max_s, max_m, allPsi, M_1)
+
+    if intervention_type=="universal_intervention":
+        allPsi = universal_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, intervention_T, allPsi, g0, M_1)
+
+    elif intervention_type=="random_rollout":
+        allPsi = random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict)
+
+    elif intervention_type=="random":
+        allPsi = random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1)
+        # TODO add the other interventions
+
+    return allPsi
+
+def baseline(num_gens, max_s, max_m, allPsi, M_1):
     for g in range(2, num_gens):
         print('working on gen ' + str(g))
-        # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
+        for s in range(max_s):
+            for m in range(max_m):
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+        psi_g = allPsi[g]
+        psi_g = psi_g / np.sum(psi_g)
+        allPsi[g] = psi_g
+    return allPsi
+
+def universal_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, intervention_T, allPsi, g0, M_1):
+    for g in range(2, num_gens):
+        print('working on gen ' + str(g))
         if g == intervention_gen:
             new_T = intervention_T
-            # THIS IS WHERE WE:D MODIFY, make a version of this function that's the intervention
-            # new_g1, new_g0 = gen_functions_with_transmissibility(original_degree_distrb, new_T)
-            # when using the random one, feed it the old T
-            new_g1 = random_vacc_distribution(degree_distrb, initial_T, prop_vacc)
-            new_M = constructMatrixM(g0, new_g1)  # TODO Is this correct? to have the oriignal g0 here?
+            new_g1, new_g0 = gen_functions_with_transmissibility(original_degree_distrb, new_T)
+            new_M = constructMatrixM(g0, new_g1)
             M_1 = new_M[1]
         for s in range(max_s):
             for m in range(max_m):
@@ -198,6 +222,45 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
         psi_g = psi_g / np.sum(psi_g)
         allPsi[g] = psi_g
     return allPsi
+
+def random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1):
+    for g in range(2, num_gens):
+        print('working on gen ' + str(g))
+        if g == intervention_gen:
+            new_g1 = random_vacc_distribution(original_degree_distrb, initial_T, prop_vacc)
+            new_M = constructMatrixM(g0, new_g1)
+            M_1 = new_M[1]
+        for s in range(max_s):
+            for m in range(max_m):
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+        psi_g = allPsi[g]
+        psi_g = psi_g / np.sum(psi_g)
+        allPsi[g] = psi_g
+
+    return allPsi
+
+def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict):
+    intervention_gen_keys = list(rollout_dict.keys())
+    current_gen_idx = 0
+    next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
+    for g in range(2, num_gens):
+        print('working on gen ' + str(g))
+        if g == next_up_intervention_gen:
+            new_g1 = random_vacc_distribution(original_degree_distrb, initial_T, rollout_dict[next_up_intervention_gen])
+            new_M = constructMatrixM(g0, new_g1)
+            M_1 = new_M[1]
+            if current_gen_idx < len(intervention_gen_keys) - 2:
+                current_gen_idx += 1
+                next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
+        for s in range(max_s):
+            for m in range(max_m):
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+        psi_g = allPsi[g]
+        psi_g = psi_g / np.sum(psi_g)
+        allPsi[g] = psi_g
+
+    return allPsi
+
 
 
 # Convolution code below:
