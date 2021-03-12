@@ -6,6 +6,7 @@ import time
 from deprecated import deprecated
 
 
+# CLASS DEPRECATED: Features moved over to new package epintervene available on TestPyPI
 class Node:
     def __init__(self, label, gen, state, recover_rate):
         self.gen = gen
@@ -57,6 +58,7 @@ class Edge:
 
 # TODO rename some of the confusing parameters
 # TODO rename everything called Lambda to be sum of rates, and actual lambda should be capital Beta, small lambdas? for particular event rates
+@deprecated
 class Simulation:
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A):
         self.sim_time = total_sim_time
@@ -243,6 +245,7 @@ class Simulation:
 
 
 # This is just random vaccination with 100% of the population getting the vaccination (but also allows for a uniform reduction in transmission probability)
+@deprecated
 class UniversalInterventionSim(Simulation):
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv):
         super().__init__(total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A)
@@ -282,7 +285,7 @@ class UniversalInterventionSim(Simulation):
             for edge in self.V_IS:
                 edge.event_rate = self.Lambda[edge.i.label][edge.j.label]
 
-
+@deprecated
 class AbsoluteTimeNetworkSwitchSim(Simulation):
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A, new_network_matrix, absolute_time_interv):
         super().__init__(total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A)
@@ -323,7 +326,7 @@ class AbsoluteTimeNetworkSwitchSim(Simulation):
         self.update_IS_edges()
         print('Modifying network')
 
-
+@deprecated
 class RandomInterventionSim(Simulation):
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_redux, proportion_reduced):
         super().__init__(total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A)
@@ -367,26 +370,14 @@ class RandomInterventionSim(Simulation):
         print(f'Randomly vaccinating {self.proportion_reduced} percent of nodes from beta value {self.beta} to {self.beta_redux}')
 
 
-
-class TargetedInterventionSim(Simulation):
-    #TODO
-    def simtype(self):
-        print('I am a simulation class of type Targeted Intervention')
-
-
-class RingInterventionSim(Simulation):
-    #TODO
-    def simtype(self):
-        print('I am a simulation class of type Targeted Intervention')
-
-
 # TODO these should be inside the Simulation class method
+@deprecated
 def draw_tau(sum_of_rates):
     # print(sum_of_rates)
     tau = np.random.exponential(1 / sum_of_rates)
     return tau
 
-
+@deprecated
 def draw_event_class(V_IS, V_I):  # [list of IS edges] [list of infected nodes]
     recovery_rate = 0
     infection_rate = 0
@@ -404,6 +395,7 @@ def draw_event_class(V_IS, V_I):  # [list of IS edges] [list of infected nodes]
         return 1  # for infection event
 
 
+@deprecated
 def draw_specific_event(max_rate, event_list):
     accepted = False
     random_event = None
@@ -417,7 +409,7 @@ def draw_specific_event(max_rate, event_list):
             accepted = True
     return random_event
 
-
+@deprecated
 def determine_draw_tau(V_IS, V_I, beta, gamma):
     v_is_count = len(V_IS)
     v_i_count = len(V_I)

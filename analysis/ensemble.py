@@ -6,12 +6,12 @@ from epintervene.simobjects import network
 import time
 
 
-def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
-                                  num_sims=10000, num_nodes=1000, init_T=0.8,
-                                  gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
-                                  intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
-                                  intervention_type="none",
-                                  run_regular=True):
+def run_ensemble_intervention_effects(degree_distrb, base_file_name='sim_results',
+                                      num_sims=10000, num_nodes=1000, init_T=0.8,
+                                      gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
+                                      intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
+                                      intervention_type="none",
+                                      run_regular=True):
     # Runs both regular and intervention ensembles with the same starting parameters
 
     # Ensemble run with no intervention:
@@ -74,8 +74,8 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
             Beta = np.full((num_nodes_in_net, num_nodes_in_net), beta_init)
             Gamma = np.full(num_nodes_in_net, gamma)
         # Get results of type generational time series
-        results = simulate(A, Beta, Gamma, i, 'generation', intervention_gen, beta_interv, prop_reduced,
-                           intervention_gen_list, beta_redux_list, prop_reduced_list, intervention_type)
+        results = run_single_simulation(A, Beta, Gamma, i, 'generation', intervention_gen, beta_interv, prop_reduced,
+                                        intervention_gen_list, beta_redux_list, prop_reduced_list, intervention_type)
         # Recording ensemble results
         for gen in range(len(results)):
             num_total_infctd = int(results[gen])
@@ -92,9 +92,9 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
     return outbreak_size_distrb_per_gen_matrix
 
 
-def simulate(A, Beta, Gamma, current, results_type='generation', intervention_gen=-1, beta_interv=-1.0,
-             prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
-             intervention_type="none"):
+def run_single_simulation(A, Beta, Gamma, current, results_type='generation', intervention_gen=-1, beta_interv=-1.0,
+                          prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
+                          intervention_type="none"):
     start_time = time.time()
     # Constructing the simulation of specified Intervention Type, otherwise will run a regular simulation
     if intervention_type == "random-rollout":
@@ -152,7 +152,7 @@ def ensemble_time_series(network, Beta, Gamma, numsims=100, N=1000):
     ts = np.zeros(1000)
 
     for i in range(numsims):
-        timeseries, timeseries_results_inf, timeseries_results_rec = simulate(A, Beta, Gamma, i, 'time')
+        timeseries, timeseries_results_inf, timeseries_results_rec = run_single_simulation(A, Beta, Gamma, i, 'time')
         ts = timeseries
         total_ts[i] = timeseries_results_inf
         total_ts_rec[i] = timeseries_results_rec
@@ -186,7 +186,7 @@ def ensemble_time_series_groups(network, Beta, Gamma, numsims=100, N=1000):
     ts = np.zeros(1000)
 
     for i in range(numsims):
-        timeseries, timeseries_results_inf, timeseries_results_rec = simulate(A, Beta, Gamma, i, 'time_groups')
+        timeseries, timeseries_results_inf, timeseries_results_rec = run_single_simulation(A, Beta, Gamma, i, 'time_groups')
         ts = timeseries  # TODO is timeseries always the same? no, because it splits the max time into bins so maybe still not a good averaging tool but close
         total_ts[i] = timeseries_results_inf
         total_ts_rec[i] = timeseries_results_rec

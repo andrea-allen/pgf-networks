@@ -3,9 +3,12 @@ import numpy as np
 import math
 from src import event_driven
 import time
+import deprecated
 
 # Phasing out this file to make way for ensemble.py, which will call the external epintervene package
+# Use analysis.ensemble instead
 
+@deprecated
 def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
                                                                num_sims=10000, num_nodes=1000, init_T=0.8,
                                                                gen_intervene=3, T_intervene=0.4, recover_rate=.001):
@@ -33,6 +36,7 @@ def simulate_intervention_effects(degree_distrb, base_file_name='sim_results',
     np.savetxt(base_file_name + '_size_distrb_per_gen_with_interv.txt', size_distrb_per_gen_intervention, delimiter=',')
 
 
+@deprecated
 def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, intervention_T=0.0, initial_T=0.8,
                       gamma=0.1):
 
@@ -75,6 +79,7 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
     return outbreak_size_distrb_per_gen_matrix
 
 
+@deprecated
 def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1, beta_interv=-1.0):
     start_time = time.time()
     # With intervention into the simulation code
@@ -94,7 +99,7 @@ def simulate(G, A, pos, beta, gamma, Lambda, Gamma, current, intervention_gen=-1
     # TODO can add a second set of results here that count for the time series of infectives
     return results
 
-
+@deprecated
 def generate_graph(N, deg_dist):
     start_time_1 = time.time()
     number_of_nodes = N * np.array(deg_dist)
