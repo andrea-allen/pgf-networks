@@ -1,11 +1,9 @@
 import unittest
-import numpy as np
 from src.event_driven import *
 from src.SIR_sims import *
 import networkx as nx
 from src import degree_distributions
-import timeit
-import time
+
 
 class TestGeneral(unittest.TestCase):
     def test_array_fills(self):
@@ -15,6 +13,7 @@ class TestGeneral(unittest.TestCase):
                 my_zero_array[i][j] = 3.1
         my_full_array = np.full((10, 10), 3.1)
         self.assertTrue((my_full_array == my_zero_array).all())
+
 
 class TestNode(unittest.TestCase):
     def test_node_attributes(self):
@@ -54,6 +53,7 @@ class TestEdge(unittest.TestCase):
         self.assertEqual(IS_edge.j.gen, 1)
         self.assertEqual(IS_edge.i.state, 1)
         self.assertEqual(IS_edge.i.gen, 0)
+
 
 class TestSimulation(unittest.TestCase):
     def setUp(self):
@@ -95,11 +95,11 @@ class TestSimulation(unittest.TestCase):
                 self.assertIn(edge.i.label, infected_nodes)
                 self.assertNotIn(edge.j.label, infected_nodes)
 
-
     def test_intervention(self):
         adjacency_matrix = np.array(nx.adjacency_matrix(self.graph).todense())
         new_beta = 0.8
-        simulation = UniversalInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix, 2, new_beta)
+        simulation = UniversalInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
+                                              adjacency_matrix, 2, new_beta)
         simulation.initialize()
         starting_IS_list_length = len(simulation.V_IS)
         self.assertGreaterEqual(starting_IS_list_length, 1)
@@ -111,7 +111,7 @@ class TestSimulation(unittest.TestCase):
         self.assertEqual(simulation.V_IS[0].event_rate, new_beta)
 
         simulation = UniversalInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
-                                adjacency_matrix, 2, new_beta)
+                                              adjacency_matrix, 2, new_beta)
         simulation.initialize()
         starting_IS_list_length = len(simulation.V_IS)
         self.assertGreaterEqual(starting_IS_list_length, 1)
@@ -128,29 +128,29 @@ class TestSimulation(unittest.TestCase):
         # Setup
         adjacency_matrix_layer1 = np.array(nx.adjacency_matrix(self.graph).todense())
         adjacency_matrix_layer2 = np.array(nx.adjacency_matrix(self.graph).todense())  # TBD change something about this
-        simulation = AbsoluteTimeNetworkSwitchSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix_layer1, None, 2.0)
+        simulation = AbsoluteTimeNetworkSwitchSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma,
+                                                  None, adjacency_matrix_layer1, None, 2.0)
         simulation.initialize()
         patient_zero_idx = simulation.V_I[0].label
         adjacency_matrix_layer2[patient_zero_idx][patient_zero_idx + 1] = 0
         simulation.A_modified = adjacency_matrix_layer2
         # Assert sample pair of nodes is connected, then will remove those for the intervention stage
-        self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx+1], 1)
+        self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx + 1], 1)
         self.assertEqual(len(simulation.V_IS), 9)
 
         # Act
         simulation.intervene()
 
         # Assert
-        self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx+1], 0)
+        self.assertEqual(simulation.A[patient_zero_idx][patient_zero_idx + 1], 0)
         self.assertEqual(len(simulation.V_IS), 8)
 
-
-
     def test_random_vacc_scheme(self):
-        # Note this test hinges on the small, complete graph set up in the set up of this test, otherwise counts will fail
-        # Setup
+        # Note this test hinges on the small, complete graph set up in the set up of this test, otherwise counts will
+        # fail Setup
         adjacency_matrix = np.array(nx.adjacency_matrix(self.graph).todense())
-        simulation = RandomInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None, adjacency_matrix, 2, .5, .15)
+        simulation = RandomInterventionSim(100000, self.graph, self.beta, self.gamma, self.Lambda, self.Gamma, None,
+                                           adjacency_matrix, 2, .5, .15)
         simulation.initialize()
         # Ensure original values are all same beta value
         for edge in simulation.V_IS:
@@ -158,32 +158,25 @@ class TestSimulation(unittest.TestCase):
 
         # Act
         # Then apply random vaccination
-        simulation.intervene(reduce_current_edges=True) #15 percent should round up to two nodes, for a 10-node network
+        simulation.intervene(
+            reduce_current_edges=True)  # 15 percent should round up to two nodes, for a 10-node network
 
         # Assert
         # Observe status of the edges after random vaccination
         recorded_beta_values = []
         for edge in simulation.V_IS:
             recorded_beta_values.append(edge.event_rate)
-        reduced_beta_group = len(np.where(np.array(recorded_beta_values)==0.5)[0])
-        original_beta_group = len(np.where(np.array(recorded_beta_values)==self.beta)[0])
+        reduced_beta_group = len(np.where(np.array(recorded_beta_values) == 0.5)[0])
+        original_beta_group = len(np.where(np.array(recorded_beta_values) == self.beta)[0])
         try:
-        # Assert that 5 percent of edge events now have the new beta value, 95 percent have original, unless the nodes vaccinated were dominating
-        # the V_IS list in which case, they'll all 9 be reduced, hence the second clause
+            # Assert that 5 percent of edge events now have the new beta value, 95 percent have original, unless the
+            # nodes vaccinated were dominating the V_IS list in which case, they'll all 9 be reduced,
+            # hence the second clause
             self.assertEqual(reduced_beta_group, 2)
             self.assertEqual(original_beta_group, 7)
         except AssertionError:
             self.assertEqual(reduced_beta_group, 9)
             self.assertEqual(original_beta_group, 0)
-
-
-    #TODO write a test that tests if intervention happens at the correct time, need to modify the code structure for this
-
-    @unittest.skip('Work in progress')
-    def test_intervention_occurs_correctly(self):
-        #TODO use mocks
-        # assert that when intervene is called, only one generation member of that gen is exists
-        self.assertFalse(True)
 
 
 if __name__ == '__main__':

@@ -76,6 +76,7 @@ class Simulation:
         self.nodes = []
         self.highest_gen = 0
         self.intervened = False
+        self.time_of_intervention = total_sim_time
         self.total_num_timesteps = 0
         self.max_beta = 0
         self.sum_of_rates_vector = []
@@ -83,6 +84,7 @@ class Simulation:
         self.time_series = [0]
         self.real_time_srs_infc = []
         self.real_time_srs_rec = []
+        self.generational_emergence = {0 : 0}
 
     def initialize(self):
         start_time = time.time()
@@ -135,10 +137,11 @@ class Simulation:
             self.V_I.append(infection_event.j)
 
             try:
-                self.gen_collection[infection_event.j.gen].append(infection_event.j.label)
-            except KeyError:
+                self.gen_collection[infection_event.j.gen].append(infection_event.j.label) #maybe move toward storing actual node objects? but also this could get huge. Could also append a vector that tracks what real time the node became infected too
+            except KeyError: # Need a better way than KeyError to catch a new generation
                 self.gen_collection[infection_event.j.gen] = [infection_event.j.label]
                 self.highest_gen += 1
+                self.generational_emergence[self.highest_gen] = self.current_sim_time
             self.has_been_infected_labels.append(infection_event.j.label)
             self.update_IS_edges()
             self.add_IS_edges(infection_event.j)
@@ -239,6 +242,7 @@ class Simulation:
         print('I am a generic Simulation class instance')
 
 
+# This is just random vaccination with 100% of the population getting the vaccination (but also allows for a uniform reduction in transmission probability)
 class UniversalInterventionSim(Simulation):
     def __init__(self, total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A, intervention_gen, beta_interv):
         super().__init__(total_sim_time, G, beta, gamma, Lambda, Gamma, pos, A)
@@ -255,6 +259,7 @@ class UniversalInterventionSim(Simulation):
             if not self.intervened:
                 if self.highest_gen >= self.intervention_gen:
                     self.intervene(self.beta_interv)
+                    self.time_of_intervention = self.current_sim_time
                     self.intervened = True
             # Run one step
             self.single_step()
@@ -295,6 +300,7 @@ class AbsoluteTimeNetworkSwitchSim(Simulation):
             if not self.intervened:
                 if self.current_sim_time > self.intervention_time:
                     self.intervene()
+                    self.time_of_intervention = self.current_sim_time
                     self.intervened = True
             # Run one step
             self.single_step()
@@ -334,6 +340,7 @@ class RandomInterventionSim(Simulation):
             if not self.intervened:
                 if self.highest_gen >= self.intervention_gen:
                     self.intervene()
+                    self.time_of_intervention = self.current_sim_time
                     self.intervened = True
             # Run one step
             self.single_step()
@@ -404,8 +411,6 @@ def draw_specific_event(max_rate, event_list):
     while not accepted:
         random_idx = np.random.randint(0, L)
         random_event = event_list[random_idx]
-        # TODO maybe instead of doing it this way, do another partition interval here based on every event's personal rate
-        # TODO just make sure the math of this works out, compare to paper on gillespie prob
         accept_rate = random_event.event_rate / max_rate  # ex. Edge.event_rate = .2 TODO need to assign max rate when intervention happens
         random_draw = random.uniform(0, 1)
         if random_draw < accept_rate:
