@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import scipy.special
 
 
 def pdf_of(degree_list):
@@ -37,18 +38,26 @@ def phase_space(g_0, g_1, g=10):
     return Psi_sm
 
 
+# START HERE!!!!! this is what will change depending on the intervention
 def gen_functions_with_transmissibility(degree_distrb, T):
     # Given a degree distribution for G0 (or the degree distribution of the entire network).
     # Given transmissibility T
     # TODO this is what will change depending on the intervention
+    # TODO don't modify this one but make new function for each vaccination strategy
     maxk = len(degree_distrb)
     p_k = degree_distrb
-    p_LK = np.zeros((400, 400))
+
+    # This is the matrix of k x l resulting p l given k in each cell
+    p_LK = np.zeros((maxk, maxk))
 
     # Generates pgf in variable l as probabilities of infection of l neighbors given the original degree distribution and transmission prob T
     for k in range(0, maxk):
+        # somewhere here have another matrix that's l by j
+        # construct that for each p_j_given_l (whatever the order is)
         for l in range(0, k + 1):
             try:
+                # this will be some operation of this with the vector for the particular l
+                # sum over all j for this particular l
                 p_LgivenK = p_k[k] * (
                         math.gamma(k + 1) / (math.gamma(l + 1) * math.gamma(k - l + 1)) * T ** (l) * (1 - T) ** (k - l))
                 p_LK[k][l] = p_LgivenK
@@ -58,9 +67,52 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     p_l = p_l / (np.sum(p_l))
 
     G0_with_T = pdf_of(p_l)
-    G1_with_T = g1_of(
-        G0_with_T)
+    G1_with_T = g1_of(G0_with_T)
     return G1_with_T, G0_with_T
+
+
+def random_vacc_distribution(degree_distrb, T, V):
+    maxk = len(degree_distrb)
+
+    # Important! Only feed this function the oringinal degree distribution
+    # it will be then transformed to g1, assuming this is happening
+    # at a generation later than 0
+    # TODO Make sure this gets normalized?
+    q_k = g1_of(degree_distrb)
+
+    # we ultimately want:
+    # vector of powerks of k
+    # matrix of j and k (j behaves like the oriignal k in the paper)
+    # matrix of j and l
+
+
+    P_lk = np.zeros((maxk, maxk))
+
+    for k in range(0, maxk):
+        P_jk = np.zeros(maxk)
+        for j in range(0, k + 1):
+            try:
+                p_j_given_k = q_k[k] * (math.gamma(k + 1) / (math.gamma(j + 1) * math.gamma(k - j + 1))
+                                        * ((1 - V) ** (j)) * (V ** (k - j)))
+                P_jk[j] = p_j_given_k
+            except OverflowError:
+                P_jk[j] = 0
+
+            for l in range(0, j + 1):
+                try:
+                    p_l_given_j = (math.gamma(j + 1) / (math.gamma(l + 1) * math.gamma(j - l + 1))) * ((1 - T) ** (j - l)) * (T ** (l))
+                    P_lk[k][l] = P_jk[j] * p_l_given_j
+                except OverflowError:
+                    P_lk[k][l] = 0
+
+    P_l_distrb = np.sum(P_lk, axis=0)
+    P_l_distrb = P_l_distrb / (np.sum(P_l_distrb))
+
+    # This return value is in the form of an excess degree distribution
+    # Question for Weds: do we need to transform again into excess, or did
+    #the original G1 take care of that?
+    return P_l_distrb
+
 
 
 def constructMatrixM(g_0, g_1):
@@ -88,7 +140,8 @@ def computeLittlePsi(s, m, prevGenPsi, M):
     return newPsi
 
 
-def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, intervention_T=0.5):
+# COMPUTATION STARTS HERE
+def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention_gen=-1, intervention_T=0.5, prop_vacc=0.5):
     # 3-d matrix with one matrix per generation of Psi_g
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
@@ -107,8 +160,11 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
         # If g is intervention, re-call g0_l's, g1_l's, M0, M1 etc
         if g == intervention_gen:
             new_T = intervention_T
-            new_g1, new_g0 = gen_functions_with_transmissibility(original_degree_distrb, new_T)
-            new_M = constructMatrixM(new_g0, new_g1)
+            # THIS IS WHERE WE:D MODIFY, make a version of this function that's the intervention
+            # new_g1, new_g0 = gen_functions_with_transmissibility(original_degree_distrb, new_T)
+            #when using the random one, feed it the old T
+            new_g1 = random_vacc_distribution(degree_distrb, initial_T, prop_vacc)
+            new_M = constructMatrixM(g0, new_g1) # TODO Is this correct? to have the oriignal g0 here?
             M_1 = new_M[1]
         for s in range(max_s):
             for m in range(max_m):
@@ -119,29 +175,35 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T, intervention
     return allPsi
 
 
+# START HERE WHEN CALLING
 def phaseSpace(num_gens, num_nodes, degree_distribution, transmissibility,
                save_results=True, gens_to_save=None,
-               file_fmt_to_save='phase_space/generation_{0}', intervention_gen=-1, intervention_trans=None):
+               file_fmt_to_save='phase_space/generation_{0}', intervention_gen=-1, intervention_trans=None, vacc_pop=.5,
+               do_non_interv = True, do_interv = True):
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
-    all_psi_results = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes, transmissibility)
 
-    if save_results:
-        try:
-            for gen in gens_to_save:
-                if gen < num_gens:
-                    np.savetxt(file_fmt_to_save.format(gen) + '.txt', all_psi_results[gen], delimiter=',')
-        except Exception:
-            print('Must provide gens_to_save in arguments as list')
+    if do_non_interv:
+        all_psi_results = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes, transmissibility)
 
-    if intervention_gen > 0 and intervention_trans is not None:
+        if save_results:
+            try:
+                for gen in gens_to_save:
+                    if gen < num_gens:
+                        np.savetxt(file_fmt_to_save.format(gen) + '.txt', all_psi_results[gen], delimiter=',')
+            except Exception:
+                print('Must provide gens_to_save in arguments as list')
+    else:
+        all_psi_results = np.zeros((2,2))
+
+    if do_interv:
         all_psi_results_with_intervention = Psi(degree_distribution, initProb, num_gens, num_nodes, num_nodes,
-                                                transmissibility, intervention_gen, intervention_trans)
+                                                transmissibility, intervention_gen, intervention_trans, vacc_pop)
         if save_results:
             try:
                 for gen in gens_to_save:
                     np.savetxt(file_fmt_to_save.format(gen) + '_intv.txt', all_psi_results_with_intervention[gen],
-                           delimiter=',')
+                               delimiter=',')
             except Exception:
                 print('Must provide gens_to_save in arguments as list')
     else:
