@@ -1,7 +1,30 @@
 import numpy as np
 import math
 import scipy.special
+from src import gen_extinct_prob
 
+def compute_extinct_prob_all(deg_dist, T):
+    psi = Psi(deg_dist, initProb=1, num_gens=20, max_s=400, max_m=400, initial_T=T)
+    for g in range(20):
+        psi[g][:,0] = np.zeros(400)
+        psi[g] = psi[g]/np.sum(psi[g])
+    # psi = [psi[g]/np.sum(psi[g]) for g in range(20)]
+    extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T)
+    print(extct_array[0])
+    return extct_array
+
+def expected_num_infected(deg_dist, T):
+    psi = Psi(deg_dist, initProb=1, num_gens=50, max_s=400, max_m=400, initial_T=T)
+    expected_cum_array = np.zeros(50)
+    for gen in range(50):
+        psi[gen][:,0] = np.zeros(400)
+        psi[gen] = psi[gen]/np.sum(psi[gen])
+        inverted_s_m = psi[gen]
+        ps_g_analytical = np.sum(inverted_s_m, axis=0)
+        ps_g_analytical = ps_g_analytical / np.sum(ps_g_analytical)
+        expected_cum_array[gen] = np.sum(ps_g_analytical * np.arange(len(ps_g_analytical)))
+    np.savetxt(f'./../data/expected_cum_{T}_m.txt', expected_cum_array)
+    print(expected_cum_array[:10])
 
 # CALL FROM OUTSIDE CLASS CALLS HERE
 def compute_phase_space(num_gens, num_nodes, degree_distribution, transmissibility,
@@ -55,6 +78,7 @@ def z1_of(g_0):
 
 
 def z2_of(g_0):
+    ## FYI this doesn't compute correctly, should equate to pgf_formalism.z1_of(pgf_formalism.g1_of(degree_distrb))
     z2 = 0
     for k in range(len(g_0) - 2):
         z2 += (k + 1) * (k + 2) * g_0[k + 2]
@@ -192,7 +216,6 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T,
 
     elif intervention_type=="random":
         allPsi = random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1)
-        # TODO add the other interventions
 
     return allPsi
 
@@ -249,7 +272,7 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
             new_g1 = random_vacc_distribution(original_degree_distrb, initial_T, rollout_dict[next_up_intervention_gen])
             new_M = constructMatrixM(g0, new_g1)
             M_1 = new_M[1]
-            if current_gen_idx < len(intervention_gen_keys) - 2:
+            if current_gen_idx < len(intervention_gen_keys) - 1:
                 current_gen_idx += 1
                 next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
         for s in range(max_s):

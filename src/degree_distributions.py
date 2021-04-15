@@ -13,7 +13,7 @@ def power_law_degree_distrb(maxk=40, alpha=2, mu=5):
 
 
 def binomial_degree_distb(N, lam=6):
-    p_k = np.empty(40)
+    p_k = np.empty(N)
     p = lam / N
     for k in range(0, len(p_k)):
         p_k[k] = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
@@ -24,6 +24,14 @@ def mean_degree(deg_distr):
     for k in range(len(deg_distr)):
         total_sum += k*deg_distr[k]
     return total_sum
+
+def chain_degree_dist(N):
+    p_k = np.zeros(N)
+    p_k[0] = 0
+    p_k[1] = .01
+    p_k[2] = .99
+    return p_k
+
 
 def compute_T_threshold_powerlaw(deg_distr, mu):
     # Currently only works for power law networks

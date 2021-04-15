@@ -6,6 +6,9 @@ import matplotlib.patches as mpatches
 import src.pgf_formalism
 from src import degree_distributions
 from matplotlib.lines import Line2D
+import seaborn as sns
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.collections import LineCollection
 
 ### Below are three sets of plotting functions; tools for plotting simulation results, tools for plotting
 ### analytical results (phase space and cumulative outbreak sizes per generation) and tools for comparing analytical and
@@ -13,25 +16,29 @@ from matplotlib.lines import Line2D
 
 ### SIMULATION PLOTTING TOOLS
 def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename,
+                                             gen_emergence_times=None,
                                              intervention_filename=None):
     intervention_comparison_true = False
     if intervention_filename is not None:
         intervention_comparison_true = True
     color_key = {}
-    colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
+    colors = ['red', 'orange', 'green', 'blue', 'goldenrod', 'purple', 'pink', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
     for i in range(len(list_of_gens)):
         gen = list_of_gens[i]
-        color = np.random.choice(colors)
+        color = colors[0]
         colors.remove(color)
         color_key[gen] = color
 
     data_no_intervention = np.loadtxt(filename, delimiter=',')
 
     for gen in list_of_gens:
+        time_label=''
+        if gen_emergence_times is not None:
+            time_label = int(gen_emergence_times[gen])
         time_series = data_no_intervention[gen][2:x_lim]
-        plt.plot(time_series, label='$g=$' + str(gen), color=color_key[gen], alpha=0.5, lw=1)
+        plt.plot(time_series, label=f'$gen=$ {str(gen)}, avg time emerged {time_label}', color=color_key[gen], alpha=0.7, lw=1)
 
     if intervention_comparison_true:
         data_intervention = np.loadtxt(intervention_filename, delimiter=',')
@@ -45,7 +52,7 @@ def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename,
     # plt.title(
     #     'Effects of simulations with intervention from $T=.2$ to $T=.1$ at $g=3$ on Binomial Degree Distribution Network')
     plt.semilogy()
-    plt.ylim(.0001, .1)
+    # plt.ylim(.0001, .1)
     # plt.title('Created from saved data')
     # plt.savefig('p_s_g_distribution_intervention.png')
     # plt.show()
@@ -65,18 +72,63 @@ def plot_psi(psi_g, gen, title_label):
     # plt.legend(handles=[red_patch], loc='upper right')
     ax.invert_yaxis()
     # plt.title('Phase Space at Generation '+str(gen)+' of '+str(title_label))
-    plt.ylabel('$m$', fontsize=20)
-    plt.xlabel('$s$', fontsize=20)
+    plt.ylabel('$m$ new ', fontsize=20)
+    plt.xlabel('$s$ cumulative', fontsize=20)
     plt.xticks(fontsize=18)
     plt.yticks(fontsize=18)
     plt.tight_layout()
     plt.show()
+
+### For NERCCS talk
+def colorlist2(c1, c2, num):
+    l = np.linspace(0, 1, num)
+    a = np.abs(np.array(c1) - np.array(c2))
+    m = np.min([c1, c2], axis=0)
+    s = np.sign(np.array(c2) - np.array(c1)).astype(int)
+    s[s == 0] = 1
+    r = np.sqrt(np.c_[(l * a[0] + m[0])[::s[0]], (l * a[1] + m[1])[::s[1]], (l * a[2] + m[2])[::s[2]]])
+    return r
+
+def plot_psi_compressed(psi_g, gen):
+    cmap = plt.cm.hot(np.linspace(1, 0, 100000))[::-1]
+    cmap = m.colors.ListedColormap(cmap[:, :])
+
+    compressed = np.sum(psi_g, axis=0)[2:60]
+    x = np.linspace(0, 2 * np.pi, len(compressed))
+    x = np.arange(2,60)
+    # x_labels = np.arange(0, 60, 60/(len(x)))
+    # plt.xticks(x, x_labels)
+    y = compressed
+
+    # cmap = LinearSegmentedColormap.from_list("", colorlist2((1, 0, 0), (0, 0, 1), 100))
+
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-2], points[1:-1], points[2:]], axis=1)
+
+    lc = LineCollection(segments, cmap=cmap, linewidth=10)
+    lc.set_array(x)
+    plt.gca().add_collection(lc)
+    plt.gca().autoscale()
+    plt.ylim(.001, .1)
+    plt.semilogy()
+    plt.xlabel('$s$ cumulative', fontsize=20)
+    plt.ylabel('Probability', fontsize=20)
+    plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    plt.tight_layout()
+    plt.show()
+
+    fig, ax = plt.subplots()
+    # plt.plot(np.sum(psi_g, axis=0)[2:50], cmap=cmap, norm=plt.cm.colors.SymLogNorm(linthresh=0.00005, vmax=0.4, vmin=0.000))
+    # plt.semilogy()
+    # plt.show()
 
 
 def phaseSpace_from_data(fname, gen, plot_title):
     psi_g = np.loadtxt(fname, delimiter=',')
     inverted_s_m = psi_g.T
     plot_psi(inverted_s_m, gen, plot_title)
+    plot_psi_compressed(inverted_s_m, gen)
 
 
 def distribution_heatmap(num_gens, s_lim, degree_distribution, transmissibility):
@@ -212,7 +264,7 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         styles.remove(style)
         style_key[gen] = style
 
-    fig, ax1 = plt.subplots(figsize=(14, 6))
+    fig, ax1 = plt.subplots(figsize=(14, 7))
 
     for gen in list_of_gens:
         fname_predict = fname_predict_format.format(gen)
@@ -373,4 +425,325 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     # plt.rcParams.update({'font.size': 12})
     # plt.title('Effects of Intervention', fontsize=10)
     if not same_plot:
+        plt.show()
+
+def gen_vs_time_correlation(gen_distributions, time_distributions):
+    max_len = min(len(gen_distributions), len(time_distributions))
+    corr_coef_series = np.zeros(max_len)
+    for gen in range(max_len):
+        gen_dist = gen_distributions[gen]
+        time_dist = time_distributions[gen]
+        # x_lim = 50
+        # plt.plot(gen_dist[:max_len])
+        # plt.plot(time_dist[:max_len])
+        # plt.semilogy()
+        # plt.show()
+        correlation = np.corrcoef(gen_dist, time_dist)
+        corr_coef_series[gen] = correlation[0][1]
+    return corr_coef_series
+
+
+
+def plots_for_nerccs_talk(list_of_gens, x_lim, fname_sim_results, fname_predict_format,
+                                      fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
+                                      normalize_axis_x=False, plot_distribution_inset=False, grayscale=False, inset_label=None):
+    ## Plain axes:
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+    plt.tight_layout()
+    plt.show()
+
+    ## Axes with theory and inset
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+    if plot_distribution_inset:
+        right, bottom, width, height = [0.4, 0.5, 0.25, 0.3]
+        ax2 = fig.add_axes([right, bottom, width, height])
+        power_law_dd = degree_distributions.power_law_degree_distrb(400)
+        ax2.plot(power_law_dd[:15], color='black')
+        ax2.set_xlim(0, 14)
+        ax2.set_title('Network Degree Distribution', fontsize=20)
+        ax2.set_xlabel('Degree $k$', fontsize=20)
+        ax2.set_ylabel('Fraction of nodes', fontsize=20)
+        # ax2.set_yticks(np.arange(0, 1, 0.25))
+        ax2.set_xticks([0, 1, 2, 3, 5, 10])
+        ax2.semilogy()
+    plt.tight_layout()
+    plt.show()
+
+    ## Axes with just theory
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+
+    color_key = {}
+    colors = ['blue', 'teal', 'orange', 'crimson', 'purple', 'teal', 'black', 'gold', 'chocolate',
+              'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
+              'cadetblue', 'crimson']
+    colorcycle = sns.color_palette("mako_r", len(list_of_gens))
+
+    ## Color test: Uncomment to test plot
+    # colorcycle = sns.color_palette("mako_r", 4)
+    # plt.plot(np.arange(100), np.sin(np.arange(100)) + 0, color=colorcycle[0])
+    # plt.plot(np.arange(100), np.sin(np.arange(100)) + 1, color=colorcycle[1])
+    # plt.plot(np.arange(100), np.sin(np.arange(100)) + 2, color=colorcycle[2])
+    # plt.plot(np.arange(100), np.sin(np.arange(100)) + 3, color=colorcycle[3])
+    # plt.tight_layout()
+    # plt.show()
+
+    style_key = {}
+    styles = [':', '-.', '--', '-']
+
+    for i in range(len(list_of_gens)):
+        gen = list_of_gens[i]
+        # color = colors[0]
+        # colors.remove(color)
+        color_key[gen] = colorcycle[i]
+        style = styles[0]
+        styles.remove(style)
+        style_key[gen] = style
+
+    for gen in list_of_gens:
+        fname_predict = fname_predict_format.format(gen)
+        fname_sims = fname_sim_results
+        if fname_sim_results_int is not None and fname_predict_format_int is not None:
+            fname_predict_interv = fname_predict_format_int.format(gen)
+            fname_sims_interv = fname_sim_results_int
+        else:
+            fname_sims_interv = None
+            fname_predict_interv = None
+        nerccs_plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, None, fname_predict, None,
+                                               None, color_key, style_key, same_plot, normalize_axis_x,
+                                               grayscale)
+
+    if plot_distribution_inset:
+        right, bottom, width, height = [0.4, 0.5, 0.25, 0.3]
+        ax2 = fig.add_axes([right, bottom, width, height])
+        power_law_dd = degree_distributions.power_law_degree_distrb(400)
+        ax2.plot(power_law_dd[:15], color='black')
+        ax2.set_xlim(0, 14)
+        ax2.set_title('Network Degree Distribution', fontsize=20)
+        ax2.set_xlabel('Degree $k$', fontsize=20)
+        ax2.set_ylabel('Fraction of nodes', fontsize=20)
+        # ax2.set_yticks(np.arange(0, 1, 0.25))
+        ax2.set_xticks([0, 1, 2, 3, 5, 10])
+        ax2.semilogy()
+
+    plt.tight_layout()
+    plt.show()
+
+    ## Axes with theory and sims
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+
+    for gen in list_of_gens:
+        fname_predict = fname_predict_format.format(gen)
+        fname_sims = fname_sim_results
+        if fname_sim_results_int is not None and fname_predict_format_int is not None:
+            fname_predict_interv = fname_predict_format_int.format(gen)
+            fname_sims_interv = fname_sim_results_int
+        else:
+            fname_sims_interv = None
+            fname_predict_interv = None
+        nerccs_plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sims, fname_predict, None,
+                                               None, color_key, style_key, same_plot, normalize_axis_x,
+                                               grayscale)
+    plt.tight_layout()
+    plt.show()
+
+    ## Axes with theory and intervention theory
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+
+    for gen in list_of_gens:
+        fname_predict = fname_predict_format.format(gen)
+        fname_sims = fname_sim_results
+        if fname_sim_results_int is not None and fname_predict_format_int is not None:
+            fname_predict_interv = fname_predict_format_int.format(gen)
+            fname_sims_interv = fname_sim_results_int
+        else:
+            fname_sims_interv = None
+            fname_predict_interv = None
+        nerccs_plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, None, fname_predict, None,
+                                               fname_predict_interv, color_key, style_key, same_plot, normalize_axis_x,
+                                               grayscale)
+
+    right, bottom, width, height = [0.4, 0.75, 0.25, 0.003]
+    ax2 = fig.add_axes([right, bottom, width, height], frameon=False)
+    ax2.set_xlabel(inset_label, fontsize=25)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    # power_law_dd = degree_distributions.power_law_degree_distrb(400)
+    # ax2.plot(power_law_dd[:15], color='black')
+    # ax2.set_xlim(0, 14)
+    # ax2.set_xlabel('Degree $k$', fontsize=20)
+    # ax2.set_ylabel('Fraction of nodes', fontsize=20)
+    # ax2.set_yticks(np.arange(0, 1, 0.25))
+    # ax2.set_xticks([0, 1, 2, 3, 5, 10])
+    # ax2.semilogy()
+
+    plt.tight_layout()
+    plt.show()
+
+    ## Axes with theory and intervention theory and intervention sims
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    ax1.set_xlim(0, x_lim)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    x_vals = np.arange(1, x_lim)
+    x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
+    ax1.set_xlim(0, max(x_vals))
+    ax1.set_xticks(x_ticks)
+    ax1.semilogy()
+    ax1.set_ylim(.00005, .1)
+    ax1.set_xlabel('Cumulative Infections', fontsize=20)
+    ax1.set_ylabel('Probability', fontsize=20)
+
+    for gen in list_of_gens:
+        fname_predict = fname_predict_format.format(gen)
+        fname_sims = fname_sim_results
+        if fname_sim_results_int is not None and fname_predict_format_int is not None:
+            fname_predict_interv = fname_predict_format_int.format(gen)
+            fname_sims_interv = fname_sim_results_int
+        else:
+            fname_sims_interv = None
+            fname_predict_interv = None
+        nerccs_plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, None, fname_predict, fname_sims_interv,
+                                               fname_predict_interv, color_key, style_key, same_plot, normalize_axis_x,
+                                               grayscale)
+    right, bottom, width, height = [0.4, 0.75, 0.25, 0.003]
+    ax2 = fig.add_axes([right, bottom, width, height], frameon=False)
+    ax2.set_xlabel(inset_label, fontsize=25)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    # power_law_dd = degree_distributions.power_law_degree_distrb(400)
+    # ax2.plot(power_law_dd[:15], color='black')
+    # ax2.set_xlim(0, 14)
+    # ax2.set_xlabel('Degree $k$', fontsize=20)
+    # ax2.set_ylabel('Fraction of nodes', fontsize=20)
+    # ax2.set_yticks(np.arange(0, 1, 0.25))
+    # ax2.set_xticks([0, 1, 2, 3, 5, 10])
+    # ax2.semilogy()
+    plt.tight_layout()
+    plt.show()
+
+
+def nerccs_plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_results, fname_predict,
+                                           fname_sim_results_interv,
+                                           fname_predict_interv, color_key, style_key, same_plot=False,
+                                           normalize_axis_x=False, grayscale=False):
+    # Rough method for plotting simulations vs analytical probabilities of outbreak size.
+    # Modify as needed for existing files or re-generation of probability results
+
+    intervention_color = '0.5'
+    intervention_color = 'cornflowerblue'
+    regular_color = '0.1'
+    regular_color = 'navy'
+    line_w=2
+
+    ax1.set_xlim(0, x_lim)
+
+    plot_intervention_predict = False
+    plot_intervention_sims = False
+    if fname_sim_results_interv is not None:
+        plot_intervention_sims = True
+    if fname_predict_interv is not None:
+        plot_intervention_predict = True
+
+    if fname_sim_results is not None:
+        data = np.loadtxt(fname_sim_results, delimiter=',')
+        time_series = data[gen][1:x_lim]
+        x_vals = np.arange(1, x_lim)
+
+        color = color_key[gen]
+
+        ax1.plot(x_vals, time_series, color=color, ls='-', lw=line_w, alpha=0.4)
+
+    if plot_intervention_sims:
+        data_int = np.loadtxt(fname_sim_results_interv, delimiter=',')
+        time_series_int = data_int[gen][1:x_lim]
+        x_vals = np.arange(1, x_lim)
+
+        color = color_key[gen]
+        alpha = 0.4
+        if grayscale:
+            color = intervention_color
+            alpha = 1
+        ax1.plot(x_vals, time_series_int, color=color, ls='--', lw=line_w, alpha=alpha)
+
+    psi_g = np.loadtxt(fname_predict, delimiter=',')
+    inverted_s_m = psi_g.T
+    ps_g_analytical = np.sum(inverted_s_m, axis=0)
+    ps_g_analytical = ps_g_analytical / np.sum(ps_g_analytical)  # normalize
+    x_vals = np.arange(1, x_lim)
+    label = 'Infections by gen {0}'.format(gen)
+    color = color_key[gen]
+    if grayscale:
+        color = regular_color
+    ax1.plot(x_vals, ps_g_analytical[1:x_lim], label=label, color=color, ls='-', lw=line_w)
+
+    if plot_intervention_predict:
+        psi_g_int = np.loadtxt(fname_predict_interv, delimiter=',')
+        inverted_s_m_int = psi_g_int.T
+        ps_g_analytical_int = np.sum(inverted_s_m_int, axis=0)
+        ps_g_analytical_int = ps_g_analytical_int / np.sum(ps_g_analytical_int)  # normalize
+        x_vals = np.arange(1, x_lim)
+        color = color_key[gen]
+        alpha = 1.0
+        ax1.plot(x_vals, ps_g_analytical_int[1:x_lim], color=color,
+                 ls='--', lw=line_w, alpha=alpha)
+
+    plt.rcParams.update({'font.size': 12})
+    plt.legend(loc='upper right', frameon=False)
+    if not same_plot:
+        plt.tight_layout()
         plt.show()
