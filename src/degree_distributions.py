@@ -16,7 +16,11 @@ def binomial_degree_distb(N, lam=6):
     p_k = np.empty(N)
     p = lam / N
     for k in range(0, len(p_k)):
-        p_k[k] = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
+        try:
+            p_k[k] = (p ** k) * ((1 - p) ** (N - k)) * math.comb(N, k)
+        except OverflowError:
+            p_k[k] = 0 #why zero? Because for large k, p**k will go to zero
+            print(N, k)
     return p_k
 
 def mean_degree(deg_distr):
@@ -30,7 +34,11 @@ def chain_degree_dist(N):
     p_k[0] = 0
     p_k[1] = .01
     p_k[2] = .99
+    # p_k[3] = .29
+    # p_k[4] = .3
     return p_k
+
+
 
 
 def compute_T_threshold_powerlaw(deg_distr, mu):

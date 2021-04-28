@@ -2,6 +2,7 @@ import numpy as np
 import math
 import scipy.special
 from src import gen_extinct_prob
+import time
 
 def compute_extinct_prob_all(deg_dist, T):
     psi = Psi(deg_dist, initProb=1, num_gens=20, max_s=400, max_m=400, initial_T=T)
@@ -174,17 +175,17 @@ def constructMatrixM(g_0, g_1):
     newDist = g_1
     M_1[1] = newDist
     for row in range(2, N_1):
-        convol = convolve_dists(newDist, g_1)
-        M_1[row] = convol
+        second_convol = convolve_with_ifft(newDist, g_1)
+        M_1[row] = second_convol
         newDist = M_1[row]
 
-    M_1[0][0] = 1
+    M_1[0][0] = 1 #nice
     return (M_0, M_1)
 
 
 def computeLittlePsi(s, m, prevGenPsi, M):
     s_prime = s - m
-    newPsi = prevGenPsi[s_prime].dot(M[:, m])
+    newPsi = prevGenPsi[s_prime, :].dot(M[:, m])
     return newPsi
 
 
@@ -202,8 +203,8 @@ def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T,
                                                  initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
     M_0, M_1 = constructMatrixM(g0, g1)
     for s_g1 in range(max_s):
-        for m_g1 in range(max_m):
-            allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0)
+        for m_g1 in range(s_g1):
+            allPsi[1][s_g1][m_g1] = computeLittlePsi(s_g1, m_g1, allPsi[0], M_0) #s are the rows, m are the columns
 
     if intervention_type=="none":
         allPsi = baseline(num_gens, max_s, max_m, allPsi, M_1)
@@ -223,7 +224,7 @@ def baseline(num_gens, max_s, max_m, allPsi, M_1):
     for g in range(2, num_gens):
         print('working on gen ' + str(g))
         for s in range(max_s):
-            for m in range(max_m):
+            for m in range(0, s):
                 allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
         psi_g = allPsi[g]
         psi_g = psi_g / np.sum(psi_g)
@@ -317,11 +318,15 @@ def find_pairs(m, len_dist_1, len_dist_2):
     return pairs
 
 
-def convolve_dists(X, Y):
+def convolve_dists(X, Y, static_length=None):
     ### X and Y should be vectors of probabilities (For our problem we need to incorporate the G0 and G1 probabilities in here.)
     ### each giving a distribution on a finite subset of the naturals
-    len_X = len(X)
-    len_Y = len(Y)
+    if static_length is None:
+        len_X = len(X)
+        len_Y = len(Y)
+    elif static_length is not None:
+        len_X = static_length
+        len_Y = static_length
     new_dist_len = len_X + len_Y - 1  # Don't think it has to be this long
     new_dist_len = len_X
     new_dist = np.zeros(new_dist_len)
@@ -332,6 +337,24 @@ def convolve_dists(X, Y):
             new_prob = new_prob + X[l_pair[0]] * Y[l_pair[1]]
         new_dist[m] = new_prob
     return new_dist
+
+def convolve_with_ifft(firstdist, seconddist):
+    result_length = len(firstdist)
+
+    # Copy each array into a 2d array of the appropriate shape.
+    rows = np.zeros((2, result_length))
+    for i, array in enumerate([firstdist, seconddist]):
+        rows[i, :len(array)] = array
+
+    # Transform, take the product, and do the inverse transform
+    # to get the convolution.
+    fft_of_rows = np.fft.fft(rows)
+    fft_of_convolution = fft_of_rows.prod(axis=0)
+    convolution = np.fft.ifft(fft_of_convolution)
+
+    # Assuming real inputs, the imaginary part of the output can
+    # be ignored.
+    return convolution.real
 
 
 def generating_function_metrics(gen_func_g0, gen_func_g1):

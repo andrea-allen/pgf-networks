@@ -25,6 +25,7 @@ def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename,
     colors = ['red', 'orange', 'green', 'blue', 'goldenrod', 'purple', 'pink', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
+    colors = ['black', 'blue', 'red', 'purple', 'orange', 'brown']
     for i in range(len(list_of_gens)):
         gen = list_of_gens[i]
         color = colors[0]
@@ -38,7 +39,7 @@ def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename,
         if gen_emergence_times is not None:
             time_label = int(gen_emergence_times[gen])
         time_series = data_no_intervention[gen][2:x_lim]
-        plt.plot(time_series, label=f'$gen=$ {str(gen)}, avg time emerged {time_label}', color=color_key[gen], alpha=0.7, lw=1)
+        plt.plot(time_series, label=f'Cumulative infections up to birth of gen$=${str(gen+1)}', color=color_key[gen], alpha=0.7, lw=1)
 
     if intervention_comparison_true:
         data_intervention = np.loadtxt(intervention_filename, delimiter=',')
@@ -248,20 +249,36 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
                                       fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
                                       normalize_axis_x=False, plot_distribution_inset=False, grayscale=False):
     color_key = {}
+    color_key_sims = {}
     colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
 
+    cmap_blues = plt.cm.get_cmap('Blues')
+    cmap_reds = plt.cm.get_cmap('Oranges')
+    cmap_reds = plt.cm.get_cmap('brg')
+    cmap_reds = plt.cm.get_cmap('CMRmap')
+    cmap_reds = plt.cm.get_cmap('autumn')
+    cmap_reds = plt.cm.get_cmap('gist_heat')
+    # cmap_reds = plt.cm.get_cmap('gnuplot')
+    hex_colorbrewer = ['#8c510a','#d8b365','#f6e8c3','#c7eae5','#5ab4ac','#01665e']
+    hex_colorbrewer = ['#a1dab4','#41b6c4','#2c7fb8','#253494']
+    standrd_colors = ['black', 'blue', 'red', 'purple']
+
+
     style_key = {}
-    styles = [':', '-.', '--', '-']
+    styles = ['-',':', '-.', '--', '-']
 
     for i in range(len(list_of_gens)):
         gen = list_of_gens[i]
-        color = np.random.choice(colors)
+        color = colors[0]
         colors.remove(color)
         color_key[gen] = color
+        color_key[gen] = cmap_reds(1 - (0.3 + (i/(1.5*len(list_of_gens)))))
+        color_key[gen] = standrd_colors[i]
+        color_key_sims[gen] = cmap_blues(0.3 + (i/(1.5*len(list_of_gens))))
         style = styles[0]
-        styles.remove(style)
+        # styles.remove(style)
         style_key[gen] = style
 
     fig, ax1 = plt.subplots(figsize=(14, 7))
@@ -277,19 +294,25 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
             fname_predict_interv = None
         plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sims, fname_predict, fname_sims_interv,
                                                fname_predict_interv, color_key, style_key, same_plot, normalize_axis_x,
+                                               # grayscale, color_key_sims)
                                                grayscale)
 
     if plot_distribution_inset:
-        right, bottom, width, height = [0.6, 0.5, 0.25, 0.3]
+        right, bottom, width, height = [0.4, 0.6, 0.25, 0.3]
         ax2 = fig.add_axes([right, bottom, width, height])
-        power_law_dd = degree_distributions.power_law_degree_distrb(10000)
-        ax2.plot(power_law_dd[:15], color='black')
+        # FOR POWER LAW with mu=10:
+        power_law_dd = degree_distributions.power_law_degree_distrb(400, mu=10) #q=3
+        ax2.plot(power_law_dd[:15], color='black', label='$p_k = k^{-2}e^{-k/10}$')
+        # FOR ERDOS-RENYI with k=2.5:
+        # erdos_renyi = degree_distributions.binomial_degree_distb(400, 2.5) #q=k=2.5
+        # ax2.plot(erdos_renyi[:15], color='black', label='$p_k \\approx \\frac{\\lambda^ke^{-\\lambda}}{k!}, \\lambda=2.5$')
         ax2.set_xlim(0, 14)
         ax2.set_xlabel('Degree $k$', fontsize=20)
         ax2.set_ylabel('Fraction of nodes', fontsize=20)
         # ax2.set_yticks(np.arange(0, 1, 0.25))
         ax2.set_xticks([0, 1, 2, 3, 5, 10])
         ax2.semilogy()
+        ax2.legend(loc='upper right', fontsize=16)
 
     # TODO adjust for this particular figure
     # ax1.text(0.0005, 0.001, '$g=2$')
@@ -313,14 +336,19 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         ax1.legend(handles=legend_elements, loc=(.1, .59), frameon=False, fontsize=18)
     plt.tight_layout()
     plt.xticks(fontsize=18)
+    plt.yticks(fontsize=18)
+    ax1.tick_params(axis='y', labelrotation=0, labelsize=16)
+    ax1.tick_params(axis='x', labelrotation=0, labelsize=16)
+    ax1.legend(loc='upper right', fontsize=16)
     if same_plot:
+        plt.legend(loc='upper right')
         plt.show()
 
 
 def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_results, fname_predict,
                                            fname_sim_results_interv,
                                            fname_predict_interv, color_key, style_key, same_plot=False,
-                                           normalize_axis_x=False, grayscale=False):
+                                           normalize_axis_x=False, grayscale=False, color_key_sims=None):
     # Rough method for plotting simulations vs analytical probabilities of outbreak size.
     # Modify as needed for existing files or re-generation of probability results
 
@@ -331,13 +359,15 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
 
     ax1.set_xlim(0, x_lim)
 
+    x_start = 2
+
     plot_intervention = False
     if fname_sim_results_interv is not None and fname_predict_interv is not None:
         plot_intervention = True
 
     data = np.loadtxt(fname_sim_results, delimiter=',')
-    time_series = data[gen][1:x_lim]
-    x_vals = np.arange(1, x_lim)
+    time_series = data[gen][x_start:x_lim]
+    x_vals = np.arange(x_start, x_lim)
     x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
     if normalize_axis_x:
         x_vals = x_vals / 10000
@@ -350,14 +380,16 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         str_percent = '${0}\\%$'.format(percent)
         x_tick_labels.append(str_percent)
     color = color_key[gen]
+    if color_key_sims is not None:
+        color = color_key_sims[gen]
     if grayscale:
         color = regular_color
-    ax1.plot(x_vals, time_series, color=color, ls=style_key[gen], lw=1)
+    ax1.plot(x_vals, time_series, color=color, ls=style_key[gen], lw=1) #, label=f'gen {gen}')
 
     if plot_intervention:
         data_int = np.loadtxt(fname_sim_results_interv, delimiter=',')
-        time_series_int = data_int[gen][1:x_lim]
-        x_vals = np.arange(1, x_lim)
+        time_series_int = data_int[gen][x_start:x_lim]
+        x_vals = np.arange(x_start, x_lim)
         if normalize_axis_x:
             x_vals = x_vals / 10000
         color = color_key[gen]
@@ -379,7 +411,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     inverted_s_m = psi_g.T
     ps_g_analytical = np.sum(inverted_s_m, axis=0)
     ps_g_analytical = ps_g_analytical / np.sum(ps_g_analytical)  # normalize
-    x_vals = np.arange(1, x_lim)
+    x_vals = np.arange(x_start, x_lim)
     if normalize_axis_x:
         x_vals = x_vals / 10000
         # TODO fix labeling issue
@@ -387,14 +419,14 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     color = color_key[gen]
     if grayscale:
         color = regular_color
-    ax1.plot(x_vals, ps_g_analytical[1:x_lim], label=label, color=color, ls=style_key[gen], lw=1)
+    ax1.plot(x_vals, ps_g_analytical[x_start:x_lim], label=label, color=color, lw=2, ls='-')
 
     if plot_intervention:
         psi_g_int = np.loadtxt(fname_predict_interv, delimiter=',')
         inverted_s_m_int = psi_g_int.T
         ps_g_analytical_int = np.sum(inverted_s_m_int, axis=0)
         ps_g_analytical_int = ps_g_analytical_int / np.sum(ps_g_analytical_int)  # normalize
-        x_vals = np.arange(1, x_lim)
+        x_vals = np.arange(x_start, x_lim)
         if normalize_axis_x:
             x_vals = x_vals / 10000
         # label = '$g=' + str(gen) + '$'
@@ -403,7 +435,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         if grayscale:
             color = intervention_color
             alpha = 1
-        ax1.plot(x_vals, ps_g_analytical_int[1:x_lim], color=color,
+        ax1.plot(x_vals, ps_g_analytical_int[x_start:x_lim], color=color,
                  ls=style_key[gen], lw=1, alpha=alpha)
 
     plt.rcParams.update({'font.size': 12})
@@ -420,10 +452,12 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     # ax1.legend(handles=legend_elements, loc=(.15, .69))
     # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.1, .85))
     # ax1.add_artist(extra_legend)
-    ax1.set_xlabel('Proportion of population cumulatively infected', fontsize=20)
+    ax1.set_xlabel('Cumulative infections', fontsize=20)
     ax1.set_ylabel('Probability', fontsize=20)
     # plt.rcParams.update({'font.size': 12})
     # plt.title('Effects of Intervention', fontsize=10)
+    print(f'gen {gen}')
+    print(np.sum((ps_g_analytical[:400]))-(np.sum(data[gen][:400])))
     if not same_plot:
         plt.show()
 

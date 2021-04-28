@@ -33,19 +33,20 @@ def run_ensemble_intervention_effects(degree_distrb, base_file_name='sim_results
 
     # Ensemble run with intervention as specified:
     start_time = time.time()
-    size_distrb_per_gen_intervention = simulate_ensemble(degree_distrb=degree_distrb, num_sims=num_sims, N=num_nodes,
-                                                         intervention_gen=gen_intervene, intervention_T=T_intervene,
-                                                         initial_T=init_T,
-                                                         gamma=recover_rate, prop_reduced=prop_reduced,
-                                                         intervention_gen_list=intervention_gen_list,
-                                                         beta_redux_list=beta_redux_list,
-                                                         prop_reduced_list=prop_reduced_list,
-                                                         intervention_type=intervention_type
-                                                         )
-    print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
-          ' number of simulations.')
-    np.savetxt(base_file_name + '_intervene.txt', size_distrb_per_gen_intervention,
-               delimiter=',')
+    if intervention_type != "none":
+        size_distrb_per_gen_intervention = simulate_ensemble(degree_distrb=degree_distrb, num_sims=num_sims, N=num_nodes,
+                                                             intervention_gen=gen_intervene, intervention_T=T_intervene,
+                                                             initial_T=init_T,
+                                                             gamma=recover_rate, prop_reduced=prop_reduced,
+                                                             intervention_gen_list=intervention_gen_list,
+                                                             beta_redux_list=beta_redux_list,
+                                                             prop_reduced_list=prop_reduced_list,
+                                                             intervention_type=intervention_type
+                                                             )
+        print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
+              ' number of simulations.')
+        np.savetxt(base_file_name + '_intervene.txt', size_distrb_per_gen_intervention,
+                   delimiter=',')
 
 
 def run_ensemble_with_time_distribution(degree_distrb, base_file_name='sim_results',
@@ -53,13 +54,26 @@ def run_ensemble_with_time_distribution(degree_distrb, base_file_name='sim_resul
                                         gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
                                         intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
                                         intervention_type="none",
-                                        run_regular=True):
+                                        run_regular=True, kill_by=None, active_gen_sizes_on=False):
     start_time = time.time()
-    t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg = ensemble_time_distributions(degree_distrb, num_sims, num_nodes,
-                                                                -1, 0.0, init_T, recover_rate, 0.0,
-                                                                intervention_gen_list=None, beta_redux_list=None,
-                                                                prop_reduced_list=None,
-                                                                intervention_type="none")
+    if active_gen_sizes_on:
+        t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg, \
+        active_gen_results, total_gen_results, active_gen_sizes_results, timeseries_values = ensemble_time_distributions(degree_distrb, num_sims,
+                                                                                               num_nodes,
+                                                                                               -1, 0.0, init_T,
+                                                                                               recover_rate, 0.0,
+                                                                                               intervention_gen_list=None,
+                                                                                               beta_redux_list=None,
+                                                                                               prop_reduced_list=None,
+                                                                                               intervention_type="none",
+                                                                                               kill_by=kill_by, active_gen_sizes_on=active_gen_sizes_on)
+    else:
+        t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg, \
+        active_gen_results, total_gen_results, timeseries_values = ensemble_time_distributions(degree_distrb, num_sims, num_nodes,
+                                                                    -1, 0.0, init_T, recover_rate, 0.0,
+                                                                    intervention_gen_list=None, beta_redux_list=None,
+                                                                    prop_reduced_list=None,
+                                                                    intervention_type="none", kill_by=kill_by)
     print('Total time for ensemble was ', time.time() - start_time, ' with N=', num_nodes, ' nodes and ', num_sims,
           ' number of simulations.')
     np.savetxt(base_file_name + '_generational.txt',
@@ -74,6 +88,15 @@ def run_ensemble_with_time_distribution(degree_distrb, base_file_name='sim_resul
     np.savetxt(base_file_name + '_gen_emergence_times.txt',
                gen_emergence_avg,
                delimiter=',')
+    np.savetxt(base_file_name + '_active_gen_ts.txt',
+               active_gen_results, delimiter=',')
+    np.savetxt(base_file_name + '_total_gen_ts.txt',
+               total_gen_results, delimiter=',')
+    if active_gen_sizes_on:
+        np.savetxt(base_file_name + '_active_gen_sizes_ts.txt',
+                   active_gen_sizes_results, delimiter=',')
+    np.savetxt(base_file_name + '_ts_vals_normalized.txt',
+               timeseries_values, delimiter=',')
 
 
 # Simulate ensemble saves results for generational time series, as opposed to real time results. Those are TBD
@@ -137,7 +160,7 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
                           beta_interv=-1.0,
                           beta_init=1.0, gamma_init=0.001,
                           prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
-                          intervention_type="none"):
+                          intervention_type="none", viz_pos=None, G=None, kill_by=None, active_gen_sizes_on=False):
     start_time = time.time()
     N = len(A)
     # Constructing the simulation of specified Intervention Type, otherwise will run a regular simulation
@@ -168,12 +191,13 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
         sim.set_uniform_gamma(gamma_init)
 
     # Run the simulation
-    sim.run_sim(uniform_rate=True, wait_for_recovery=False)
+    sim.run_sim(uniform_rate=True, wait_for_recovery=False, p_zero=None, visualize=False, kill_by=kill_by, viz_graph=G,
+                viz_pos=viz_pos, record_active_gen_sizes=active_gen_sizes_on)
 
     # Printing progress of the ensemble for the user to keep track
-    if current % 5 == 0:
+    if current % 50 == 0:
         print('current sim ' + str(current))
-        print("--- %s seconds to run simulation---" % (time.time() - start_time))
+        print("--- %s seconds to run latest simulation---" % (time.time() - start_time))
 
     # Tabulating results based on user's specified input type
     if str(results_type).lower() == 'generation':
@@ -181,17 +205,30 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
         return generational_results
     elif str(results_type).lower() == 'time':
         # TODO put the time buckets in here
-        timeseries, timeseries_results_inf, timeseries_results_rec = sim.tabulate_continuous_time(1000,
+        timeseries, timeseries_results_inf, timeseries_results_rec = sim.tabulate_continuous_time(100,
                                                                                                   custom_range=True,
                                                                                                   custom_t_lim=20000)
         return timeseries, timeseries_results_inf, timeseries_results_rec
     elif str(results_type).lower() == 'time_and_gen':
-        timeseries, timeseries_results_inf, timeseries_results_rec = sim.tabulate_continuous_time(1000,
+        if active_gen_sizes_on:
+            timeseries, timeseries_results_inf, timeseries_results_rec, active_gens_ts, \
+            total_gens_ts, active_gen_sizes = sim.tabulate_continuous_time(1000,
+                                                                            custom_range=True,
+                                                                            custom_t_lim=5000,
+                                                                            active_gen_info=True,
+                                                                           active_gen_sizes=True)
+            generational_results = sim.tabulate_generation_results(100)
+            generational_emergence = sim.get_generational_emergence()
+            return generational_results, generational_emergence, timeseries, timeseries_results_inf, \
+                   timeseries_results_rec, active_gens_ts, total_gens_ts, active_gen_sizes
+        else:
+            timeseries, timeseries_results_inf, timeseries_results_rec, active_gens_ts, total_gens_ts = sim.tabulate_continuous_time(1000,
                                                                                                   custom_range=True,
-                                                                                                  custom_t_lim=20000)
+                                                                                                  custom_t_lim=5000,
+                                                                                                  active_gen_info=True)
         generational_results = sim.tabulate_generation_results(100)
         generational_emergence = sim.get_generational_emergence()
-        return generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec
+        return generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec, active_gens_ts, total_gens_ts
     elif str(results_type).lower() == 'time_groups':
         timeseries, infection_timeseries_groups = sim.tabulate_continuous_time_with_groups(1000)
         return timeseries, infection_timeseries_groups
@@ -207,55 +244,87 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
                                 initial_T=0.8,
                                 gamma=0.1, prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None,
                                 prop_reduced_list=None,
-                                intervention_type="none"):
+                                intervention_type="none", kill_by=None, active_gen_sizes_on=False):
     # Configuring the parameters
     beta_init = -(gamma * initial_T) / (initial_T - 1)
+    # beta_init = 0.99
     print(f'Beta {beta_init}')
     beta_interv = -(gamma * intervention_T) / (intervention_T - 1)
 
     # Setting up a results data structure
     ## This first definition of t_buckets does it in chunks of 1/beta
-    t_buckets = np.arange(0, 15000, 1 / beta_init)
+    t_buckets = np.arange(0, 15000, 1 / beta_init) # this isn't quite right
     ## This definition of t_buckets uses q*beta/(q*beta + gamma) *(q*beta + gamma).^{-1}, where q is avg excess degree
     q = pgf_formalism.z1_of(pgf_formalism.g1_of(degree_distrb))
+    #TODO can you compute q without the dead end leaves? to mimic the infinite network?
     k = pgf_formalism.z1_of(degree_distrb)
     bucket_increment = (q*beta_init/(q*beta_init+gamma)) * (1/(q*beta_init + gamma))
     bucket_increment = (1/(q*beta_init + gamma)) # try T/(beta+gamma), then try again for a bigger q_bar
     bucket_increment = (beta_init/(beta_init+gamma)) / (beta_init+gamma)
     bucket_increment = 1/(q*(beta_init)) # Latest idea
-    t_buckets = np.arange(0, 15000, bucket_increment)
+    t_buckets = np.arange(0, 5000, bucket_increment)
     callibrated = False
     time_buckets_distribution = np.zeros((len(t_buckets), N))
     generational_distribution = np.zeros((100, N))
+    averaging_active = None
+    averaging_total = None
+    averaging_active_gen_sizes = None
+    averaging_count = 0
     # 2 rows: first is the average, 2nd is the number of times the generation actually ever existed (so the denominator of the average)
     gen_emergence_avg = np.zeros((2, 100))
 
     # Generating the initial network
     G, pos = network.NetworkBuilder.from_degree_distribution(N, degree_distrb)
+
+    k = np.mean([nx.degree(G, node) for node in nx.nodes(G)])
+    # q = np.mean([nx.degree(G, node)-1 for node in nx.nodes(G)])
+    print(f'k is {k}, q is {q}')
+    # Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
+    # G0 = G.subgraph(Gcc[0])
+    # max_diameter = nx.diameter(G0)
+    # np.savetxt(f'../data/max_tree_diameter.txt', max_diameter)
+    # print(f'MAX DIAMETER', max_diameter)
+    # nx.draw(G, with_labels=True)
+    # plt.show()
     A = np.array(nx.adjacency_matrix(G).todense())
     adjlist = network.NetworkBuilder.create_adjacency_list(G)
-    num_nodes_in_net = len(A[0])
-
     Beta = None
     Gamma = None
 
+    ## ORIGINAL NETWORK
+    # G, pos = network.NetworkBuilder.from_degree_distribution(N, degree_distrb)
 
     # Running the ensemble
+    num_sims_where_g2_direct = 0
+    num_sims_wher_g2_indirect = 0
     for i in range(num_sims):
         # Generate a new network every 500 simulations
         if i % 500 == 0:
+            print('making new network')
             G, pos = network.NetworkBuilder.from_degree_distribution(N, degree_distrb)
             A = np.array(nx.adjacency_matrix(G).todense())
             adjlist = network.NetworkBuilder.create_adjacency_list(G)
         # Get results of type generational time series and time series
         # generational_results, timeseries, timeseries_results_inf, timeseries_results_rec
-        generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec = \
-            run_single_simulation(A=A, adjlist=adjlist, Beta=Beta, Gamma=Gamma, current=i, results_type='time_and_gen',
-                                  intervention_gen=intervention_gen,
-                                  beta_interv=beta_interv, beta_init=beta_init, gamma_init=gamma,
-                                  prop_reduced=prop_reduced,
-                                  intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
-                                  prop_reduced_list=prop_reduced_list, intervention_type=intervention_type)
+        if active_gen_sizes_on:
+            generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec,\
+                active_gens_results, total_gens_results, active_gen_sizes = \
+                run_single_simulation(A=A, adjlist=adjlist, Beta=Beta, Gamma=Gamma, current=i, results_type='time_and_gen',
+                                      intervention_gen=intervention_gen,
+                                      beta_interv=beta_interv, beta_init=beta_init, gamma_init=gamma,
+                                      prop_reduced=prop_reduced,
+                                      intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
+                                      prop_reduced_list=prop_reduced_list, intervention_type=intervention_type, G=G,
+                                      viz_pos=None, kill_by=kill_by, active_gen_sizes_on=active_gen_sizes_on)
+        else:
+            generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec,\
+                active_gens_results, total_gens_results = \
+                run_single_simulation(A=A, adjlist=adjlist, Beta=Beta, Gamma=Gamma, current=i, results_type='time_and_gen',
+                                      intervention_gen=intervention_gen,
+                                      beta_interv=beta_interv, beta_init=beta_init, gamma_init=gamma,
+                                      prop_reduced=prop_reduced,
+                                      intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
+                                      prop_reduced_list=prop_reduced_list, intervention_type=intervention_type, G=G, viz_pos=None, kill_by=kill_by)
         # Recording ensemble results
         # Need to specify the range of gens based on beta
         if callibrated == False:
@@ -266,14 +335,17 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
             for t in range(0, int(len(t_buckets))):
                 found_nearest = False
                 curr_bucket = t_buckets[curr_bucket_idx]
-                while not found_nearest:
-                    nearest = time_values[curr_idx]
-                    if nearest >= curr_bucket:
-                        new_time_buckets[curr_bucket_idx] = nearest
-                        curr_bucket_idx += 1
-                        found_nearest = True
-                    else:
-                        curr_idx += 1
+                try:
+                    while not found_nearest:
+                        nearest = time_values[curr_idx]
+                        if nearest >= curr_bucket:
+                            new_time_buckets[curr_bucket_idx] = nearest
+                            curr_bucket_idx += 1
+                            found_nearest = True
+                        else:
+                            curr_idx += 1
+                except IndexError:
+                    continue
             t_buckets = new_time_buckets
             callibrated = True
 
@@ -281,7 +353,7 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
         # todo need the results to be cumulative
         # starting_tie = time.time()
         for t_time_idx in range(len(t_buckets)):
-            # lazy way of cumulative infections is adding quantity recovered at that time too
+        #     # lazy way of cumulative infections is adding quantity recovered at that time too
             t_time = t_buckets[t_time_idx]
             t_time = int(t_time)
             t_idx = np.where(timeseries == t_time)
@@ -309,6 +381,20 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
             except KeyError:
                 continue
 
+        if averaging_active is None:
+            averaging_active = np.array(active_gens_results)
+            averaging_total = np.array(total_gens_results)
+            if active_gen_sizes_on:
+                averaging_active_gen_sizes = np.array(active_gen_sizes)
+        else:
+            # print(np.array(total_gens_results)[-1])
+            if total_gens_results[-1] > 2:
+                averaging_active += np.array(active_gens_results)
+                averaging_total += np.array(total_gens_results)
+                if active_gen_sizes_on:
+                    averaging_active_gen_sizes += np.array(active_gen_sizes)
+                averaging_count += 1
+
         # Two other ideas:
         # 1. Average generational emergence, so a time series of the emergence of each generation (or a dict that's the average of each value)
         # 2. Time buckets, and average number of gens that have appeared by that time. Is this the same thing?
@@ -326,7 +412,23 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
     for gen in range(100):
         if gen_emergence_avg[1][gen] > 0:
             gen_emergence_avg[0][gen] = gen_emergence_avg[0][gen] / gen_emergence_avg[1][gen]
-    return t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg[0]
+
+    averaging_active = averaging_active / averaging_count
+    averaging_total = averaging_total / averaging_count
+    if active_gen_sizes_on:
+        averaging_active_gen_sizes = averaging_active_gen_sizes / averaging_count
+
+    # plt.scatter([2, 3, 4, 6, 9, 11, 3], [.52, .25, .17, .09, .06, .05, .33])
+    # x_vals = np.array([2, 3, 4, 6, 9, 11, 3])
+    # q_vals = np.array([[2, 3, 4, 6, 9, 11, 2]])
+    # plt.scatter(np.array(x_vals), (1 / x_vals))
+    # plt.scatter(np.array(x_vals), (1 / q_vals))
+    # plt.scatter(np.arange(38), np.diff(gen_emergence_avg[0][:39]))
+    if active_gen_sizes_on:
+        return t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg[0], averaging_active, \
+               averaging_total, averaging_active_gen_sizes, timeseries
+    return t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg[0], averaging_active, \
+           averaging_total, timeseries
 
 
 ##### In PROGRESS ######
@@ -384,3 +486,19 @@ def ensemble_time_series_groups(network, Beta, Gamma, numsims=100, N=1000):
     infection_ts = np.mean(total_ts, axis=0)
     recover_ts = np.mean(total_ts_rec, axis=0)
     return ts, infection_ts, recover_ts
+
+def plotting_exercise(beta=1):
+    intergen_times = np.zeros(25)
+    whole_times = np.zeros(10)
+    intergen_times[1] = 1/(2*beta)
+    start_i = 3
+    for g in range(2,25):
+        my_time = 0
+        for i in range(start_i, start_i+(g)):
+            my_time += (1/i)
+        intergen_times[g] = my_time
+        start_i += g
+
+    plt.scatter(np.arange(len(intergen_times)-1), intergen_times[1:])
+    plt.show()
+
