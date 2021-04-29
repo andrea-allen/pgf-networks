@@ -4,15 +4,20 @@ import scipy.special
 from src import gen_extinct_prob
 import time
 
-def compute_extinct_prob_all(deg_dist, T):
-    psi = Psi(deg_dist, initProb=1, num_gens=20, max_s=400, max_m=400, initial_T=T)
-    for g in range(20):
+def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
+    psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=400, max_m=400, initial_T=T)
+    for g in range(n_gens):
         psi[g][:,0] = np.zeros(400)
+        for s in range(0,g+1):
+            psi[g][s,:] = np.zeros(400)
         psi[g] = psi[g]/np.sum(psi[g])
-    # psi = [psi[g]/np.sum(psi[g]) for g in range(20)]
+    if renorm:
+        for g in range(n_gens):
+            for s in range(psi.shape[1]):
+                if np.sum(psi[g][s][:]) > 0:
+                    psi[g][s,:] = psi[g][s,:] / np.sum(psi[g][s,:])
     extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T)
-    print(extct_array[0])
-    return extct_array
+    return [extct_array, psi]
 
 def expected_num_infected(deg_dist, T):
     psi = Psi(deg_dist, initProb=1, num_gens=50, max_s=400, max_m=400, initial_T=T)

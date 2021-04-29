@@ -124,6 +124,23 @@ def plot_psi_compressed(psi_g, gen):
     # plt.semilogy()
     # plt.show()
 
+def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax="y axis"):
+    s_list = range(1,101)
+    Psi = psi.sum(axis=sum_ax)
+    Psi = np.where(Psi==0, -1, Psi)
+    plt.figure()
+    markers = ['ko', 'bs', 'rD', 'mv']
+    for g in g_list:
+        lbl = "gen" + str(g)
+        plt.plot(s_list, Psi[g][s_list[0]:s_list[-1]+1], markers[g_list.index(g)], label=lbl)
+    plt.xlabel(x_ax, fontsize=20)
+    plt.ylabel(y_ax, fontsize=20)
+    plt.xticks(range(0,101,10),fontsize=18)
+    plt.ylim((0,np.max(Psi)+0.05))
+    plt.yticks(fontsize=18)
+    plt.legend()
+    plt.tight_layout()
+    plt.show() 
 
 def phaseSpace_from_data(fname, gen, plot_title):
     psi_g = np.loadtxt(fname, delimiter=',')
