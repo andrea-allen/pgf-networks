@@ -124,10 +124,11 @@ def plot_psi_compressed(psi_g, gen):
     # plt.semilogy()
     # plt.show()
 
-def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax="y axis"):
+def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax="y axis", hide_zero = False):
     s_list = range(1,101)
     Psi = psi.sum(axis=sum_ax)
-    Psi = np.where(Psi==0, -1, Psi)
+    if hide_zero:
+        Psi = np.where(Psi==0, -1, Psi)
     plt.figure()
     markers = ['ko', 'bs', 'rD', 'mv']
     for g in g_list:
