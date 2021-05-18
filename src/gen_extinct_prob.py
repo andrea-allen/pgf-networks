@@ -13,7 +13,7 @@ def gen_offspring_dist(deg_dist, T):
     l_dist = np.zeros(len(deg_dist))
     for l in range(len(l_dist)):
         for k in range(l,len(l_dist)):
-            l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]
+            l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]*k
     return l_dist/np.sum(l_dist)
 
 # takes a distribution and returns a pgf as a function

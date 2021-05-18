@@ -134,11 +134,11 @@ def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax=
     markers = ['ko', 'bs', 'rD', 'mv']
     for g in g_list:
         lbl = "gen" + str(g)
-        plt.plot(s_list, Psi[g][s_list[0]:s_list[-1]+1], markers[g_list.index(g)], label=lbl)
+        plt.plot(s_list, np.log(Psi[g][s_list[0]:s_list[-1]+1]), markers[g_list.index(g)], label=lbl)
     plt.xlabel(x_ax, fontsize=20)
     plt.ylabel(y_ax, fontsize=20)
     plt.xticks(range(0,101,10),fontsize=18)
-    plt.ylim((0,np.max(Psi)+0.05))
+    #plt.ylim((0,np.max(Psi)+0.05))
     plt.yticks(fontsize=18)
     plt.legend()
     plt.tight_layout()

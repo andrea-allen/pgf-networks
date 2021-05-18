@@ -6,11 +6,11 @@ from src import gen_extinct_prob
 
 
 def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
-    psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=400, max_m=400, initial_T=T)
+    psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=len(deg_dist), max_m=len(deg_dist), initial_T=T)
     for g in range(n_gens):
-        psi[g][:,0] = np.zeros(400)
+        psi[g][:,0] = np.zeros(len(deg_dist))
         for s in range(0,g+1):
-            psi[g][s,:] = np.zeros(400)
+            psi[g][s,:] = np.zeros(len(deg_dist))
         psi[g] = psi[g]/np.sum(psi[g])
     if renorm:
         for g in range(n_gens):
