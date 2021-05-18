@@ -282,6 +282,12 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     hex_colorbrewer = ['#8c510a','#d8b365','#f6e8c3','#c7eae5','#5ab4ac','#01665e']
     hex_colorbrewer = ['#a1dab4','#41b6c4','#2c7fb8','#253494']
     standrd_colors = ['black', 'blue', 'red', 'purple']
+    # standrd_colors = ["#48acf0","#594236","#6f584b", "#93a3bc"] # too light "#ccdde2",
+    standrd_colors = ["#001524", "#15616d", "#ff7d00", "#78290f"] #  "#ffecd1", too light
+    photocopy_friendly = ['#e66101','#fdb863','#b2abd2','#5e3c99']
+    sequential_bluegreen = ['#a1dab4','#41b6c4','#2c7fb8','#253494'] # '#ffffcc', too light
+    sequential_orange = ['#fecc5c','#fd8d3c','#f03b20','#bd0026'] # '#ffffb2', too light
+    standrd_colors = sequential_orange
 
 
     style_key = {}
@@ -296,7 +302,7 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         color_key[gen] = standrd_colors[i]
         color_key_sims[gen] = cmap_blues(0.3 + (i/(1.5*len(list_of_gens))))
         style = styles[0]
-        # styles.remove(style)
+        styles.remove(style)
         style_key[gen] = style
 
     fig, ax1 = plt.subplots(figsize=(14, 7))
@@ -437,7 +443,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     color = color_key[gen]
     if grayscale:
         color = regular_color
-    ax1.plot(x_vals, ps_g_analytical[x_start:x_lim], label=label, color=color, lw=2, ls='-')
+    ax1.plot(x_vals, ps_g_analytical[x_start:x_lim], label=label, color=color, lw=2, ls=style_key[gen])
 
     if plot_intervention:
         psi_g_int = np.loadtxt(fname_predict_interv, delimiter=',')
