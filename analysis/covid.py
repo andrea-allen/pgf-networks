@@ -28,7 +28,7 @@ def run():
         start_date_as_date = datetime.datetime.strptime(start_date, '%m/%d/%y')
         for g in range(1, 50):
             cases_20_days = add_serial_interval(start_date, 5*g)
-            if cases_20_days[0] =='0':
+            if cases_20_days[0] == '0':
                 cases_20_days = cases_20_days[1:]
             if cases_20_days[2] == '0':
                 cases_20_days = cases_20_days[0:2] + cases_20_days[3:]
@@ -39,7 +39,7 @@ def run():
             cases_20_days = datetime.datetime.strptime(cases_20_days, '%m/%d/%y').date()
             # first_case = datetime.datetime.strptime(first_case, '%m/%d/%y').date()
             plt.scatter(g, s_cum, label=state, color=colors[0])
-            if g%5==0:
+            if g % 5 == 0:
                 plt.text(g, s_cum, f'{state}, {cases_20_days} \n {s_cum} cases')
             # plt.scatter(first_case, s_cum_first, label=state, color=colors[0])
             # plt.text(first_case + datetime.timedelta(days=1), s_cum_first, f'{state} \n {first_case} \n {s_cum_first} cases')

@@ -18,7 +18,7 @@ if __name__ == '__main__':
     rc('font', **{'family': 'serif', 'serif': ['Times']})
     rc('text', usetex=True)
     print('pgfs yay!')
-    covid.run()
+    # covid.run()
 
     # figs_for_paper.combine_data()
 
@@ -37,19 +37,19 @@ if __name__ == '__main__':
     # plt.show()
     #
     plotting_util.plot_sims_vs_analytical_multigens([3, 4, 6, 10], 400,  f'../data/testing/plaw_T8_10k_120ksims_q3_generational.txt',
-                                                    '../data/testing/powerlaw_q3_T8_ifft_g{0}.txt',
+                                                    '../data/testing/powerlaw_q3_T8_ifft_g{0}.txt', inset_to_plot=power_law_q3, inset_title='$p_k = k^{-2}e^{-k/10}$',
                                                     same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
     plt.show()
-    # #
+    # # #
     plotting_util.plot_sims_vs_analytical_multigens([15, 6, 8, 10], 400,  f'../data/testing/erdos_renyi_10k_60ksims_combo_generational.txt',
-                                                    '../data/paper/ER_q2.5_T8_ifft_g{0}.txt',
+                                                    '../data/paper/ER_q2.5_T8_ifft_g{0}.txt', inset_to_plot=poisson, inset_title='$p_k \\approx \\frac{\\lambda^ke^{-\\lambda}}{k!}, \\lambda=2.5$',
                                                     same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
     plt.show()
-    # plt.figure('correctedps')
-    plotting_util.plot_sims_vs_analytical_multigens([3, 6, 8, 10], 400,  f'../data/testing/erdos_renyi_10k_60ksims_combo_generational.txt',
-                                                    '../data/testing/poiss_T8_appx2k_uptom_g{0}.txt',
-                                                    same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
-    plt.show()
+    # # plt.figure('correctedps')
+    # plotting_util.plot_sims_vs_analytical_multigens([3, 6, 8, 10], 400,  f'../data/testing/erdos_renyi_10k_60ksims_combo_generational.txt',
+    #                                                 '../data/testing/poiss_T8_appx2k_uptom_g{0}.txt',
+    #                                                 same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
+    # plt.show()
 
     # ensemble.run_ensemble_intervention_effects(power_law_dd, '../data/testing/pl_20k', 30000, 20000,
     #                                            init_T=0.8, intervention_type="none", run_regular=True)
@@ -71,9 +71,9 @@ if __name__ == '__main__':
     print(f'took {time.time()-start_time} seconds')
     # figs_for_paper.results_plots(file_root='plaw_T8_10k_30ksims', q_degree=1.65)
     # figs_for_paper.results_plots(file_root='poiss_T8_5k_q_6_gamma1_g_over_b', q_degree=6)
-    figs_for_paper.results_plots(file_root='erdos_renyi_10k_10ksims_pt6', q_degree=2.5)
-    figs_for_paper.results_plots(file_root='plaw_T8_10k_40ksims_q3_p6', q_degree=3.04, active_gen_sizes_on=False)
-    figs_for_paper.results_plots(file_root='plaw_T8_10k_1ksims_q3_p7', q_degree=3.04, active_gen_sizes_on=True) #used just for the time plot because only need 10k results,not 120k
+    # figs_for_paper.results_plots(file_root='erdos_renyi_10k_10ksims_pt6', q_degree=2.5)
+    # figs_for_paper.results_plots(file_root='plaw_T8_10k_40ksims_q3_p6', q_degree=3.04, active_gen_sizes_on=False)
+    figs_for_paper.results_plots(file_root='paper/plaw_T8_10k_1ksims_q3_p7', q_degree=3.04, active_gen_sizes_on=True) #used just for the time plot because only need 10k results,not 120k
     figs_for_paper.results_plots(file_root='plaw_T8_10k_40ksims_q3_p6', q_degree=3.04, active_gen_sizes_on=False)
     figs_for_paper.results_plots(file_root='plaw_T8_10k_30ksims_p2', q_degree=1.65)
 

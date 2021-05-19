@@ -265,7 +265,8 @@ def outbreak_size_curves(list_of_gens, x_lim, fname_predict_format,
 ### SIMULATION WITH ANALYTICAL PLOTTING TOOLS
 def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format,
                                       fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
-                                      normalize_axis_x=False, plot_distribution_inset=False, grayscale=False):
+                                      normalize_axis_x=False, plot_distribution_inset=False, inset_to_plot=None,
+                                      inset_title=None, grayscale=False):
     color_key = {}
     color_key_sims = {}
     colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
@@ -325,8 +326,8 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         right, bottom, width, height = [0.4, 0.6, 0.25, 0.3]
         ax2 = fig.add_axes([right, bottom, width, height])
         # FOR POWER LAW with mu=10:
-        power_law_dd = degree_distributions.power_law_degree_distrb(400, mu=10) #q=3
-        ax2.plot(power_law_dd[:15], color='black', label='$p_k = k^{-2}e^{-k/10}$')
+        # power_law_dd = degree_distributions.power_law_degree_distrb(400, mu=10) #q=3
+        ax2.plot(inset_to_plot[:15], color='black', label=inset_title)
         # FOR ERDOS-RENYI with k=2.5:
         # erdos_renyi = degree_distributions.binomial_degree_distb(400, 2.5) #q=k=2.5
         # ax2.plot(erdos_renyi[:15], color='black', label='$p_k \\approx \\frac{\\lambda^ke^{-\\lambda}}{k!}, \\lambda=2.5$')
