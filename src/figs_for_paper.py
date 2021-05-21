@@ -1,17 +1,13 @@
 import time
 
 import matplotlib.pyplot as plt
-from matplotlib import rc
+import networkx as nx
 import numpy as np
 from scipy import stats
-import networkx as nx
 
 from analysis import ensemble
 from src import degree_distributions
-from src import pgf_formalism
 from src import plotting_util
-
-import epintervene
 
 
 def erdos_renyi_exp(file_root='poiss_T8_10k_q_1_gamma1_g_over_b',num_sims=50, num_nodes=10000, kill_by=None):

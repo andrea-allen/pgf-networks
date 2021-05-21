@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import time
 from deprecated import deprecated
 
+# ## ARCHIVED, DO NOT USE: See analysis.ensemble.py and use of epintervene package.
+
 
 # CLASS DEPRECATED: Features moved over to new package epintervene available on TestPyPI
 class Node:

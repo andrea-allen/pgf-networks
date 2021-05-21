@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-## THIS FILE IS IN PROGRESS, Please use src.plotting_util.py
+# ## ARCHIVED, DO NOT USE: Please use src.plotting_util.py
 
 def graph_infection_size_distribution_by_gen(list_of_gens, x_lim, filename, intervention_filepath=None,
                                              intervention_filename=None):

@@ -1,8 +1,9 @@
-import numpy as np
 import math
-import scipy.special
+
+import numpy as np
+
 from src import gen_extinct_prob
-import time
+
 
 def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
     psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=400, max_m=400, initial_T=T)

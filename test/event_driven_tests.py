@@ -1,10 +1,11 @@
 import unittest
-from src.event_driven import *
-from src.SIR_sims import *
+from archive.event_driven import *
+from archive.SIR_sims import *
 import networkx as nx
 from src import degree_distributions
 
-
+# ## ARCHIVED, DO NOT USE
+@deprecated
 class TestGeneral(unittest.TestCase):
     def test_array_fills(self):
         my_zero_array = np.zeros((10, 10))
@@ -14,7 +15,7 @@ class TestGeneral(unittest.TestCase):
         my_full_array = np.full((10, 10), 3.1)
         self.assertTrue((my_full_array == my_zero_array).all())
 
-
+@deprecated
 class TestNode(unittest.TestCase):
     def test_node_attributes(self):
         node = Node(24, 0, 0, 0.01)

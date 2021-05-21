@@ -1,10 +1,11 @@
 import networkx as nx
 import numpy as np
 import math
-from src import event_driven
+from archive import event_driven
 import time
 import deprecated
 
+# ## ARCHIVED, DO NOT USE (see analysis.ensemble.py instead)
 # Phasing out this file to make way for ensemble.py, which will call the external epintervene package
 # Use analysis.ensemble instead
 

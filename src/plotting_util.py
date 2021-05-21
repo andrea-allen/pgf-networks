@@ -1,14 +1,15 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib as m
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from matplotlib.collections import LineCollection
+from matplotlib.lines import Line2D
+
 import src.pgf_formalism
 from src import degree_distributions
-from matplotlib.lines import Line2D
-import seaborn as sns
-from matplotlib.colors import LinearSegmentedColormap
-from matplotlib.collections import LineCollection
+
 
 ### Below are three sets of plotting functions; tools for plotting simulation results, tools for plotting
 ### analytical results (phase space and cumulative outbreak sizes per generation) and tools for comparing analytical and
