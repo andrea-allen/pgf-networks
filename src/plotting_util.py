@@ -288,7 +288,10 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     photocopy_friendly = ['#e66101','#fdb863','#b2abd2','#5e3c99']
     sequential_bluegreen = ['#a1dab4','#41b6c4','#2c7fb8','#253494'] # '#ffffcc', too light
     sequential_orange = ['#fecc5c','#fd8d3c','#f03b20','#bd0026'] # '#ffffb2', too light
-    standrd_colors = sequential_orange
+    cmap = plt.get_cmap('bone')
+    indices = np.linspace(0, cmap.N, len(list_of_gens)+1)
+    my_colors = [cmap(int(i)) for i in indices]
+    standrd_colors = my_colors[:-1][::-1] #Shifted to avoid yellow
 
 
     style_key = {}
@@ -306,7 +309,8 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         styles.remove(style)
         style_key[gen] = style
 
-    fig, ax1 = plt.subplots(figsize=(14, 7))
+    # fig, ax1 = plt.subplots(figsize=(14, 7))
+    fig, ax1 = plt.subplots(figsize=(8, 6))
 
     for gen in list_of_gens:
         fname_predict = fname_predict_format.format(gen)
@@ -323,7 +327,7 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
                                                grayscale)
 
     if plot_distribution_inset:
-        right, bottom, width, height = [0.4, 0.6, 0.25, 0.3]
+        right, bottom, width, height = [0.4, 0.65, 0.25, 0.3]
         ax2 = fig.add_axes([right, bottom, width, height])
         # FOR POWER LAW with mu=10:
         # power_law_dd = degree_distributions.power_law_degree_distrb(400, mu=10) #q=3
@@ -337,7 +341,11 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         # ax2.set_yticks(np.arange(0, 1, 0.25))
         ax2.set_xticks([0, 1, 2, 3, 5, 10])
         ax2.semilogy()
-        ax2.legend(loc='upper right', fontsize=16)
+        ax2.legend(loc='upper right', fontsize=16, frameon=False)
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        ax2.spines['bottom'].set_visible(True)
+        ax2.spines['left'].set_visible(True)
 
     # TODO adjust for this particular figure
     # ax1.text(0.0005, 0.001, '$g=2$')
@@ -364,7 +372,11 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     plt.yticks(fontsize=18)
     ax1.tick_params(axis='y', labelrotation=0, labelsize=16)
     ax1.tick_params(axis='x', labelrotation=0, labelsize=16)
-    ax1.legend(loc='upper right', fontsize=16)
+    ax1.legend(loc='upper right', fontsize=16, frameon=False)
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(True)
+    ax1.spines['left'].set_visible(True)
     if same_plot:
         plt.legend(loc='upper right')
         plt.show()
@@ -441,6 +453,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         x_vals = x_vals / 10000
         # TODO fix labeling issue
     label = 'Infections up to gen {0}'.format(gen)
+    label = 's, gen {0}'.format(gen)
     color = color_key[gen]
     if grayscale:
         color = regular_color
@@ -477,7 +490,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     # ax1.legend(handles=legend_elements, loc=(.15, .69))
     # extra_legend = ax1.legend(handles=[regular_patch, intervention_patch], loc=(.1, .85))
     # ax1.add_artist(extra_legend)
-    ax1.set_xlabel('Cumulative infections', fontsize=20)
+    ax1.set_xlabel('Cumulative infections $s$', fontsize=20)
     ax1.set_ylabel('Probability', fontsize=20)
     # plt.rcParams.update({'font.size': 12})
     # plt.title('Effects of Intervention', fontsize=10)

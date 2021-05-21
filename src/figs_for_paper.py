@@ -171,8 +171,13 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
 
 
 def time_emergence_plot(file_root, q_degree, beta):
+    #TODO: bone colors?
     gens_to_display_lines = [2, 6, 10, 14, 18, 22, 26, 30]
     gens_to_display_curves = [2, 4, 6, 8, 10, 12]
+    cmap = plt.get_cmap('bone')
+    indices = np.linspace(0, cmap.N, int(max(gens_to_display_lines)*1.5) + 2)
+    my_colors = [cmap(int(i)) for i in indices]
+    standrd_colors = my_colors[:max(gens_to_display_lines)+2][::-1] #Shifted to avoid yellow
     ax2 = plt.subplot(212)
     # ax1 = plt.subplot(211, sharex=ax2)
     ax1 = plt.subplot(211)
@@ -187,9 +192,9 @@ def time_emergence_plot(file_root, q_degree, beta):
     timeseries_vals = np.loadtxt(f'../data/{file_root}_ts_vals_normalized.txt', delimiter=',')
     max_x_val = int(.8 * len(timeseries_vals))
     # plt.subplot(2, 1, 1, sharex=True)
-    ax1.plot(timeseries_vals[:max_x_val], active_gens_ts[:max_x_val], label='active \n generations', color='blue',
+    ax1.plot(timeseries_vals[:max_x_val], active_gens_ts[:max_x_val], label='active \n generations', color=standrd_colors[-1],
              ls='--')
-    ax1.plot(timeseries_vals[:max_x_val], total_gens_ts[:max_x_val], label='total \n generations', color='blue', ls='-')
+    ax1.plot(timeseries_vals[:max_x_val], total_gens_ts[:max_x_val], label='total \n generations', color=standrd_colors[-1], ls='-')
     # ax1.set_xticks(
     #     [timeseries_vals[0], timeseries_vals[50], timeseries_vals[100], timeseries_vals[150], timeseries_vals[200],
     #      timeseries_vals[250]])
@@ -197,17 +202,18 @@ def time_emergence_plot(file_root, q_degree, beta):
     start_color = (.1, .2, .5)
     for g in range(1, 15):
         expected_time[g] = g / (q_main * beta)
-    for g in gens_to_display_lines:
+    for i in range(len(gens_to_display_lines)):
+        g = gens_to_display_lines[i]
         if g == 2:  # just do a label for one pair
-            ax1.vlines(expected_time[g], ymin=0, ymax=max(total_gens_ts), color=(.1, .2, .3 + g / 50), ls=':')
+            ax1.vlines(expected_time[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], ls=':')
             # ,alpha=0.5, label='Expected time of \n emergence $\\frac{g}{q\\beta}$')
-            ax1.vlines(gen_emergence[g], ymin=0, ymax=max(total_gens_ts), color=(.1, .2, .3 + g / 50), alpha=0.5)
+            ax1.vlines(gen_emergence[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], alpha=0.5)
             # ,label='Average empirical time \n of emergence')
         else:
-            ax1.vlines(expected_time[g], ymin=0, ymax=max(total_gens_ts), color=(.1, .2, .3 + g / 50), ls=':',
+            ax1.vlines(expected_time[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], ls=':',
                        alpha=0.5)
-            ax1.vlines(gen_emergence[g], ymin=0, ymax=max(total_gens_ts), color=(.1, .2, .3 + g / 50), alpha=0.5)
-    ax1.legend(loc='upper right')
+            ax1.vlines(gen_emergence[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], alpha=0.5)
+    ax1.legend(loc='upper right', frameon=False)
     ax1.set_xticks(list([expected_time[g] for g in gens_to_display_lines]))
     x_tick_labels = list([f'$\\frac{{{g}}}{{q\\beta}}$' for g in gens_to_display_lines])
     x_tick_labels[0] = f'$t = \\frac{{g}}{{q\\beta}}$'
@@ -218,29 +224,35 @@ def time_emergence_plot(file_root, q_degree, beta):
     # ax1.set_xticks([])
     # ax1.set_xlabel('Time')
     ax1.set_ylabel('Number active generations')
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(True)
+    ax1.spines['left'].set_visible(True)
     # plt.show()
     # plt.subplot(2, 1, 2, sharex=True)
     # ax2.set_xticks([timeseries_vals[0], timeseries_vals[50], timeseries_vals[100], timeseries_vals[150], timeseries_vals[200], timeseries_vals[250]])
     # TODO make it an actual inset
     average_active_sizes = np.loadtxt(f'../data/{file_root}_active_gen_sizes_ts.txt', delimiter=',')
-    for g in gens_to_display_curves:
-        ax2.plot(timeseries_vals[:max_x_val], average_active_sizes.T[g][:max_x_val], color=(.1, .2, .3 + g / 20))
+    for i in range(len(gens_to_display_curves)):
+        g = gens_to_display_curves[i]
+        ax2.plot(timeseries_vals[:max_x_val], average_active_sizes.T[g][:max_x_val], color=standrd_colors[g])
         x_position_val = np.argmax(average_active_sizes.T[g])
         max_y_val = average_active_sizes.T[g][x_position_val]
         ax2.text(timeseries_vals[x_position_val] + 200, max_y_val - 1, f'g {g}', horizontalalignment='left')
-    for g in gens_to_display_lines:
+    for i in range(len(gens_to_display_lines)):
+        g = gens_to_display_lines[i]
         if g == 2:  # just do a label for one pair
-            ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=(.1, .2, .3 + g / 50), ls=':',
+            ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g], ls=':',
                        alpha=0.5, label='Expected time \n of emergence $\\frac{g}{q\\beta}$')
-            ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=(.1, .2, .3 + g / 50),
+            ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5,
                        label='Average empirical \n time of gen $g$ \n emergence')
         else:
-            ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=(.1, .2, .3 + g / 50),
+            ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5, ls=':')
-            ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=(.1, .2, .3 + g / 50),
+            ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5)
-    ax2.legend(loc='upper right')
+    ax2.legend(loc='upper right', frameon=False)
     # plt.xlabel('time')
     ax2.set_xlabel('Time')
     ax2.set_xticks(np.arange(0, 4001, 500))
@@ -249,6 +261,10 @@ def time_emergence_plot(file_root, q_degree, beta):
     ax2.set_xticklabels(x_tick_labels_time)
     ax2.tick_params(axis='x', labelrotation=-20)
     ax2.set_ylabel('Number active nodes')
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.spines['bottom'].set_visible(True)
+    ax2.spines['left'].set_visible(True)
     plt.show()
 
 
