@@ -14,29 +14,6 @@ if __name__ == '__main__':
 
     covid.contour_figs()
 
-    sample_dd = np.array([1, 2, 3, 4, 4])
-    # pgf_formalism.compute_g0_from_offspring(g1=sample_dd, p0=.03)
-    pgf_formalism.offspring_dists(r0=3, k=5, p0=.03)
-
-
-    covid.contour_fig1(r0=3.5, k=3.1, g=3, s=100)
-
-    # figs_for_paper.power_law_exp('plaw_05_25', num_sims=75000, num_nodes=10000)
-    # figs_for_paper.erdos_renyi_exp('ER_05_25', num_sims=50000, num_nodes=10000, kill_by=16)
-    power_law_dd = degree_distributions.power_law_degree_distrb(400)
-    poisson = degree_distributions.binomial_degree_distb(2000, 2.5)
-    # figs_for_paper.results_plots('testing/ER_newtest', q_degree=2.5)
-    plotting_util.plot_sims_vs_analytical_multigens([3, 6, 10, 12], 400,  f'../data/testing/plaw_05_25_generational.txt',
-                                                    '../data/paper/powerlaw_q3_T8_ifft_g{0}.txt', inset_to_plot=power_law_dd, inset_title='$p_k = k^{-2}e^{-k/10}$',
-                                                    same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
-    plt.show()
-
-    plotting_util.plot_sims_vs_analytical_multigens([3, 6, 10, 12], 400,  f'../data/testing/ER_05_25_generational.txt',
-                                                    '../data/paper/ER_q2.5_T8_ifft_g{0}.txt', inset_to_plot=poisson, inset_title='tbd$p_k = k^{-2}e^{-k/10}$',
-                                                    same_plot=True, normalize_axis_x=False, plot_distribution_inset=True)
-    plt.show()
-
-
     covid.run()
 
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
