@@ -12,9 +12,7 @@ if __name__ == '__main__':
     rc('text', usetex=True)
     print('pgfs yay!')
 
-    covid.contour_figs()
-
-    covid.run()
+    covid.contour_fig2()
 
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
     power_law_q3 = degree_distributions.power_law_degree_distrb(2000, mu=10) #q is 3, k is 1.7

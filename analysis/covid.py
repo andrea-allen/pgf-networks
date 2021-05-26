@@ -17,21 +17,23 @@ from matplotlib.colors import LinearSegmentedColormap
 #    Next, vary g and start on a first date. Then for each g along the x axis, get the corresponding multiple of the
 # serial interval. Plot the number of cases at that serial interval after the first case.
 
-def run():
+def covid_data(ax, solo_plot=True):
     print('Covid-19')
     colors = ['red', 'orange', 'blue', 'yellow', 'purple']
     covid_df = read_jh_data()
-    all_states = list(pd.unique(covid_df['Province_State']))
+    # all_states = list(pd.unique(covid_df['Province_State']))
     y_labels = []
-    for state in ['Arkansas', 'Indiana', 'Michigan']:
+    for state in ['Iowa', 'Idaho', 'Kentucky']:
         #TODO convert to datetime
         state_df = get_by_state(covid_df, state)
         state_df_summed = sum_for_state(state_df)
         first_case = get_first_case_date(state_df_summed)
         start_date = '3/15/20'
+        start_date = first_case
+        # start_date = state_df_summed.head(1).index.values[0]
         start_date_as_date = datetime.datetime.strptime(start_date, '%m/%d/%y')
         for g in range(1, 5):
-            cases_20_days = add_serial_interval(start_date, 5*g)
+            cases_20_days = add_serial_interval(start_date, 3*g)
             if cases_20_days[0] == '0':
                 cases_20_days = cases_20_days[1:]
             if cases_20_days[2] == '0':
@@ -42,7 +44,7 @@ def run():
             s_cum = state_df_summed.loc[cases_20_days]
             cases_20_days = datetime.datetime.strptime(cases_20_days, '%m/%d/%y').date()
             # first_case = datetime.datetime.strptime(first_case, '%m/%d/%y').date()
-            plt.scatter(g, s_cum, label=state, color=colors[0])
+            ax.scatter(g, s_cum, label=state, color=colors[0])
             if g % 1 == 0:
                 plt.text(g, s_cum, f'{state}, {cases_20_days} \n {s_cum} cases')
             # plt.scatter(first_case, s_cum_first, label=state, color=colors[0])
@@ -55,18 +57,19 @@ def run():
     indices_to_show = np.arange(0, len(state_df_summed), 60)
     # indices_to_show = np.arange(0, 365, 30)
     # plt.xticks(state_df_summed.index.values[indices_to_show], rotation=35)
-    plt.xticks(rotation=35)
-    plt.ylabel('Cumulative cases')
-    plt.xlabel('Generation, (5 day increments, with serial interval=5)')
-    plt.yticks(y_labels)
-    plt.xticks(np.arange(0, 50))
-    # plt.legend(loc='upper left')
-    plt.box(on=False)
-    plt.semilogy()
-    # plt.text(datetime.datetime.strptime('01/30/20', '%m/%d/%y').date(), 3000, 'Serial interval: 5 days \n Points shown are date of first recorded \n case and number of cumulative \n cases, then cumulative cases 20 days later \n corresponding to generation g=4.')
-    plt.show()
+    if solo_plot:
+        plt.xticks(rotation=35)
+        plt.ylabel('Cumulative cases')
+        plt.xlabel('Generation, (5 day increments, with serial interval=5)')
+        plt.yticks(y_labels)
+        plt.xticks(np.arange(0, 50))
+        # plt.legend(loc='upper left')
+        plt.box(on=False)
+        plt.semilogy()
+        # plt.text(datetime.datetime.strptime('01/30/20', '%m/%d/%y').date(), 3000, 'Serial interval: 5 days \n Points shown are date of first recorded \n case and number of cumulative \n cases, then cumulative cases 20 days later \n corresponding to generation g=4.')
+        plt.show()
     # print(covid_df.head())
-    return covid_df
+    return ax
 
 def read_jh_data():
     data = pd.read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
@@ -157,9 +160,10 @@ def make_figure2():
     k = .14
     r0 = 3.5
     g_vals = np.arange(1, 10)
-    s_vals = np.arange(2, 100)
+    s_vals = np.arange(2, 500)
     Z_vals = np.zeros((len(s_vals), len(g_vals)))
-    g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03)  # TODO pull derivation of p0 from contour file from LHD
+    p0 = 1 - (k * ((k / (k + r0)) ** (k - 1) - 1) / (1 - k))
+    g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0, length=500)  # TODO pull derivation of p0 from contour file from LHD
     results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
     extnct_array = results[0]  # format is g, s, m
     # then condense over m, get value at g,s
@@ -247,6 +251,68 @@ def contour_figs():
 
 
     # Save to file.
-    # plt.tight_layout(0.1)
+    plt.tight_layout(0.1)
+    plt.show()
+
+def contour_fig2():
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.size"] = 16
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.sans-serif"] = ["Fira Sans", "PT Sans", "Open Sans", "Roboto", "DejaVu Sans", "Liberation Sans",
+                                       "sans-serif"]
+    plt.rcParams["xtick.major.width"] = 2
+    plt.rcParams["xtick.major.size"] = 8
+    plt.rcParams["ytick.major.width"] = 2
+    plt.rcParams["ytick.major.size"] = 8
+
+    colors = [(24 / 255, 22 / 255, 35 / 255),
+              (11 / 255, 26 / 255, 69 / 255),
+              (85 / 255, 114 / 255, 194 / 255),
+              (216 / 255, 157 / 255, 125 / 255),
+              (195 / 255, 177 / 255, 137 / 255),
+              (175 / 255, 90 / 255, 59 / 255)]
+    n_bins = [3, 6, 10, 100]  # Discretizes the interpolation into bins
+    cmap_name = 'my_list'
+    cm = LinearSegmentedColormap.from_list(
+        cmap_name, colors, N=7)
+
+    fig, ((ax)) = plt.subplots(1,1,figsize=(6,5.5), sharey=False)
+    # fig.subplots_adjust(bottom=0.15)
+
+    ax.set_yscale('log')
+    ax.set_ylim(5,100)
+
+    X, Y, Z = make_figure2()
+    covid_data(ax, solo_plot=False)
+    cp = ax.contour(X, Y, Z,levels=40)
+    cbar = fig.colorbar(cp)
+    ax.clabel(cp, inline=True, fontsize=10)
+    # Patch:
+    # ax.add_patch(plt.Rectangle((1.4,0.1), 2.5, 0.54, fill=False,
+    #                            edgecolor="r", linewidth=3))
+
+    ax.set_ylabel(r'Cumulative cases $s$')
+    ax.set_xlabel(r'Epidemic generation $g$')
+    cbar.set_label(r'Probability of epidemic survival', rotation=270)
+
+    # plt.text(0.16, 0.33, "2019-nCoV, Wuhan",
+    #          color="w",
+    #          horizontalalignment='left',
+    #          verticalalignment='bottom',
+    #          transform=ax.transAxes,
+    #          fontsize=18)
+    # plt.text(0.14, 0.4, "COVID-19 (over-dispersed)",
+    #          color="r",
+    #          horizontalalignment='left',
+    #          verticalalignment='bottom',
+    #          transform=ax.transAxes,
+    #          backgroundcolor="w")
+
+    # plt.text(0.05, 0.05, r'low $R_0$, high variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    # plt.text(0.57, 0.95, r'high $R_0$, low variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+
+
+    # Save to file.
+    plt.tight_layout(0.1)
     plt.show()
 

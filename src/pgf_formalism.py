@@ -192,13 +192,17 @@ def computeLittlePsi(s, m, prevGenPsi, M):
     newPsi = prevGenPsi[s_prime, :].dot(M[:, m])
     return newPsi
 
-def offspring_dists(r0, k, p0):
+def offspring_dists(r0, k, p0, length):
     a = 1/k
-    g1 = np.zeros(100)
-    g0 = np.zeros(100)
+    g1 = np.zeros(length)
+    g0 = np.zeros(length)
     for i in range(len(g1)):
-        g1[i] = (math.gamma(i + k) / (math.factorial(i) * math.gamma(k))) * ((a * r0) / (1 + a * r0)) ** (i) * (
-                    1 / (1 + a * r0)) ** (k)
+        try:
+            # fact = np.sqrt(2 * math.pi * i) * (i / np.exp(1)) ** i
+            g1[i] = (math.gamma(i + k) / (math.factorial(i) * math.gamma(k))) * ((a * r0) / (1 + a * r0)) ** (i) * (
+                        1 / (1 + a * r0)) ** (k)
+        except OverflowError:
+            g1[i] = 0
     g1 = g1 / np.sum(g1)
     g0 = compute_g0_from_offspring(g1, p0)
     g0 = g0[:-1]
