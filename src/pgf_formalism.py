@@ -17,7 +17,7 @@ def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
             for s in range(psi.shape[1]):
                 if np.sum(psi[g][s][:]) > 0:
                     psi[g][s,:] = psi[g][s,:] / np.sum(psi[g][s,:])
-    extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T)
+    extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=False)
     return [extct_array, psi]
 
 def expected_num_infected(deg_dist, T):

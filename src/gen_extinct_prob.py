@@ -10,11 +10,33 @@ Created on Tue Apr 13 15:11:09 2021
 
 # takes a deg dist and transmission prob and returns offspring dist
 def gen_offspring_dist(deg_dist, T):
+    d_dist = np.multiply(deg_dist, range(len(deg_dist)))
+    d_dist = d_dist / np.sum(d_dist)
     l_dist = np.zeros(len(deg_dist))
     for l in range(len(l_dist)):
         for k in range(l,len(l_dist)):
-            l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]*k
+            #l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]*k
+            l_dist[l] += binom.pmf(l,k,T)*d_dist[k]
     return l_dist/np.sum(l_dist)
+
+def G1(ddist):
+    new_dist = np.multiply(ddist,range(len(ddist)))
+    new_dist = new_dist / np.sum(new_dist)
+    
+    Pk = np.zeros((len(new_dist), 2))
+    Pk[:,0] = range(len(new_dist))
+    Pk[:,1] = list(new_dist)
+    return Pk
+
+def G(x, pk):
+    return np.power(x[np.newaxis].T, pk[:,0]).dot(pk[:,1])
+    #return np.multiply(np.power(x, pk[:,0]), pk[:,1])
+
+def GT(T, pk):
+    N = 2000
+    z = np.exp(2 * np.pi * complex(0,1) * np.arange(N) / N)
+    G_at_x = G(z*T+1-T, pk)
+    return np.absolute(np.fft.ifft(G_at_x))[::-1]
 
 # takes a distribution and returns a pgf as a function
 def make_pgf(dist):
@@ -37,15 +59,19 @@ def ext_prob_iter(mu, x=0, comp=1, tol=10**(-7)):
     else:
         return ext_prob_iter(mu, mu(x), mu(x), tol)
     
-def sngl_ext_prob(deg_dist, T):
-    return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
+def sngl_ext_prob(deg_dist, T, fft=True):
+    #return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
+    if fft:
+        return ext_prob_iter( make_pgf( GT(T, G1(deg_dist)) ) )
+    else:
+        return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
 
 """
 for Psi cake indexed as [g][s][m]
 compute extinction probability array
 """
-def gen_ext_prob_array(psi, d_dist, T):
-    e_prob = sngl_ext_prob(d_dist, T)
+def gen_ext_prob_array(psi, d_dist, T, fft=True):
+    e_prob = sngl_ext_prob(d_dist, T, fft)
     extnct_array = np.zeros(psi.shape)
     for g in range(extnct_array.shape[0]):
         for s in range(extnct_array.shape[1]):
