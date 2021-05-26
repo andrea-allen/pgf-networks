@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import datetime
+import scipy.stats as spt
+import src.gen_extinct_prob
 
 # Say we use a serial interval of 5 days
 # then g is given by... 0, 5, 10, 15, 20 days intervals after first case
@@ -19,14 +21,14 @@ def run():
     covid_df = read_jh_data()
     all_states = list(pd.unique(covid_df['Province_State']))
     y_labels = []
-    for state in ['California', 'New York', 'Texas', 'Washington', 'Vermont']:
+    for state in ['Arkansas', 'Indiana', 'Michigan']:
         #TODO convert to datetime
         state_df = get_by_state(covid_df, state)
         state_df_summed = sum_for_state(state_df)
         first_case = get_first_case_date(state_df_summed)
         start_date = '3/15/20'
         start_date_as_date = datetime.datetime.strptime(start_date, '%m/%d/%y')
-        for g in range(1, 50):
+        for g in range(1, 5):
             cases_20_days = add_serial_interval(start_date, 5*g)
             if cases_20_days[0] == '0':
                 cases_20_days = cases_20_days[1:]
@@ -39,7 +41,7 @@ def run():
             cases_20_days = datetime.datetime.strptime(cases_20_days, '%m/%d/%y').date()
             # first_case = datetime.datetime.strptime(first_case, '%m/%d/%y').date()
             plt.scatter(g, s_cum, label=state, color=colors[0])
-            if g % 5 == 0:
+            if g % 1 == 0:
                 plt.text(g, s_cum, f'{state}, {cases_20_days} \n {s_cum} cases')
             # plt.scatter(first_case, s_cum_first, label=state, color=colors[0])
             # plt.text(first_case + datetime.timedelta(days=1), s_cum_first, f'{state} \n {first_case} \n {s_cum_first} cases')
@@ -86,4 +88,30 @@ def add_serial_interval(date_as_str, days_to_add):
     date_as_date = datetime.datetime.strptime(date_as_str, '%m/%d/%y').date()
     date_add_days = date_as_date + datetime.timedelta(days=days_to_add)
     return date_add_days.strftime('%m/%d/%y')
+
+def contour_fig1(r0, k, g, s):
+    plt.figure('Contour plot 1')
+    # Fixed g, fixed s, vary k, r0 and do the following:
+    # offspring distribution, from k and r0:
+    # neg_binom = spt.nbinom.pmf(n=100, p=0.5, k=2)
+    neg_binom = np.arange(0, 100)
+    z_vals = np.zeros((11, len(neg_binom)))
+    # survival prob:
+    for k in range(1, 12):
+        actual_k = k/2
+        # neg_binom = spt.nbinom.pmf(n=100, p=0.5, k=actual_k)
+        survival_prob_matrix = np.random.rand(len(neg_binom), len(neg_binom))
+        summed = np.sum(survival_prob_matrix, axis=1)
+        z_vals[k-1] = summed
+    x_sample = np.arange(0, 10)
+    y_sample = np.arange(0, 10)
+    X, Y = np.meshgrid(neg_binom, np.arange(11))
+    Z1 = np.exp(-X ** 2 - Y ** 2)
+    Z2 = np.exp(-(X - 1) ** 2 - (Y - 1) ** 2)
+    Z = (Z1 - Z2) * 2
+    # z_vals = np.full((10, 10), 2)
+    # for i in range(10):
+    #     z_vals[i] = np.random.randn(10)
+    plt.contour(X, Y, z_vals)
+    plt.show()
 

@@ -1,18 +1,10 @@
-import time
-
 import matplotlib.pyplot as plt
-from matplotlib import rc
-import numpy as np
-from scipy import stats
 
 from analysis import ensemble
 from src import degree_distributions
+from src import figs_for_paper
 from src import pgf_formalism
 from src import plotting_util
-from src import figs_for_paper
-from analysis import covid
-
-import epintervene
 
 # ## CREATE A DEGREE DISTRIBUTION
 power_law_dd = degree_distributions.power_law_degree_distrb(400)

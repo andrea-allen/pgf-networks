@@ -84,14 +84,6 @@ def z1_of(g_0):
     return z1
 
 
-def z2_of(g_0):
-    ## FYI this doesn't compute correctly, should equate to pgf_formalism.z1_of(pgf_formalism.g1_of(degree_distrb))
-    z2 = 0
-    for k in range(len(g_0) - 2):
-        z2 += (k + 1) * (k + 2) * g_0[k + 2]
-    return z2
-
-
 def g1_of(g_0):
     g_1 = np.zeros(len(g_0))
     for k in range(len(g_0) - 1):
@@ -194,19 +186,49 @@ def computeLittlePsi(s, m, prevGenPsi, M):
     newPsi = prevGenPsi[s_prime, :].dot(M[:, m])
     return newPsi
 
+def offspring_dists(r0, k, p0):
+    a = 1/k
+    g1 = np.zeros(100)
+    g0 = np.zeros(100)
+    for i in range(len(g1)):
+        g1[i] = (math.gamma(i + k) / (math.factorial(i) * math.gamma(k))) * ((a * r0) / (1 + a * r0)) ** (i) * (
+                    1 / (1 + a * r0)) ** (k)
+    g1 = g1 / np.sum(g1)
+    g0 = compute_g0_from_offspring(g1, p0)
+    g0 = g0[:-1]
+    return g0, g1
+
+def compute_g0_from_offspring(g1, p0):
+    g0 = np.zeros(len(g1)+1)
+    for i in range(1, len(g0)):
+        g0[i] = g1[i-1]/i
+    g0 = g0 / np.sum(g0)
+    g0[0] = p0
+    g0[1:] = g0[1:]*(1-p0)
+    return g0
+
+
 
 # COMPUTATION STARTS HERE
-def Psi(degree_distrb, initProb, num_gens, max_s, max_m, initial_T,
+def Psi(degree_distrb=None, initProb=1, num_gens=100, max_s=400, max_m=400, initial_T=0.8,
         intervention_gen=-1, intervention_T=0.5,
-        prop_vacc=0.5, rollout_dict=None, intervention_type="none"):
+        prop_vacc=0.5, rollout_dict=None, intervention_type="none",
+        custom_g0=None, custom_g1=None):
     # 3-d matrix with one matrix per generation of Psi_g
     allPsi = np.zeros(((num_gens, max_s, max_m)))
     allPsi[0][1][1] = initProb
 
     # Assign initial degree distribution here
-    original_degree_distrb = degree_distrb
-    g1, g0 = gen_functions_with_transmissibility(original_degree_distrb,
-                                                 initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
+    if custom_g0 is None and custom_g1 is None:
+        original_degree_distrb = degree_distrb
+        g1, g0 = gen_functions_with_transmissibility(original_degree_distrb,
+                                                     initial_T)  # this g0 and g1 is for the G(1-(xy+1)T) in terms of the l's
+    elif custom_g0 is None or custom_g1 is None:
+        print('PLEASE PROVIDE BOTH CUSTOM G1 AND CUSTOM G0')
+    else:
+        g0 = custom_g0
+        g1 = custom_g1
+
     M_0, M_1 = constructMatrixM(g0, g1)
     for s_g1 in range(max_s):
         for m_g1 in range(s_g1):

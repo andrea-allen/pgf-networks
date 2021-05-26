@@ -5,7 +5,6 @@ from epintervene.simobjects import extended_simulation
 from epintervene.simobjects import network
 from src import pgf_formalism
 import time
-import matplotlib.pyplot as plt
 
 
 def run_ensemble_intervention_effects(degree_distrb, base_file_name='sim_results',
@@ -156,16 +155,17 @@ def simulate_ensemble(degree_distrb, num_sims=10, N=1000, intervention_gen=-1, i
     return outbreak_size_distrb_per_gen_matrix
 
 
-def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='generation', intervention_gen=-1,
+def run_single_simulation(A, adjlist, current, results_type='generation', intervention_gen=-1,
                           beta_interv=-1.0,
                           beta_init=1.0, gamma_init=0.001,
                           prop_reduced=0.0, intervention_gen_list=None, beta_redux_list=None, prop_reduced_list=None,
-                          intervention_type="none", viz_pos=None, G=None, kill_by=None, active_gen_sizes_on=False):
+                          intervention_type="none", viz_pos=None, G=None, kill_by=None, active_gen_sizes_on=False,
+                          Beta=None, Gamma=None):
     start_time = time.time()
-    N = len(A)
+    N = len(adjlist)
     # Constructing the simulation of specified Intervention Type, otherwise will run a regular simulation
     if intervention_type == "random-rollout":
-        sim = extended_simulation.RandomRolloutSimulation(N=N, adjlist=adjlist, adjmatrix=A)
+        sim = extended_simulation.RandomRolloutSimulation(N=N, adjlist=adjlist)
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
@@ -175,7 +175,7 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
         #                            proportion_reduced_list=[0,0,0])
 
     elif intervention_type == "random":
-        sim = extended_simulation.RandomInterventionSim(N, adjmatrix=A, adjlist=adjlist)
+        sim = extended_simulation.RandomInterventionSim(N, adjlist=adjlist)
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv,
@@ -186,7 +186,7 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv)
     else:
-        sim = simulation.Simulation(N=N, adj_list=adjlist, adj_matrix=A)
+        sim = simulation.Simulation(N=N, adj_list=adjlist)
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
 
@@ -214,7 +214,7 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
             timeseries, timeseries_results_inf, timeseries_results_rec, active_gens_ts, \
             total_gens_ts, active_gen_sizes = sim.tabulate_continuous_time(1000,
                                                                             custom_range=True,
-                                                                            custom_t_lim=5000,
+                                                                            custom_t_lim=10000,
                                                                             active_gen_info=True,
                                                                            active_gen_sizes=True)
             generational_results = sim.tabulate_generation_results(100)
@@ -224,7 +224,7 @@ def run_single_simulation(A, adjlist, Beta, Gamma, current, results_type='genera
         else:
             timeseries, timeseries_results_inf, timeseries_results_rec, active_gens_ts, total_gens_ts = sim.tabulate_continuous_time(1000,
                                                                                                   custom_range=True,
-                                                                                                  custom_t_lim=5000,
+                                                                                                  custom_t_lim=10000,
                                                                                                   active_gen_info=True)
         generational_results = sim.tabulate_generation_results(100)
         generational_emergence = sim.get_generational_emergence()
@@ -247,20 +247,13 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
                                 intervention_type="none", kill_by=None, active_gen_sizes_on=False):
     # Configuring the parameters
     beta_init = -(gamma * initial_T) / (initial_T - 1)
-    # beta_init = 0.99
     print(f'Beta {beta_init}')
     beta_interv = -(gamma * intervention_T) / (intervention_T - 1)
 
     # Setting up a results data structure
     ## This first definition of t_buckets does it in chunks of 1/beta
-    t_buckets = np.arange(0, 15000, 1 / beta_init) # this isn't quite right
     ## This definition of t_buckets uses q*beta/(q*beta + gamma) *(q*beta + gamma).^{-1}, where q is avg excess degree
     q = pgf_formalism.z1_of(pgf_formalism.g1_of(degree_distrb))
-    #TODO can you compute q without the dead end leaves? to mimic the infinite network?
-    k = pgf_formalism.z1_of(degree_distrb)
-    bucket_increment = (q*beta_init/(q*beta_init+gamma)) * (1/(q*beta_init + gamma))
-    bucket_increment = (1/(q*beta_init + gamma)) # try T/(beta+gamma), then try again for a bigger q_bar
-    bucket_increment = (beta_init/(beta_init+gamma)) / (beta_init+gamma)
     bucket_increment = 1/(q*(beta_init)) # Latest idea
     t_buckets = np.arange(0, 5000, bucket_increment)
     callibrated = False
@@ -277,26 +270,10 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
     G, pos = network.NetworkBuilder.from_degree_distribution(N, degree_distrb)
 
     k = np.mean([nx.degree(G, node) for node in nx.nodes(G)])
-    # q = np.mean([nx.degree(G, node)-1 for node in nx.nodes(G)])
     print(f'k is {k}, q is {q}')
-    # Gcc = sorted(nx.connected_components(G), key=len, reverse=True)
-    # G0 = G.subgraph(Gcc[0])
-    # max_diameter = nx.diameter(G0)
-    # np.savetxt(f'../data/max_tree_diameter.txt', max_diameter)
-    # print(f'MAX DIAMETER', max_diameter)
-    # nx.draw(G, with_labels=True)
-    # plt.show()
-    A = np.array(nx.adjacency_matrix(G).todense())
+
     adjlist = network.NetworkBuilder.create_adjacency_list(G)
-    Beta = None
-    Gamma = None
 
-    ## ORIGINAL NETWORK
-    # G, pos = network.NetworkBuilder.from_degree_distribution(N, degree_distrb)
-
-    # Running the ensemble
-    num_sims_where_g2_direct = 0
-    num_sims_wher_g2_indirect = 0
     for i in range(num_sims):
         # Generate a new network every 500 simulations
         if i % 500 == 0:
@@ -309,7 +286,7 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
         if active_gen_sizes_on:
             generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec,\
                 active_gens_results, total_gens_results, active_gen_sizes = \
-                run_single_simulation(A=A, adjlist=adjlist, Beta=Beta, Gamma=Gamma, current=i, results_type='time_and_gen',
+                run_single_simulation(A=None, adjlist=adjlist, current=i, results_type='time_and_gen',
                                       intervention_gen=intervention_gen,
                                       beta_interv=beta_interv, beta_init=beta_init, gamma_init=gamma,
                                       prop_reduced=prop_reduced,
@@ -319,7 +296,7 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
         else:
             generational_results, generational_emergence, timeseries, timeseries_results_inf, timeseries_results_rec,\
                 active_gens_results, total_gens_results = \
-                run_single_simulation(A=A, adjlist=adjlist, Beta=Beta, Gamma=Gamma, current=i, results_type='time_and_gen',
+                run_single_simulation(A=None, adjlist=adjlist, current=i, results_type='time_and_gen',
                                       intervention_gen=intervention_gen,
                                       beta_interv=beta_interv, beta_init=beta_init, gamma_init=gamma,
                                       prop_reduced=prop_reduced,
@@ -350,10 +327,8 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
             callibrated = True
 
         # Recording results with time buckets
-        # todo need the results to be cumulative
         # starting_tie = time.time()
         for t_time_idx in range(len(t_buckets)):
-        #     # lazy way of cumulative infections is adding quantity recovered at that time too
             t_time = t_buckets[t_time_idx]
             t_time = int(t_time)
             t_idx = np.where(timeseries == t_time)
@@ -363,7 +338,6 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
             except IndexError:
                 print('Index error for g: ', t_time_idx, ', gen_s: ', num_total_infctd)
                 continue
-        # print(f'Sorting the time took {time.time()-starting_tie}')
 
         # Recording ensemble results generational results
         for gen in range(len(generational_results)):
@@ -395,9 +369,6 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
                     averaging_active_gen_sizes += np.array(active_gen_sizes)
                 averaging_count += 1
 
-        # Two other ideas:
-        # 1. Average generational emergence, so a time series of the emergence of each generation (or a dict that's the average of each value)
-        # 2. Time buckets, and average number of gens that have appeared by that time. Is this the same thing?
     # averaging results:
     for gen in range(100):
         gen_time_series = generational_distribution[gen]
@@ -418,12 +389,6 @@ def ensemble_time_distributions(degree_distrb, num_sims=10, N=1000, intervention
     if active_gen_sizes_on:
         averaging_active_gen_sizes = averaging_active_gen_sizes / averaging_count
 
-    # plt.scatter([2, 3, 4, 6, 9, 11, 3], [.52, .25, .17, .09, .06, .05, .33])
-    # x_vals = np.array([2, 3, 4, 6, 9, 11, 3])
-    # q_vals = np.array([[2, 3, 4, 6, 9, 11, 2]])
-    # plt.scatter(np.array(x_vals), (1 / x_vals))
-    # plt.scatter(np.array(x_vals), (1 / q_vals))
-    # plt.scatter(np.arange(38), np.diff(gen_emergence_avg[0][:39]))
     if active_gen_sizes_on:
         return t_buckets, time_buckets_distribution, generational_distribution, gen_emergence_avg[0], averaging_active, \
                averaging_total, averaging_active_gen_sizes, timeseries
@@ -451,54 +416,4 @@ def ensemble_time_series(network, Beta, Gamma, numsims=100, N=1000):
     infection_ts = np.mean(total_ts, axis=0)
     recover_ts = np.mean(total_ts_rec, axis=0)
     return ts, infection_ts, recover_ts
-
-
-def ensemble_time_series_groups(network, Beta, Gamma, numsims=100, N=1000):
-    A = np.array(nx.adjacency_matrix(network).todense())
-    num_nodes_in_net = len(A[0])
-    # Beta = np.full((num_nodes_in_net, num_nodes_in_net), beta_init)
-    # Gamma = np.full(num_nodes_in_net, gamma)
-    staff_pop = int(len(A) / 3)
-    res_pop = int(len(A) / 3)
-    county_pop = int(len(A) / 3)
-
-    node_membership_vector = []
-    for i in range(staff_pop):
-        node_membership_vector.append('staff')
-    for j in range(res_pop):
-        node_membership_vector.append('residents')
-    for k in range(county_pop):
-        node_membership_vector.append('county')
-    sim = simulation.Simulation(A, membership_groups=['staff', 'residents', 'county'],
-                                node_memberships=node_membership_vector)
-
-    total_ts = np.zeros((numsims, 1000))
-    total_ts_rec = np.zeros((numsims, 1000))
-    ts = np.zeros(1000)
-
-    for i in range(numsims):
-        timeseries, timeseries_results_inf, timeseries_results_rec = run_single_simulation(A, Beta, Gamma, i,
-                                                                                           'time_groups')
-        ts = timeseries  # TODO is timeseries always the same? no, because it splits the max time into bins so maybe still not a good averaging tool but close
-        total_ts[i] = timeseries_results_inf
-        total_ts_rec[i] = timeseries_results_rec
-
-    infection_ts = np.mean(total_ts, axis=0)
-    recover_ts = np.mean(total_ts_rec, axis=0)
-    return ts, infection_ts, recover_ts
-
-def plotting_exercise(beta=1):
-    intergen_times = np.zeros(25)
-    whole_times = np.zeros(10)
-    intergen_times[1] = 1/(2*beta)
-    start_i = 3
-    for g in range(2,25):
-        my_time = 0
-        for i in range(start_i, start_i+(g)):
-            my_time += (1/i)
-        intergen_times[g] = my_time
-        start_i += g
-
-    plt.scatter(np.arange(len(intergen_times)-1), intergen_times[1:])
-    plt.show()
 

@@ -51,7 +51,8 @@ def power_law_exp(file_root='plaw_T8_10k_q_1_gamma1_g_over_b',num_sims=50, num_n
     # file_root = 'poiss_T8_1k_q_1_gamma1_g_over_b'
     print('Running power law experiment')
     ensemble.run_ensemble_with_time_distribution(power_law_q2, f'../data/testing/{file_root}', num_sims=num_sims,
-                                                 num_nodes=num_nodes, init_T=T, recover_rate=gamma, active_gen_sizes_on=active_gen_sizes_on)
+                                                 num_nodes=num_nodes, init_T=T, recover_rate=gamma,
+                                                 active_gen_sizes_on=active_gen_sizes_on, kill_by=16)
     print('Done')
 
 def tree_exp(file_root='tree_T8_10k', num_sims=50, num_nodes=8191):

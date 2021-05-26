@@ -1,4 +1,8 @@
 # pgf-networks
+#TODO edit this next
+## Readme not currently up to date, check back soon.
+
+
 This project was created at the University of Vermont, Complex Systems and Data Science Center in the Laboratory for Structure and Dynamics to accompany a working paper titled
 "Disease Interventions in Probabilistic Modeling: Expansion and Modeling of
 Time Evolution Probability Generating Function Formalism" and contains the original code
