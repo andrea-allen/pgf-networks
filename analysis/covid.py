@@ -4,6 +4,8 @@ import pandas as pd
 import datetime
 import scipy.stats as spt
 import src.gen_extinct_prob
+from src import pgf_formalism
+from matplotlib.colors import LinearSegmentedColormap
 
 # Say we use a serial interval of 5 days
 # then g is given by... 0, 5, 10, 15, 20 days intervals after first case
@@ -113,5 +115,138 @@ def contour_fig1(r0, k, g, s):
     # for i in range(10):
     #     z_vals[i] = np.random.randn(10)
     plt.contour(X, Y, z_vals)
+    plt.show()
+
+## Pseudocode for steps for making the contour plot
+def make_figure():
+    # Pick g, s as in g: 20 days into the pando, serial interval of 5, means g=4, we have s=16 cases on day 20
+    # for each k we want:
+    # for each r0 we want:
+    # compute nbinom (g1 and g0) using k, r0
+    # call the new functions we wrote to get g0, g1 with r0 and k
+    # then compute entire Psi with those g1 and g0
+    # compute survival probability from Psi,
+    # this will be real data:
+    g = 4
+    s = 16
+
+    k_vals = np.arange(.09, .25, .05)
+    r0_vals = np.arange(2, 5, .2)
+    Z_vals = np.zeros((len(k_vals), len(r0_vals)))
+    for i in range(len(r0_vals)):
+        for j in range(len(k_vals)):
+            r0 = r0_vals[i]
+            k = k_vals[j]
+            g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03) #TODO pull derivation of p0 from contour file from LHD
+            results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
+            extnct_array = results[0] # format is g, s, m
+            # then condense over m, get value at g,s
+            extnct_array_all_m = extnct_array.sum(axis=2)
+            val_g_s = extnct_array_all_m[g, s]
+            Z_vals[j, i] = val_g_s
+            # that constitutes the single value for z(r0, k)
+    Z_vals = 1 - Z_vals
+    X, Y = np.meshgrid(r0_vals, k_vals)
+    # plt.contour(X, Y, Z_vals, levels=40)
+    # plt.colorbar()
+    # plt.show()
+
+    return X, Y, Z_vals
+
+def make_figure2():
+    k = .14
+    r0 = 3.5
+    g_vals = np.arange(1, 10)
+    s_vals = np.arange(2, 100)
+    Z_vals = np.zeros((len(s_vals), len(g_vals)))
+    g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03)  # TODO pull derivation of p0 from contour file from LHD
+    results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
+    extnct_array = results[0]  # format is g, s, m
+    # then condense over m, get value at g,s
+    extnct_array_all_m = extnct_array.sum(axis=2)
+    for i in range(len(g_vals)):
+        for j in range(len(s_vals)):
+            g = g_vals[i]
+            s = s_vals[j]
+            val_g_s = extnct_array_all_m[g, s]
+            Z_vals[j, i] = val_g_s
+    Z_vals = 1 - Z_vals
+    X, Y = np.meshgrid(g_vals, s_vals)
+    # plt.contour(X, Y, Z_vals, levels=40)
+    # plt.colorbar()
+    # plt.show()
+
+    return X, Y, Z_vals
+
+
+    ## Figure 2:
+    # pick r0 and k from fig 1 that are known from lit / from data / etc.
+    # vary g, s
+    # compute nbinom (g1 and g0) using k, r0
+    # # then compute entire Psi with those g1 and g0
+    # # compute survival probability from Psi,
+    # # then condense over m, get value at g,s
+    # populate results with each point over (g,s) survival prob
+    # add real data points
+
+def contour_figs():
+    plt.rcParams["text.usetex"] = True
+    plt.rcParams["font.size"] = 16
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.sans-serif"] = ["Fira Sans", "PT Sans", "Open Sans", "Roboto", "DejaVu Sans", "Liberation Sans",
+                                       "sans-serif"]
+    plt.rcParams["xtick.major.width"] = 2
+    plt.rcParams["xtick.major.size"] = 8
+    plt.rcParams["ytick.major.width"] = 2
+    plt.rcParams["ytick.major.size"] = 8
+
+    colors = [(24 / 255, 22 / 255, 35 / 255),
+              (11 / 255, 26 / 255, 69 / 255),
+              (85 / 255, 114 / 255, 194 / 255),
+              (216 / 255, 157 / 255, 125 / 255),
+              (195 / 255, 177 / 255, 137 / 255),
+              (175 / 255, 90 / 255, 59 / 255)]
+    n_bins = [3, 6, 10, 100]  # Discretizes the interpolation into bins
+    cmap_name = 'my_list'
+    cm = LinearSegmentedColormap.from_list(
+        cmap_name, colors, N=7)
+
+    fig, ((ax)) = plt.subplots(1,1,figsize=(6,5.5), sharey=False)
+    # fig.subplots_adjust(bottom=0.15)
+
+    ax.set_yscale('log')
+    # ax.set_ylim(0.005,10)
+
+    X, Y, Z = make_figure()
+    cp = ax.contour(X, Y, Z,levels=40)
+    cbar = fig.colorbar(cp)
+    ax.clabel(cp, inline=True, fontsize=10)
+    # Patch:
+    # ax.add_patch(plt.Rectangle((1.4,0.1), 2.5, 0.54, fill=False,
+    #                            edgecolor="r", linewidth=3))
+
+    ax.set_ylabel(r'Dispersion parameter $k$')
+    ax.set_xlabel(r'$R_0$')
+    cbar.set_label(r'Probability of epidemic survival', rotation=270)
+
+    # plt.text(0.16, 0.33, "2019-nCoV, Wuhan",
+    #          color="w",
+    #          horizontalalignment='left',
+    #          verticalalignment='bottom',
+    #          transform=ax.transAxes,
+    #          fontsize=18)
+    # plt.text(0.14, 0.4, "COVID-19 (over-dispersed)",
+    #          color="r",
+    #          horizontalalignment='left',
+    #          verticalalignment='bottom',
+    #          transform=ax.transAxes,
+    #          backgroundcolor="w")
+
+    # plt.text(0.05, 0.05, r'low $R_0$, high variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+    # plt.text(0.57, 0.95, r'high $R_0$, low variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
+
+
+    # Save to file.
+    # plt.tight_layout(0.1)
     plt.show()
 

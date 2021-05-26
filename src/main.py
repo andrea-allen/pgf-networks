@@ -12,6 +12,8 @@ if __name__ == '__main__':
     rc('text', usetex=True)
     print('pgfs yay!')
 
+    covid.contour_figs()
+
     sample_dd = np.array([1, 2, 3, 4, 4])
     # pgf_formalism.compute_g0_from_offspring(g1=sample_dd, p0=.03)
     pgf_formalism.offspring_dists(r0=3, k=5, p0=.03)

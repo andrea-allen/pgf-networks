@@ -5,18 +5,24 @@ import numpy as np
 from src import gen_extinct_prob
 
 
-def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True, fft = True):
-    psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=len(deg_dist), max_m=len(deg_dist), initial_T=T)
+def compute_extinct_prob_all(deg_dist=None, T=1.0, n_gens=20, renorm=True, fft = True, custom_g0=None, custom_g1=None):
+    if deg_dist is not None:
+        psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=len(deg_dist), max_m=len(deg_dist), initial_T=T)
+    else:
+        psi = Psi(deg_dist, initProb=1, num_gens=n_gens, initial_T=T, custom_g0=custom_g0, custom_g1=custom_g1,
+                  max_m=len(custom_g1), max_s=len(custom_g1))
     for g in range(n_gens):
-        psi[g][:,0] = np.zeros(len(deg_dist))
+        psi[g][:,0] = np.zeros(psi.shape[1])
         for s in range(0,g+1):
-            psi[g][s,:] = np.zeros(len(deg_dist))
+            psi[g][s,:] = np.zeros(psi.shape[1])
         psi[g] = psi[g]/np.sum(psi[g])
     if renorm:
         for g in range(n_gens):
             for s in range(psi.shape[1]):
                 if np.sum(psi[g][s][:]) > 0:
                     psi[g][s,:] = psi[g][s,:] / np.sum(psi[g][s,:])
+    if deg_dist is None:
+        deg_dist = custom_g1 # this is just for computing the extinction prob
     extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=fft)
     return [extct_array, psi]
 
@@ -210,7 +216,7 @@ def compute_g0_from_offspring(g1, p0):
 
 
 # COMPUTATION STARTS HERE
-def Psi(degree_distrb=None, initProb=1, num_gens=100, max_s=400, max_m=400, initial_T=0.8,
+def Psi(degree_distrb=None, initProb=1, num_gens=400, max_s=400, max_m=400, initial_T=0.8,
         intervention_gen=-1, intervention_T=0.5,
         prop_vacc=0.5, rollout_dict=None, intervention_type="none",
         custom_g0=None, custom_g1=None):
