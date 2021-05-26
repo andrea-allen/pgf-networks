@@ -10,9 +10,9 @@ Created on Tue Apr 13 15:11:09 2021
 
 # takes a deg dist and transmission prob and returns offspring dist
 def gen_offspring_dist(deg_dist, T):
-    d_dist = np.multiply(deg_dist, range(len(deg_dist)))
-    d_dist = d_dist / np.sum(d_dist)
-    l_dist = np.zeros(len(deg_dist))
+    d_dist = np.multiply(deg_dist[1:], range(1,len(deg_dist)))
+    d_dist = d_dist / deg_dist.dot(range(len(deg_dist)))
+    l_dist = np.zeros(len(d_dist))
     for l in range(len(l_dist)):
         for k in range(l,len(l_dist)):
             #l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]*k
@@ -20,8 +20,9 @@ def gen_offspring_dist(deg_dist, T):
     return l_dist/np.sum(l_dist)
 
 def G1(ddist):
-    new_dist = np.multiply(ddist,range(len(ddist)))
-    new_dist = new_dist / np.sum(new_dist)
+    new_dist = np.zeros(len(ddist))
+    new_dist[0:-1] = np.multiply(ddist[1:],range(1,len(ddist)))
+    new_dist = new_dist / ddist.dot(range(len(ddist)))
     
     Pk = np.zeros((len(new_dist), 2))
     Pk[:,0] = range(len(new_dist))
@@ -33,10 +34,10 @@ def G(x, pk):
     #return np.multiply(np.power(x, pk[:,0]), pk[:,1])
 
 def GT(T, pk):
-    N = 2000
+    N = pk.shape[0]+20
     z = np.exp(2 * np.pi * complex(0,1) * np.arange(N) / N)
     G_at_x = G(z*T+1-T, pk)
-    return np.absolute(np.fft.ifft(G_at_x))[::-1]
+    return np.roll(np.absolute(np.fft.ifft(G_at_x))[::-1],1)
 
 # takes a distribution and returns a pgf as a function
 def make_pgf(dist):

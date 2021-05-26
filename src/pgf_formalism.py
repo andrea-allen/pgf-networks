@@ -5,7 +5,7 @@ import numpy as np
 from src import gen_extinct_prob
 
 
-def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
+def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True, fft = True):
     psi = Psi(deg_dist, initProb=1, num_gens=n_gens, max_s=len(deg_dist), max_m=len(deg_dist), initial_T=T)
     for g in range(n_gens):
         psi[g][:,0] = np.zeros(len(deg_dist))
@@ -17,7 +17,7 @@ def compute_extinct_prob_all(deg_dist, T, n_gens=20, renorm=True):
             for s in range(psi.shape[1]):
                 if np.sum(psi[g][s][:]) > 0:
                     psi[g][s,:] = psi[g][s,:] / np.sum(psi[g][s,:])
-    extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=False)
+    extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=fft)
     return [extct_array, psi]
 
 def expected_num_infected(deg_dist, T):
