@@ -126,7 +126,7 @@ def plot_psi_compressed(psi_g, gen):
     # plt.show()
 
 def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax="y axis", hide_zero = False):
-    s_list = range(1,101)
+    s_list = range(1,psi.shape[1])
     Psi = psi.sum(axis=sum_ax)
     if hide_zero:
         Psi = np.where(Psi==0, -1, Psi)
@@ -137,7 +137,7 @@ def plot_extinct_prob(psi, g_list = (3,5,7,10), sum_ax = 2, x_ax="x axis", y_ax=
         plt.plot(s_list, np.log(Psi[g][s_list[0]:s_list[-1]+1]), markers[g_list.index(g)], label=lbl)
     plt.xlabel(x_ax, fontsize=20)
     plt.ylabel(y_ax, fontsize=20)
-    plt.xticks(range(0,101,10),fontsize=18)
+    plt.xticks(range(0,len(s_list),50),fontsize=18)
     #plt.ylim((0,np.max(Psi)+0.05))
     plt.yticks(fontsize=18)
     plt.legend()

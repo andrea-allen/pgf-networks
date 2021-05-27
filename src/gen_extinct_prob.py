@@ -9,13 +9,16 @@ Created on Tue Apr 13 15:11:09 2021
 """
 
 # takes a deg dist and transmission prob and returns offspring dist
-def gen_offspring_dist(deg_dist, T):
-    d_dist = np.multiply(deg_dist[1:], range(1,len(deg_dist)))
-    d_dist = d_dist / deg_dist.dot(range(len(deg_dist)))
+def gen_offspring_dist(deg_dist, T, custom=False):
+    if not custom:
+        d_dist = np.zeros(len(deg_dist))
+        d_dist[0:-1] = np.multiply(deg_dist[1:], range(1,len(deg_dist)))
+        d_dist = d_dist / deg_dist.dot(range(len(deg_dist)))
+    else:
+        d_dist = deg_dist
     l_dist = np.zeros(len(d_dist))
     for l in range(len(l_dist)):
         for k in range(l,len(l_dist)):
-            #l_dist[l] += binom.pmf(l,k,T)*deg_dist[k]*k
             l_dist[l] += binom.pmf(l,k,T)*d_dist[k]
     return l_dist/np.sum(l_dist)
 
@@ -60,19 +63,21 @@ def ext_prob_iter(mu, x=0, comp=1, tol=10**(-7)):
     else:
         return ext_prob_iter(mu, mu(x), mu(x), tol)
     
-def sngl_ext_prob(deg_dist, T, fft=True):
+def sngl_ext_prob(deg_dist, T, fft=True, custom=False):
     #return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
-    if fft:
+    if fft and custom:
+        return ext_prob_iter( make_pgf( GT(T, deg_dist) ) )
+    elif fft:
         return ext_prob_iter( make_pgf( GT(T, G1(deg_dist)) ) )
     else:
-        return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
+        return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T, custom)))
 
 """
 for Psi cake indexed as [g][s][m]
 compute extinction probability array
 """
-def gen_ext_prob_array(psi, d_dist, T, fft=True):
-    e_prob = sngl_ext_prob(d_dist, T, fft)
+def gen_ext_prob_array(psi, d_dist, T, fft=True, custom=False):
+    e_prob = sngl_ext_prob(d_dist, T, fft, custom)
     extnct_array = np.zeros(psi.shape)
     for g in range(extnct_array.shape[0]):
         for s in range(extnct_array.shape[1]):
