@@ -66,7 +66,7 @@ def ext_prob_iter(mu, x=0, comp=1, tol=10**(-7)):
 def sngl_ext_prob(deg_dist, T, fft=True, custom=False):
     #return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
     if fft and custom:
-        return ext_prob_iter( make_pgf( GT(T, deg_dist) ) )
+        return ext_prob_iter(make_pgf(deg_dist))
     elif fft:
         return ext_prob_iter( make_pgf( GT(T, G1(deg_dist)) ) )
     else:

@@ -187,7 +187,7 @@ def time_emergence_plot(file_root, q_degree, beta):
     active_gens_ts = np.loadtxt(f'../data/{file_root}_active_gen_ts.txt', delimiter=',')
     total_gens_ts = np.loadtxt(f'../data/{file_root}_total_gen_ts.txt', delimiter=',')
     timeseries_vals = np.loadtxt(f'../data/{file_root}_ts_vals_normalized.txt', delimiter=',')
-    max_x_val = int(.8 * len(timeseries_vals))
+    max_x_val = int(.6 * len(timeseries_vals))
     # plt.subplot(2, 1, 1, sharex=True)
     ax1.plot(timeseries_vals[:max_x_val], active_gens_ts[:max_x_val], label='active \n generations', color=standrd_colors[-1],
              ls='--')

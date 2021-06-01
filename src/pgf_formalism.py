@@ -24,7 +24,7 @@ def compute_extinct_prob_all(deg_dist=None, T=1.0, n_gens=20, renorm=True, fft =
                     psi[g][s,:] = psi[g][s,:] / np.sum(psi[g][s,:])
     if deg_dist is None:
         deg_dist = custom_g1 # this is just for computing the extinction prob
-        extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=fft, custom = True)
+        extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=fft, custom=True)
     else:
         extct_array = gen_extinct_prob.gen_ext_prob_array(psi, deg_dist, T, fft=fft)
     return [extct_array, psi]

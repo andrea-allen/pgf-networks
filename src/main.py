@@ -12,10 +12,15 @@ if __name__ == '__main__':
     rc('text', usetex=True)
     print('pgfs yay!')
 
+    covid.contour_figs()
     covid.contour_fig2()
 
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
     power_law_q3 = degree_distributions.power_law_degree_distrb(2000, mu=10) #q is 3, k is 1.7
+
+    # figs_for_paper.power_law_exp('plaw_05_27_500sims', num_sims=500, num_nodes=10000, active_gen_sizes_on=True)
+    figs_for_paper.results_plots(file_root='testing/plaw_05_27_500sims', q_degree=3.04, active_gen_sizes_on=True) #used just for the time plot because only need 10k results,not 120k
+
     poisson = degree_distributions.binomial_degree_distb(2000, 2.5)
 
 

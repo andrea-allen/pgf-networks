@@ -23,7 +23,7 @@ def covid_data(ax, solo_plot=True):
     covid_df = read_jh_data()
     # all_states = list(pd.unique(covid_df['Province_State']))
     y_labels = []
-    for state in ['Iowa', 'Idaho', 'Kentucky']:
+    for state in ['Iowa', 'Idaho', 'Kentucky', 'California']:
         #TODO convert to datetime
         state_df = get_by_state(covid_df, state)
         state_df_summed = sum_for_state(state_df)
@@ -140,7 +140,7 @@ def make_figure():
         for j in range(len(k_vals)):
             r0 = r0_vals[i]
             k = k_vals[j]
-            g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03) #TODO pull derivation of p0 from contour file from LHD
+            g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03, length=250) #TODO pull derivation of p0 from contour file from LHD
             results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
             extnct_array = results[0] # format is g, s, m
             # then condense over m, get value at g,s
@@ -157,8 +157,8 @@ def make_figure():
     return X, Y, Z_vals
 
 def make_figure2():
-    k = .14
-    r0 = 3.5
+    k = .1
+    r0 = 1.5
     g_vals = np.arange(1, 10)
     s_vals = np.arange(2, 500)
     Z_vals = np.zeros((len(s_vals), len(g_vals)))
@@ -280,7 +280,7 @@ def contour_fig2():
     # fig.subplots_adjust(bottom=0.15)
 
     ax.set_yscale('log')
-    ax.set_ylim(5,100)
+    # ax.set_ylim(5,100)
 
     X, Y, Z = make_figure2()
     covid_data(ax, solo_plot=False)
