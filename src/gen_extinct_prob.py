@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from scipy.stats import binom
+from decimal import Decimal
 """
 Created on Tue Apr 13 15:11:09 2021
 
@@ -57,11 +58,11 @@ mathematically it is function composition
 call should go as ext_prob_iter(offspring_pgf)
 the arg mu is the offspring pgf
 """
-def ext_prob_iter(mu, x=0, comp=1, tol=10**(-7)):
-    if np.abs(mu(x) - comp) < tol:
+def ext_prob_iter(mu, x=0, comp=1, tol=Decimal(10**(-9))):
+    if np.abs(Decimal(mu(x)) - Decimal(comp)) < tol:
         return mu(x)
     else:
-        return ext_prob_iter(mu, mu(x), mu(x), tol)
+        return ext_prob_iter(mu, Decimal(mu(x)), Decimal(mu(x)), tol)
     
 def sngl_ext_prob(deg_dist, T, fft=True, custom=False):
     #return ext_prob_iter(make_pgf(gen_offspring_dist(deg_dist, T)))
@@ -82,5 +83,5 @@ def gen_ext_prob_array(psi, d_dist, T, fft=True, custom=False):
     for g in range(extnct_array.shape[0]):
         for s in range(extnct_array.shape[1]):
             for m in range(extnct_array.shape[2]):
-                extnct_array[g][s][m] = psi[g][s][m]*e_prob**m
+                extnct_array[g][s][m] = Decimal(psi[g][s][m])*Decimal(e_prob)**Decimal(m)
     return extnct_array
