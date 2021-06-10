@@ -140,7 +140,7 @@ def make_figure():
         for j in range(len(k_vals)):
             r0 = r0_vals[i]
             k = k_vals[j]
-            g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03, length=250) #TODO pull derivation of p0 from contour file from LHD
+            g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0.03, length=500) #TODO pull derivation of p0 from contour file from LHD
             results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
             extnct_array = results[0] # format is g, s, m
             # then condense over m, get value at g,s
@@ -293,6 +293,7 @@ def contour_fig2():
 
     ax.set_ylabel(r'Cumulative cases $s$')
     ax.set_xlabel(r'Epidemic generation $g$')
+    ax.set_xlim([0, 60])
     cbar.set_label(r'Probability of epidemic survival', rotation=270)
 
     # plt.text(0.16, 0.33, "2019-nCoV, Wuhan",

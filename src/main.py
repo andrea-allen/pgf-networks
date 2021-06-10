@@ -12,13 +12,14 @@ if __name__ == '__main__':
     rc('text', usetex=True)
     print('pgfs yay!')
 
-    covid.contour_fig2()
+    # covid.contour_figs()
+    # covid.contour_fig2()
 
     power_law_dd = degree_distributions.power_law_degree_distrb(400)
     poisson = degree_distributions.binomial_degree_distb(2000, 2.5)
     # figs_for_paper.combine_plaw_results()
-    # figs_for_paper.power_law_exp('plaw_06_07', num_sims=1000, num_nodes=10000, active_gen_sizes_on=True)
-    figs_for_paper.results_plots('testing/plaw_06_07', q_degree=3.04, active_gen_sizes_on=True)
+    # figs_for_paper.power_law_exp('plaw_06_10_40knet', num_sims=200, num_nodes=40000, active_gen_sizes_on=True)
+    figs_for_paper.results_plots('testing/plaw_06_10_40knet', q_degree=3.04, active_gen_sizes_on=True)
     plotting_util.plot_sims_vs_analytical_multigens([3, 4, 6, 10], 400, f'../data/paper/plaw_combo_125k_generational.txt',
                                                     '../data/paper/powerlaw_q3_T8_ifft_g{0}.txt',
                                                     inset_to_plot=power_law_dd, inset_title='$p_k = k^{-2}e^{-k/10}$',
