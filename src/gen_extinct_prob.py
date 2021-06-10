@@ -48,7 +48,10 @@ def make_pgf(dist):
     def ret_pgf(x):
         ret = 0
         for k in range(len(dist)):
-            ret += dist[k]*x**k
+            try:
+                ret += Decimal(dist[k])*x**k
+            except TypeError:
+                print(k, x)
         return ret
     return ret_pgf 
 
