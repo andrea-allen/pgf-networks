@@ -163,7 +163,7 @@ def make_figure2():
     s_vals = np.arange(2, 500)
     Z_vals = np.zeros((len(s_vals), len(g_vals)))
     p0 = 1 - (k * ((k / (k + r0)) ** (k - 1) - 1) / (1 - k))
-    g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0, length=500)  # TODO pull derivation of p0 from contour file from LHD
+    g0, g1 = pgf_formalism.offspring_dists(r0=r0, k=k, p0=0, length=1000)  # TODO pull derivation of p0 from contour file from LHD
     results = pgf_formalism.compute_extinct_prob_all(n_gens=11, renorm=True, custom_g0=g0, custom_g1=g1)
     extnct_array = results[0]  # format is g, s, m
     # then condense over m, get value at g,s
