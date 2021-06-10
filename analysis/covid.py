@@ -23,7 +23,7 @@ def covid_data(ax, solo_plot=True):
     covid_df = read_jh_data()
     # all_states = list(pd.unique(covid_df['Province_State']))
     y_labels = []
-    for state in ['Iowa', 'Idaho', 'Kentucky', 'California']:
+    for state in ['Michigan', 'New York', 'Wyoming', 'California']:
         #TODO convert to datetime
         state_df = get_by_state(covid_df, state)
         state_df_summed = sum_for_state(state_df)
@@ -44,9 +44,9 @@ def covid_data(ax, solo_plot=True):
             s_cum = state_df_summed.loc[cases_20_days]
             cases_20_days = datetime.datetime.strptime(cases_20_days, '%m/%d/%y').date()
             # first_case = datetime.datetime.strptime(first_case, '%m/%d/%y').date()
-            ax.scatter(g, s_cum, label=state, color=colors[0])
+            ax.scatter(g, s_cum, label=state, color=colors[0], s=.2)
             if g % 1 == 0:
-                plt.text(g, s_cum, f'{state}, {cases_20_days} \n {s_cum} cases')
+                plt.text(g, s_cum, f'{state}, {cases_20_days} \n {s_cum} cases', fontsize=6)
             # plt.scatter(first_case, s_cum_first, label=state, color=colors[0])
             # plt.text(first_case + datetime.timedelta(days=1), s_cum_first, f'{state} \n {first_case} \n {s_cum_first} cases')
             # y_labels.append(s_cum_first)
@@ -158,7 +158,7 @@ def make_figure():
 
 def make_figure2():
     k = .1
-    r0 = 1.5
+    r0 = 2.5
     g_vals = np.arange(1, 10)
     s_vals = np.arange(2, 500)
     Z_vals = np.zeros((len(s_vals), len(g_vals)))

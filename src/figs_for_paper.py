@@ -169,7 +169,7 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
 
 def time_emergence_plot(file_root, q_degree, beta):
     #TODO: bone colors?
-    gens_to_display_lines = [2, 6, 10, 14, 18, 22, 26, 30]
+    gens_to_display_lines = [2, 4, 6, 8, 10, 12, 14, 18, 20, 22]
     gens_to_display_curves = [2, 4, 6, 8, 10, 12]
     cmap = plt.get_cmap('bone')
     indices = np.linspace(0, cmap.N, int(max(gens_to_display_lines)*1.5) + 2)
@@ -187,11 +187,13 @@ def time_emergence_plot(file_root, q_degree, beta):
     active_gens_ts = np.loadtxt(f'../data/{file_root}_active_gen_ts.txt', delimiter=',')
     total_gens_ts = np.loadtxt(f'../data/{file_root}_total_gen_ts.txt', delimiter=',')
     timeseries_vals = np.loadtxt(f'../data/{file_root}_ts_vals_normalized.txt', delimiter=',')
-    max_x_val = int(.6 * len(timeseries_vals))
+    max_x_val = int(.2 * len(timeseries_vals))
     # plt.subplot(2, 1, 1, sharex=True)
     ax1.plot(timeseries_vals[:max_x_val], active_gens_ts[:max_x_val], label='active \n generations', color=standrd_colors[-1],
              ls='--')
     ax1.plot(timeseries_vals[:max_x_val], total_gens_ts[:max_x_val], label='total \n generations', color=standrd_colors[-1], ls='-')
+    ax1.text(timeseries_vals[max_x_val], active_gens_ts[max_x_val], 'active generations', horizontalalignment='left')
+    ax1.text(timeseries_vals[max_x_val], total_gens_ts[max_x_val], 'total generations', horizontalalignment='left')
     # ax1.set_xticks(
     #     [timeseries_vals[0], timeseries_vals[50], timeseries_vals[100], timeseries_vals[150], timeseries_vals[200],
     #      timeseries_vals[250]])
@@ -210,20 +212,22 @@ def time_emergence_plot(file_root, q_degree, beta):
             ax1.vlines(expected_time[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], ls=':',
                        alpha=0.5)
             ax1.vlines(gen_emergence[g], ymin=0, ymax=max(total_gens_ts), color=standrd_colors[g], alpha=0.5)
-    ax1.legend(loc='upper right', frameon=False)
+    ax1.text(expected_time[gens_to_display_lines[2]], 5, 'expected time of gen $\\rightarrow$', horizontalalignment='right', rotation=45)
+    ax1.text(gen_emergence[gens_to_display_lines[2]], 5, 'empirical time of gen $\\rightarrow$', horizontalalignment='right', rotation=45)
+    # ax1.legend(loc='upper right', frameon=False)
     ax1.set_xticks(list([expected_time[g] for g in gens_to_display_lines]))
-    x_tick_labels = list([f'$\\frac{{{g}}}{{q\\beta}}$' for g in gens_to_display_lines])
-    x_tick_labels[0] = f'$t = \\frac{{g}}{{q\\beta}}$'
-    ax1.set_xticklabels(x_tick_labels)
+    # x_tick_labels = list([f'$\\frac{{{g}}}{{q\\beta}}$' for g in gens_to_display_lines])
+    # x_tick_labels[0] = f'$t = \\frac{{g}}{{q\\beta}}$'
+    # ax1.set_xticklabels(x_tick_labels)
     ax1.xaxis.tick_top()
     ax1.xaxis.set_label_position('top')
-    ax1.tick_params(axis='x', labelrotation=0, labelsize=12)
+    ax1.tick_params(axis='x', labelrotation=-20) #, labelsize=12)
     # ax1.set_xticks([])
     # ax1.set_xlabel('Time')
     ax1.set_ylabel('Number active generations')
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
-    ax1.spines['bottom'].set_visible(True)
+    ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(True)
     # plt.show()
     # plt.subplot(2, 1, 2, sharex=True)
@@ -236,6 +240,7 @@ def time_emergence_plot(file_root, q_degree, beta):
         x_position_val = np.argmax(average_active_sizes.T[g])
         max_y_val = average_active_sizes.T[g][x_position_val]
         ax2.text(timeseries_vals[x_position_val] + 200, max_y_val - 1, f'g {g}', horizontalalignment='left')
+    ax2.text(0, np.max(average_active_sizes)+20, 'generation:', horizontalalignment='center')
     for i in range(len(gens_to_display_lines)):
         g = gens_to_display_lines[i]
         if g == 2:  # just do a label for one pair
@@ -244,18 +249,21 @@ def time_emergence_plot(file_root, q_degree, beta):
             ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5,
                        label='Average empirical \n time of gen $g$ \n emergence')
+            ax2.text(gen_emergence[g], np.max(average_active_sizes)+20, f'{g}', horizontalalignment='center', rotation=0)
         else:
             ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5, ls=':')
             ax2.vlines(gen_emergence[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5)
-    ax2.legend(loc='upper right', frameon=False)
+            ax2.text(gen_emergence[g], np.max(average_active_sizes)+20, f'{g}', horizontalalignment='center', rotation=0)
+    # ax2.legend(loc='upper right', frameon=False)
     # plt.xlabel('time')
     ax2.set_xlabel('Time')
-    ax2.set_xticks(np.arange(0, 4001, 500))
-    x_tick_labels_time = list(np.arange(0, 4001, 500))
-    x_tick_labels_time[0] = '$t=0$'
-    ax2.set_xticklabels(x_tick_labels_time)
+    # ax2.set_xticks(np.arange(0, int(timeseries_vals[:max_x_val][-1]), 500))
+    ax2.set_xticks(list([gen_emergence[g] for g in gens_to_display_lines]))
+    # x_tick_labels_time = list(np.arange(0, int(timeseries_vals[:max_x_val][-1]), 500))
+    # x_tick_labels_time[0] = '$t=0$'
+    # ax2.set_xticklabels(x_tick_labels_time)
     ax2.tick_params(axis='x', labelrotation=-20)
     ax2.set_ylabel('Number active nodes')
     ax2.spines['top'].set_visible(False)
@@ -286,5 +294,14 @@ def combine_data():
     combo_results = combo_results/6
     # np.savetxt(f'../data/testing/erdos_renyi_10k_60ksims_combo_generational.txt', combo_results, delimiter=',')
     print(combo_results[1][:10])
+
+def combine_plaw_results():
+    results_june = np.loadtxt(f'../data/testing/plaw_06_03_generational.txt', delimiter=',') #50,000 simulations
+    results_may = np.loadtxt(f'../data/testing/plaw_05_25_generational.txt', delimiter=',') #75000 simulations
+    combo_results = (np.array(results_june) * 50) + (np.array(results_may) * 75)
+    combo_results = combo_results / (50+75)
+    np.savetxt(f'../data/paper/plaw_combo_125k_generational.txt', combo_results, delimiter=',')
+    print(combo_results[0])
+
 
 

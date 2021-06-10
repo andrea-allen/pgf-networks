@@ -454,7 +454,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         x_vals = x_vals / 10000
         # TODO fix labeling issue
     label = 'Infections up to gen {0}'.format(gen)
-    label = 's, gen {0}'.format(gen)
+    label = 's at generation {0}'.format(gen)
     color = color_key[gen]
     if grayscale:
         color = regular_color
