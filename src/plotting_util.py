@@ -267,7 +267,7 @@ def outbreak_size_curves(list_of_gens, x_lim, fname_predict_format,
 def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fname_predict_format,
                                       fname_sim_results_int=None, fname_predict_format_int=None, same_plot=False,
                                       normalize_axis_x=False, plot_distribution_inset=False, inset_to_plot=None,
-                                      inset_title=None, grayscale=False):
+                                      inset_title=None, grayscale=False, legend_on=True):
     color_key = {}
     color_key_sims = {}
     colors = ['red', 'orange', 'green', 'blue', 'purple', 'teal', 'black', 'gold', 'chocolate',
@@ -290,25 +290,32 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     sequential_bluegreen = ['#a1dab4','#41b6c4','#2c7fb8','#253494'] # '#ffffcc', too light
     sequential_orange = ['#fecc5c','#fd8d3c','#f03b20','#bd0026'] # '#ffffb2', too light
     cmap = plt.get_cmap('bone')
-    indices = np.linspace(0, cmap.N, len(list_of_gens)+1)
-    my_colors = [cmap(int(i)) for i in indices]
-    standrd_colors = my_colors[:-1][::-1] #Shifted to avoid yellow
+    cmap = sns.color_palette('colorblind', n_colors=4)
+    # indices = np.linspace(0, cmap.N, len(list_of_gens)+1)
+    # my_colors = [cmap(int(i)) for i in indices]
+    # standrd_colors = my_colors[:-1][::-1] #Shifted to avoid yellow
 
 
     style_key = {}
     styles = ['-',':', '-.', '--', '-']
 
+    # if using cmap, continuous:
     for i in range(len(list_of_gens)):
         gen = list_of_gens[i]
         color = colors[0]
         colors.remove(color)
         color_key[gen] = color
         color_key[gen] = cmap_reds(1 - (0.3 + (i/(1.5*len(list_of_gens)))))
-        color_key[gen] = standrd_colors[i]
+        # color_key[gen] = standrd_colors[i]
+        # if using palette, with finite colors:
+        # COMMENT IF USING CMAP VERSION ABOVE
+        color_key[gen] = cmap[0]
+        cmap.remove(cmap[0])
         color_key_sims[gen] = cmap_blues(0.3 + (i/(1.5*len(list_of_gens))))
         style = styles[0]
         styles.remove(style)
         style_key[gen] = style
+
 
     # fig, ax1 = plt.subplots(figsize=(14, 7))
     fig, ax1 = plt.subplots(figsize=(8, 6))
@@ -342,7 +349,8 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
         # ax2.set_yticks(np.arange(0, 1, 0.25))
         ax2.set_xticks([0, 1, 2, 3, 5, 10])
         ax2.semilogy()
-        ax2.legend(loc='upper right', fontsize=16, frameon=False)
+        if legend_on:
+            ax2.legend(loc='upper right', fontsize=16, frameon=False)
         ax2.spines['top'].set_visible(False)
         ax2.spines['right'].set_visible(False)
         ax2.spines['bottom'].set_visible(True)
@@ -373,13 +381,15 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     plt.yticks(fontsize=18)
     ax1.tick_params(axis='y', labelrotation=0, labelsize=16)
     ax1.tick_params(axis='x', labelrotation=0, labelsize=16)
-    ax1.legend(loc='upper right', fontsize=16, frameon=False)
+    if legend_on:
+        ax1.legend(loc='upper right', fontsize=16, frameon=False)
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(True)
     ax1.spines['left'].set_visible(True)
     if same_plot:
-        plt.legend(loc='upper right')
+        if legend_on:
+            plt.legend(loc='upper right', frameon=False, fontsize=18)
         plt.show()
 
 
@@ -454,7 +464,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         x_vals = x_vals / 10000
         # TODO fix labeling issue
     label = 'Infections up to gen {0}'.format(gen)
-    label = 's at generation {0}'.format(gen)
+    label = '$g={{{0}}}$'.format(gen)
     color = color_key[gen]
     if grayscale:
         color = regular_color
@@ -530,7 +540,7 @@ def plots_for_nerccs_talk(list_of_gens, x_lim, fname_sim_results, fname_predict_
     ax1.set_xlim(0, max(x_vals))
     ax1.set_xticks(x_ticks)
     ax1.semilogy()
-    ax1.set_ylim(.00005, .1)
+    # ax1.set_ylim(.00005, .1)
     ax1.set_xlabel('Cumulative Infections', fontsize=20)
     ax1.set_ylabel('Probability', fontsize=20)
     plt.tight_layout()

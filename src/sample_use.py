@@ -49,11 +49,11 @@ ensemble.run_ensemble_intervention_effects(power_law_dd, '../data/talk_results/p
 #                                                 '../data/talk_results/universal_pl_T8_gen4_T4_intervene.txt', '../data/talk_results/powerlawuniversal4_T4{0}_intv.txt',
 #                                                 same_plot=True, normalize_axis_x=False, plot_distribution_inset=True, inset_label=f'$T_g \\rightarrow T_4=0.4$')
 #
-# ## Universal Intervention
-# # plotting_util.plots_for_nerccs_talk([3, 6, 10, 15], 400,  '../data/talk_results/pl_T8_no_intervene.txt', '../data/talk_results/powerlawrollout456{0}.txt',
-# #                                                 '../data/talk_results/universal_pl_T8_gen4_T4_intervene.txt', '../data/talk_results/powerlawuniversal4_T4{0}_intv.txt',
-# #                                                 same_plot=True, normalize_axis_x=False, inset_label=f'$T_g \\rightarrow T_4=0.4$')
-# # plt.show()
+## Universal Intervention
+plotting_util.plots_for_nerccs_talk([3, 6, 10, 15], 400,  '../data/talk_results/pl_T8_no_intervene.txt', '../data/talk_results/powerlawrollout456{0}.txt',
+                                                '../data/talk_results/universal_pl_T8_gen4_T4_intervene.txt', '../data/talk_results/powerlawuniversal4_T4{0}_intv.txt',
+                                                same_plot=True, normalize_axis_x=False, inset_label=f'$T_g \\rightarrow T_4=0.4$')
+plt.show()
 #
 # ## Random Vaccination
 # plotting_util.plots_for_nerccs_talk([3, 5, 6, 15], 400,  '../data/talk_results/pl_T8_no_intervene.txt', '../data/talk_results/powerlawrollout456{0}.txt',

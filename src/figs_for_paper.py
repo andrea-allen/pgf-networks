@@ -8,6 +8,7 @@ from scipy import stats
 from analysis import ensemble
 from src import degree_distributions
 from src import plotting_util
+import seaborn as sns
 
 
 def erdos_renyi_exp(file_root='poiss_T8_10k_q_1_gamma1_g_over_b',num_sims=50, num_nodes=10000, kill_by=None):
@@ -54,6 +55,31 @@ def power_law_exp(file_root='plaw_T8_10k_q_1_gamma1_g_over_b',num_sims=50, num_n
                                                  num_nodes=num_nodes, init_T=T, recover_rate=gamma,
                                                  active_gen_sizes_on=active_gen_sizes_on, kill_by=16)
     print('Done')
+
+def random_vax_exp(file_root, num_sims=50, num_nodes=10000):
+    ## Make erdos renyi network
+    k_mean_degree = 3.04
+    # k_mean_degree = 5
+    power_law_q2 = degree_distributions.power_law_degree_distrb(400, mu=10)
+
+
+    ## set up paramters
+    beta = 0.004
+    gamma = 0.001
+    T = 0.8
+
+
+    ## quantities to track:
+    ## dist of cmulative infections by gen, dist of cum infections by time (g/beta*q?), total and active gens, diff of waiting times
+    # file_root = 'poiss_T8_1k_q_1_gamma1_g_over_b'
+    print('Running power law intervention experiment')
+    s_time = time.time()
+    ensemble.run_ensemble_intervention_effects(power_law_q2, f'../data/testing/{file_root}', num_sims=num_sims,
+                                               num_nodes=num_nodes, init_T=T, gen_intervene=4, T_intervene=0.0,
+                                               recover_rate=gamma, prop_reduced=0.5, intervention_type="random",
+                                               run_regular=False)
+    print('Done')
+    print(f'time all was {time.time() - s_time}')
 
 def tree_exp(file_root='tree_T8_10k', num_sims=50, num_nodes=8191):
     ## Make tree network
@@ -197,8 +223,8 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     ax1.plot(timeseries_vals[:max_x_val - offset_for_top_plot], active_gens_ts[:max_x_val- offset_for_top_plot], label='active \n generations', color=standrd_colors[-1],
              ls='--')
     ax1.plot(timeseries_vals[:max_x_val - offset_for_top_plot], total_gens_ts[:max_x_val - offset_for_top_plot], label='total \n generations', color=standrd_colors[-1], ls='-')
-    ax1.text(timeseries_vals[max_x_val - offset_for_top_plot]+5, active_gens_ts[max_x_val - offset_for_top_plot], 'active', horizontalalignment='left')
-    ax1.text(timeseries_vals[max_x_val - offset_for_top_plot]+5, total_gens_ts[max_x_val - offset_for_top_plot], 'total', horizontalalignment='left')
+    ax1.text(timeseries_vals[max_x_val - offset_for_top_plot]+5, active_gens_ts[max_x_val - offset_for_top_plot], 'active', horizontalalignment='left', fontsize=12)
+    ax1.text(timeseries_vals[max_x_val - offset_for_top_plot]+5, total_gens_ts[max_x_val - offset_for_top_plot], 'total', horizontalalignment='left', fontsize=12)
     # ax1.set_xticks(
     #     [timeseries_vals[0], timeseries_vals[50], timeseries_vals[100], timeseries_vals[150], timeseries_vals[200],
     #      timeseries_vals[250]])
@@ -230,8 +256,8 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
                 ax1.axvspan(expctd_time, actl_time, alpha=0.5, color='green')
             elif expctd_time > actl_time:
                 ax1.axvspan(expctd_time, actl_time, alpha=0.5, color='yellow')
-    ax1.text(expected_time[gens_to_display_lines[-1]]+4, 5, '$\\leftarrow$ expected time of gen', horizontalalignment='left', rotation=0)
-    ax1.text(gen_emergence[gens_to_display_lines[-1]]+4, 3, '$\\leftarrow$ empirical time of gen', horizontalalignment='left', rotation=0)
+    ax1.text(expected_time[gens_to_display_lines[-1]]+4, 10, '$\\leftarrow$ expected time of gen', horizontalalignment='left', rotation=0, fontsize=12)
+    ax1.text(gen_emergence[gens_to_display_lines[-1]]+4, 3, '$\\leftarrow$ empirical time of gen', horizontalalignment='left', rotation=0, fontsize=12)
     # ax1.legend(loc='upper right', frameon=False)
     ax1.set_xticks(list([expected_time[g] for g in gens_to_display_lines]))
     # x_tick_labels = list([f'$\\frac{{{g}}}{{q\\beta}}$' for g in gens_to_display_lines])
@@ -242,7 +268,7 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     ax1.tick_params(axis='x', labelrotation=-45) #, labelsize=12)
     # ax1.set_xticks([])
     # ax1.set_xlabel('Time')
-    ax1.set_ylabel('Number generations')
+    ax1.set_ylabel('Number generations', fontsize=12)
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(False)
@@ -258,8 +284,8 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
         x_position_val = np.argmax(average_active_sizes.T[g]) #for specific positioning of labels
         static_position = max_x_val - int(max_x_val / 10) # for static positioning of curve labels
         max_y_val = average_active_sizes.T[g][static_position]
-        ax2.text(timeseries_vals[static_position]+5, max_y_val, f'$g={{{g}}}$', horizontalalignment='left')
-    ax2.text(0, np.max(average_active_sizes)+80, 'gen $g$:', horizontalalignment='center')
+        ax2.text(timeseries_vals[static_position]+5, max_y_val, f'$g={{{g}}}$', horizontalalignment='left', fontsize=12)
+    ax2.text(0, np.max(average_active_sizes)+80, 'gen $g$:', horizontalalignment='center', fontsize=12)
     for i in range(len(gens_to_display_lines)):
         g = gens_to_display_lines[i]
         if g == 2:  # just do a label for one pair
@@ -275,12 +301,12 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
                 ax2.axvspan(expctd_time, actl_time, alpha=0.5, color='green', ymax=np.max(average_active_sizes))
                 midpnt = expctd_time + (actl_time - expctd_time)/2
                 ax2.text(midpnt, np.max(average_active_sizes) + 80, f'{g}', horizontalalignment='center',
-                         rotation=0)
+                         rotation=0, fontsize=12)
             elif expctd_time > actl_time:
                 ax2.axvspan(expctd_time, actl_time, alpha=0.5, color='yellow', ymax=np.max(average_active_sizes))
                 midpnt = actl_time + (expctd_time - actl_time)/2
                 ax2.text(midpnt, np.max(average_active_sizes) + 80, f'{g}', horizontalalignment='center',
-                         rotation=0)
+                         rotation=0, fontsize=12)
         else:
             ax2.vlines(expected_time[g], ymin=0, ymax=np.max(average_active_sizes), color=standrd_colors[g],
                        alpha=0.5, ls=':')
@@ -296,22 +322,22 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
                 ax2.axvspan(expctd_time, actl_time, alpha=0.5, color='green', ymax=np.max(average_active_sizes))
                 midpnt = expctd_time + (actl_time - expctd_time)/2
                 ax2.text(midpnt, np.max(average_active_sizes) + 80, f'{g}', horizontalalignment='center',
-                         rotation=0)
+                         rotation=0, fontsize=12)
             elif expctd_time > actl_time:
                 ax2.axvspan(expctd_time, actl_time, alpha=0.5, color='yellow', ymax=np.max(average_active_sizes))
                 midpnt = actl_time + (expctd_time - actl_time)/2
                 ax2.text(midpnt, np.max(average_active_sizes) + 80, f'{g}', horizontalalignment='center',
-                         rotation=0)
+                         rotation=0, fontsize=12)
     # ax2.legend(loc='upper right', frameon=False)
     # plt.xlabel('time')
-    ax2.set_xlabel('Time')
+    ax2.set_xlabel('Time (unitless)', fontsize=12)
     # ax2.set_xticks(np.arange(0, int(timeseries_vals[:max_x_val][-1]), 500))
     ax2.set_xticks(list([gen_emergence[g] for g in gens_to_display_lines]))
     # x_tick_labels_time = list(np.arange(0, int(timeseries_vals[:max_x_val][-1]), 500))
     # x_tick_labels_time[0] = '$t=0$'
     # ax2.set_xticklabels(x_tick_labels_time)
     ax2.tick_params(axis='x', labelrotation=-45)
-    ax2.set_ylabel('Number active nodes in gen')
+    ax2.set_ylabel('Number active nodes in gen', fontsize=12)
     ax2.set_xlim([0, timeseries_vals[max_x_val+1]])
     ax2.spines['top'].set_visible(False)
     ax2.spines['right'].set_visible(False)
@@ -320,6 +346,7 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     plt.tight_layout()
     if save:
         plt.savefig('time_plot_color.png')
+    plt.savefig('time_plot_svg.svg', format='svg')
     plt.show()
 
 
@@ -352,6 +379,58 @@ def combine_plaw_results():
     combo_results = combo_results / (50+75)
     np.savetxt(f'../data/paper/plaw_combo_125k_generational.txt', combo_results, delimiter=',')
     print(combo_results[0])
+
+def network_drawing():
+    # nodes = list(np.arange(8))
+    edges = [(0,1), (0,2), (0,3), (1,4), (1,5), (3,6), (3,7), (5,8), (6,7), (0,9), (9,10), (9,11)]
+    G = nx.Graph()
+    # G.add_nodes_from(nodes)
+    G.add_edges_from(edges)
+    fig, axs = plt.subplots(2, 2)
+    pos1 = nx.spring_layout(G)
+
+    node_labels = {0:'0', 1:'', 2:'', 3:'', 4:'', 5:'', 6:'', 7:'', 8:'', 9:'', 10:'', 11:''}
+    cmap = sns.color_palette('colorblind', n_colors=4)
+    susceptible_color = cmap[1]
+    infected_color = cmap[2]
+    node_colors_step1 = [infected_color, susceptible_color, susceptible_color,susceptible_color,susceptible_color
+        ,susceptible_color,susceptible_color,susceptible_color,susceptible_color, susceptible_color, susceptible_color
+        , susceptible_color]
+    nx.draw_networkx_nodes(G, pos=pos1, ax=axs[0,0], node_color=node_colors_step1)
+    nx.draw_networkx_edges(G, pos=pos1, ax=axs[0,0], edge_color='black')
+    nx.draw_networkx_labels(G, pos=pos1, ax=axs[0,0], labels=node_labels)
+    axs[0,0].axis('off')
+
+    node_colors_step1 = [infected_color, infected_color, infected_color, infected_color, susceptible_color,
+                         susceptible_color, susceptible_color, susceptible_color, susceptible_color, susceptible_color,
+                         susceptible_color, susceptible_color]
+    node_labels = {0: '0', 1: '1', 2: '1', 3: '1', 4: '', 5: '', 6: '', 7: '', 8: '', 9:'', 10:'', 11:''}
+    nx.draw_networkx_nodes(G, pos=pos1, ax=axs[0,1], node_color=node_colors_step1)
+    nx.draw_networkx_edges(G, pos=pos1, ax=axs[0,1], edge_color='black')
+    nx.draw_networkx_labels(G, pos=pos1, ax=axs[0,1], labels=node_labels)
+    axs[0,1].axis('off')
+
+    node_colors_step1 = [infected_color, infected_color, infected_color, infected_color, infected_color,
+                         infected_color, susceptible_color, infected_color, susceptible_color, susceptible_color,
+                         susceptible_color, susceptible_color]
+    node_labels = {0: '0', 1: '1', 2: '1', 3: '1', 4: '2', 5: '2', 6: '', 7: '2', 8: '', 9:'', 10:'', 11:''}
+    nx.draw_networkx_nodes(G, pos=pos1, ax=axs[1,0], node_color=node_colors_step1)
+    nx.draw_networkx_edges(G, pos=pos1, ax=axs[1,0], edge_color='black')
+    nx.draw_networkx_labels(G, pos=pos1, ax=axs[1,0], labels=node_labels)
+    axs[1,0].axis('off')
+
+    node_colors_step1 = [infected_color, infected_color, infected_color, infected_color, infected_color,
+                         infected_color, susceptible_color, infected_color, infected_color, susceptible_color,
+                         susceptible_color, susceptible_color]
+    node_labels = {0: '0', 1: '1', 2: '1', 3: '1', 4: '2', 5: '2', 6: '', 7: '2', 8: '3', 9:'', 10:'', 11:''}
+    nx.draw_networkx_nodes(G, pos=pos1, ax=axs[1,1], node_color=node_colors_step1)
+    nx.draw_networkx_edges(G, pos=pos1, ax=axs[1,1], edge_color='black')
+    nx.draw_networkx_labels(G, pos=pos1, ax=axs[1,1], labels=node_labels)
+
+    axs[1,1].axis('off')
+
+    plt.savefig('cartoon_network.svg', fmt='svg')
+    plt.show()
 
 
 

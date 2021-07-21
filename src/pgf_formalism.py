@@ -326,6 +326,14 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
     return allPsi
 
+def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1):
+    print('Working on targeted intervention')
+    #TODO
+
+def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict):
+    print('Working on targeted rollout intervention')
+    #TODO
+
 
 
 # Convolution code below:

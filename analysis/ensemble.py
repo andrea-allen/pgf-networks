@@ -6,7 +6,7 @@ from epintervene.simobjects import network
 from src import pgf_formalism
 import time
 
-
+# TODO start this on tuesday
 def run_ensemble_intervention_effects(degree_distrb, base_file_name='sim_results',
                                       num_sims=10000, num_nodes=1000, init_T=0.8,
                                       gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
