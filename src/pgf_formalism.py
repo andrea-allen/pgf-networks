@@ -140,7 +140,7 @@ def gen_functions_with_transmissibility(degree_distrb, T):
 def random_vacc_distribution(degree_distrb, T, V):
     maxk = len(degree_distrb)
 
-    # Important! Only feed this function the oringinal degree distribution
+    # Important! Only feed this function the original degree distribution
     # it will be then transformed to g1, assuming this is happening
     # at a generation later than 0
     # TODO Make sure this gets normalized?
@@ -169,6 +169,52 @@ def random_vacc_distribution(degree_distrb, T, V):
     P_l_distrb = np.sum(P_lk, axis=0)
     P_l_distrb = P_l_distrb / (np.sum(P_l_distrb))
     return P_l_distrb
+
+
+def critical_Degree_Calc(prop, degree_d):
+    k_crit = len(degree_d) #default for the critical k value
+    temp_prop = prop
+    while temp_prop > 0:
+        temp_prop = temp_prop - degree_d[k_crit]
+        k_crit -= 1
+
+
+
+def targeted_vacc_distribution(degree_distrb, T, prop_V):
+    maxk = len(degree_distrb)
+
+    # Important! Only feed this function the original degree distribution
+    # it will be then transformed to g1, assuming this is happening
+    # at a generation later than 0
+
+    q_k = g1_of(degree_distrb)
+    k_crit = critical_Degee_Calc(prop_V, degree_distrb)
+
+
+    P_lkTarget = np.zeros((maxk, maxk))
+
+    # need to have an if statement in the second for loop that adjusts the transmissibility
+    for k in range(0, maxk):
+        P_jkTarget = np.zeros(maxk)
+        for j in range(0, k + 1):
+            try:
+                p_j_given_k_tar = q_k[k] * (math.gamma(k + 1) / (math.gamma(j + 1) * math.gamma(k - j + 1))
+                                        * ((1 - H) ** (j)) * (H ** (k - j)))
+                P_jkTarget[j] = p_j_given_k_tar
+            except OverflowError:
+                P_jkTarget[j] = 0
+
+            for l in range(0, j + 1):
+                try:
+                    p_l_given_j_tar = (math.gamma(j + 1) / (math.gamma(l + 1) * math.gamma(j - l + 1))) * (
+                            (1 - T) ** (j - l)) * (T ** (l))
+                    P_lkTarget[k][l] = P_jkTarget[j] * p_l_given_j_tar
+                except OverflowError:
+                    P_lkTarget[k][l] = 0
+
+    P_l_tar_distrb = np.sum(P_lkTarget, axis=0)
+    P_l_tar_distrb = P_l_tar_distrb / (np.sum(P_l_tar_distrb))
+    return P_l_tar_distrb
 
 
 def constructMatrixM(g_0, g_1):
@@ -328,11 +374,26 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
 def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1):
     print('Working on targeted intervention')
-    #TODO
+    #TODO need to do the target vaccination distribution
+
+    for g in range(2, num_gens):
+        print('working on gen ' + str(g))
+        if g == intervention_gen:
+            new_g1 = targeted_vacc_distribution(original_degree_distrb, initial_T, prop_vacc, crit_degree)
+            new_M = constructMatrixM(g0, new_g1)
+            M_1 = new_M[1]
+        for s in range(max_s):
+            for m in range(max_m):
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+        psi_g = allPsi[g]
+        psi_g = psi_g / np.sum(psi_g)
+        allPsi[g] = psi_g
+
+    return allPsi
 
 def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict):
     print('Working on targeted rollout intervention')
-    #TODO
+    #TODO need to do the target vaccination distribution with rollout
 
 
 
