@@ -171,16 +171,16 @@ def random_vacc_distribution(degree_distrb, T, V):
     return P_l_distrb
 
 
-def critical_Degree_Calc(prop, degree_d):
+def critical_degree_calc(prop, degree_d):
     k_crit = len(degree_d) #default for the critical k value
     temp_prop = prop
     while temp_prop > 0:
-        temp_prop = temp_prop - degree_d[k_crit]
+        temp_prop = temp_prop - degree_d[k_crit-1]
         k_crit -= 1
 
+    return k_crit
 
-
-def targeted_vacc_distribution(degree_distrb, T, prop_V):
+def targeted_vacc_distribution(degree_distrb, T, V):
     maxk = len(degree_distrb)
 
     # Important! Only feed this function the original degree distribution
@@ -188,8 +188,17 @@ def targeted_vacc_distribution(degree_distrb, T, prop_V):
     # at a generation later than 0
 
     q_k = g1_of(degree_distrb)
-    k_crit = critical_Degee_Calc(prop_V, degree_distrb)
+    crit_value = critical_degree_calc(V, degree_distrb)
 
+    num_H = 0
+    for c in range(crit_value, maxk-1):
+        num_H += c*q_k[c]
+
+    denom_H = 0
+    for f in range(maxk-1):
+        denom_H += f*q_k[f]
+
+    H = num_H / denom_H
 
     P_lkTarget = np.zeros((maxk, maxk))
 
@@ -197,6 +206,7 @@ def targeted_vacc_distribution(degree_distrb, T, prop_V):
     for k in range(0, maxk):
         P_jkTarget = np.zeros(maxk)
         for j in range(0, k + 1):
+
             try:
                 p_j_given_k_tar = q_k[k] * (math.gamma(k + 1) / (math.gamma(j + 1) * math.gamma(k - j + 1))
                                         * ((1 - H) ** (j)) * (H ** (k - j)))
@@ -205,9 +215,15 @@ def targeted_vacc_distribution(degree_distrb, T, prop_V):
                 P_jkTarget[j] = 0
 
             for l in range(0, j + 1):
+
+                #Determine what k is to change T_k accordingly
+                T_k = T
+                if k >= crit_value:
+                    T_k = 0
+
                 try:
                     p_l_given_j_tar = (math.gamma(j + 1) / (math.gamma(l + 1) * math.gamma(j - l + 1))) * (
-                            (1 - T) ** (j - l)) * (T ** (l))
+                            (1 - T_k) ** (j - l)) * (T_k ** (l))
                     P_lkTarget[k][l] = P_jkTarget[j] * p_l_given_j_tar
                 except OverflowError:
                     P_lkTarget[k][l] = 0
@@ -379,7 +395,7 @@ def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, interv
     for g in range(2, num_gens):
         print('working on gen ' + str(g))
         if g == intervention_gen:
-            new_g1 = targeted_vacc_distribution(original_degree_distrb, initial_T, prop_vacc, crit_degree)
+            new_g1 = targeted_vacc_distribution(original_degree_distrb, initial_T, prop_vacc)
             new_M = constructMatrixM(g0, new_g1)
             M_1 = new_M[1]
         for s in range(max_s):
