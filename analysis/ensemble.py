@@ -6,7 +6,6 @@ from epintervene.simobjects import network
 from src import pgf_formalism
 import time
 
-# TODO start this on tuesday
 def run_ensemble_intervention_effects(degree_distrb, base_file_name='sim_results',
                                       num_sims=10000, num_nodes=1000, init_T=0.8,
                                       gen_intervene=3, T_intervene=0.4, recover_rate=.001, prop_reduced=0.0,
@@ -185,6 +184,11 @@ def run_single_simulation(A, adjlist, current, results_type='generation', interv
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv)
+    elif intervention_type == "targeted":
+        sim = extended_simulation.TargetedInterventionSim(N, adjlist=adjlist)
+        sim.set_uniform_beta(beta_init)
+        sim.set_uniform_gamma(gamma_init)
+        sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv, proportion_reduced=prop_reduced)
     else:
         sim = simulation.Simulation(N=N, adj_list=adjlist)
         sim.set_uniform_beta(beta_init)
