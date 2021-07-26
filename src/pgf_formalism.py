@@ -327,6 +327,9 @@ def Psi(degree_distrb=None, initProb=1, num_gens=400, max_s=400, max_m=400, init
     elif intervention_type=="targeted":
         allPsi = targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1)
 
+    elif intervention_type=="targeted_rollout":
+        allPsi = targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict)
+
     return allPsi
 
 def baseline(num_gens, max_s, max_m, allPsi, M_1):
@@ -413,8 +416,6 @@ def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, interv
     return allPsi
 
 def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict):
-    print('Working on targeted rollout intervention')
-
     intervention_gen_keys = list(rollout_dict.keys())
     current_gen_idx = 0
     next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
