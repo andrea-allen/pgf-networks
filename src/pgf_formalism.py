@@ -233,6 +233,9 @@ def targeted_vacc_distribution(degree_distrb, T, V):
     return P_l_tar_distrb
 
 
+
+
+
 def constructMatrixM(g_0, g_1):
     # Constructs the matrix of pgfs for G0_with transmission convolved to every mth power
     N_0 = len(g_0)
@@ -393,7 +396,6 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
 def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1):
     print('Working on targeted intervention')
-    #TODO need to do the target vaccination distribution
 
     for g in range(2, num_gens):
         print('working on gen ' + str(g))
@@ -412,8 +414,27 @@ def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, interv
 
 def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, rollout_dict):
     print('Working on targeted rollout intervention')
-    #TODO need to do the target vaccination distribution with rollout
 
+    intervention_gen_keys = list(rollout_dict.keys())
+    current_gen_idx = 0
+    next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
+    for g in range(2, num_gens):
+        print('working on gen ' + str(g))
+        if g == next_up_intervention_gen:
+            new_g1 = targeted_vacc_distribution(original_degree_distrb, initial_T, rollout_dict[next_up_intervention_gen])
+            new_M = constructMatrixM(g0, new_g1)
+            M_1 = new_M[1]
+            if current_gen_idx < len(intervention_gen_keys) - 1:
+                current_gen_idx += 1
+                next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
+        for s in range(max_s):
+            for m in range(max_m):
+                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M_1)
+        psi_g = allPsi[g]
+        psi_g = psi_g / np.sum(psi_g)
+        allPsi[g] = psi_g
+
+    return allPsi
 
 
 # Convolution code below:
