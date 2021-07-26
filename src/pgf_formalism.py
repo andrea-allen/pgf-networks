@@ -321,6 +321,9 @@ def Psi(degree_distrb=None, initProb=1, num_gens=400, max_s=400, max_m=400, init
     elif intervention_type=="random":
         allPsi = random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1)
 
+    elif intervention_type=="targeted":
+        allPsi = targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1)
+
     return allPsi
 
 def baseline(num_gens, max_s, max_m, allPsi, M_1):
