@@ -387,6 +387,7 @@ def plot_sims_vs_analytical_multigens(list_of_gens, x_lim, fname_sim_results, fn
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(True)
     ax1.spines['left'].set_visible(True)
+    ax1.set_ylim([10**(-5), 1])
     if same_plot:
         if legend_on:
             plt.legend(loc='upper right', frameon=False, fontsize=18)

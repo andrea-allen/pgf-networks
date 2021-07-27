@@ -169,9 +169,6 @@ def run_single_simulation(A, adjlist, current, results_type='generation', interv
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
                                    proportion_reduced_list=prop_reduced_list)
-        # TODO try this to see if can find bug:
-        # sim.configure_intervention(intervention_gen_list=[5,6,7], beta_redux_list=[0,0,0],
-        #                            proportion_reduced_list=[0,0,0])
 
     elif intervention_type == "random":
         sim = extended_simulation.RandomInterventionSim(N, adjlist=adjlist)
@@ -189,6 +186,12 @@ def run_single_simulation(A, adjlist, current, results_type='generation', interv
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv, proportion_reduced=prop_reduced)
+    elif intervention_type == "targeted-rollout":
+        sim = extended_simulation.TargetedRolloutSimulation(N=N, adjlist=adjlist)
+        sim.set_uniform_beta(beta_init)
+        sim.set_uniform_gamma(gamma_init)
+        sim.configure_intervention(intervention_gen_list=intervention_gen_list, beta_redux_list=beta_redux_list,
+                                   proportion_reduced_list=prop_reduced_list)
     else:
         sim = simulation.Simulation(N=N, adj_list=adjlist)
         sim.set_uniform_beta(beta_init)
