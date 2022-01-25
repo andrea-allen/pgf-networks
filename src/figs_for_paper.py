@@ -106,14 +106,14 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
     ## FIGURE FOR PAPER
     if active_gen_sizes_on:
         beta = .004
-        time_emergence_plot(file_root, q_degree, beta, save=True)
+        time_emergence_plot(file_root, q_degree, beta, save=False)
 
     ## NOT FOR PAPER
-    gen_emergence = np.loadtxt(f'../data/{file_root}_gen_emergence_times.txt', delimiter=',')
+    gen_emergence = np.loadtxt(f'{file_root}_gen_emergence_times.txt', delimiter=',')
     # vlines doesn't really make sense here since the x axis is node quantity, but, can use as labels
     # plt.vlines(gen_emergence, ymin=0, ymax=1, colors='orange', alpha=0.5, linestyles=':')
-    t_buckets = np.loadtxt(f'../data/{file_root}_time_distribution_values.txt', delimiter=',')
-    t_distribution = np.loadtxt(f'../data/{file_root}_time_distribution.txt', delimiter=',')
+    t_buckets = np.loadtxt(f'{file_root}_time_distribution_values.txt', delimiter=',')
+    t_distribution = np.loadtxt(f'{file_root}_time_distribution.txt', delimiter=',')
     colors = ['red', 'orange', 'green', 'blue', 'goldenrod', 'purple', 'pink', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
@@ -134,7 +134,7 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
     plt.plot(x_vals, y_fit, color='red', label=f'Linear fit of $y={np.round(lin_reg_result.slope, 2)}$')
     plt.legend(loc='lower right')
     plt.tight_layout()
-    plt.savefig(f'../data/{file_root}_time_fit.png')
+    # plt.savefig(f'../data/{file_root}_time_fit.png')
     plt.show()
 
     expected_time = np.zeros(100)
@@ -155,10 +155,10 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
     ## POSSIBLE FIGURE FOR PAPER
     plt.figure('Generations')
     plt.title('Generational time distribution of cumulative infections')
-    gen_emergence = np.loadtxt(f'../data/{file_root}_gen_emergence_times.txt', delimiter=',')
+    gen_emergence = np.loadtxt(f'{file_root}_gen_emergence_times.txt', delimiter=',')
     plt.subplot(2,1,1)
     plotting_util.graph_infection_size_distribution_by_gen([4, 6, 10, 20], 200,
-                                                           f'../data/{file_root}_generational.txt',
+                                                           f'{file_root}_generational.txt',
                                                            gen_emergence_times=gen_emergence)
     # vlines doesn't really make sense here since the x axis is node quantity, but, can use as labels
     # plt.vlines(gen_emergence, ymin=0, ymax=1, colors='orange', alpha=0.5, linestyles=':')
@@ -166,8 +166,8 @@ def results_plots(file_root='poiss_T8_10k_q_1_gamma1_g_over_b', q_degree=1, acti
     plt.ylabel('Probability')
     plt.ylim([.0001, .05])
     plt.tight_layout()
-    t_buckets = np.loadtxt(f'../data/{file_root}_time_distribution_values.txt', delimiter=',')
-    t_distribution = np.loadtxt(f'../data/{file_root}_time_distribution.txt', delimiter=',')
+    t_buckets = np.loadtxt(f'{file_root}_time_distribution_values.txt', delimiter=',')
+    t_distribution = np.loadtxt(f'{file_root}_time_distribution.txt', delimiter=',')
     colors = ['red', 'orange', 'green', 'blue', 'goldenrod', 'purple', 'pink', 'teal', 'black', 'gold', 'chocolate',
               'dodgerblue', 'darkslategray', 'mediumorchid', 'magenta', 'tomato', 'midnightblue',
               'cadetblue', 'crimson']
@@ -213,10 +213,10 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     for g in range(1, 100):
         expected_time[g] = g/(q_degree*beta)
 
-    gen_emergence = np.loadtxt(f'../data/{file_root}_gen_emergence_times.txt', delimiter=',')
-    active_gens_ts = np.loadtxt(f'../data/{file_root}_active_gen_ts.txt', delimiter=',')
-    total_gens_ts = np.loadtxt(f'../data/{file_root}_total_gen_ts.txt', delimiter=',')
-    timeseries_vals = np.loadtxt(f'../data/{file_root}_ts_vals_normalized.txt', delimiter=',')
+    gen_emergence = np.loadtxt(f'{file_root}_gen_emergence_times.txt', delimiter=',')
+    active_gens_ts = np.loadtxt(f'{file_root}_active_gen_ts.txt', delimiter=',')
+    total_gens_ts = np.loadtxt(f'{file_root}_total_gen_ts.txt', delimiter=',')
+    timeseries_vals = np.loadtxt(f'{file_root}_ts_vals_normalized.txt', delimiter=',')
     max_x_val = int(.35 * len(timeseries_vals))
     # plt.subplot(2, 1, 1, sharex=True)
     offset_for_top_plot = int(max_x_val/10)
@@ -277,7 +277,7 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     # plt.subplot(2, 1, 2, sharex=True)
     # ax2.set_xticks([timeseries_vals[0], timeseries_vals[50], timeseries_vals[100], timeseries_vals[150], timeseries_vals[200], timeseries_vals[250]])
     # TODO make it an actual inset
-    average_active_sizes = np.loadtxt(f'../data/{file_root}_active_gen_sizes_ts.txt', delimiter=',')
+    average_active_sizes = np.loadtxt(f'{file_root}_active_gen_sizes_ts.txt', delimiter=',')
     for i in range(len(gens_to_display_curves)):
         g = gens_to_display_curves[i]
         ax2.plot(timeseries_vals[:max_x_val - offset_for_top_plot], average_active_sizes.T[g][:max_x_val-offset_for_top_plot], color=standrd_colors[g])
@@ -346,7 +346,7 @@ def time_emergence_plot(file_root, q_degree, beta, save=True):
     plt.tight_layout()
     if save:
         plt.savefig('time_plot_color.png')
-    plt.savefig('time_plot_svg.svg', format='svg')
+    # plt.savefig('time_plot_svg.svg', format='svg')
     plt.show()
 
 
@@ -377,7 +377,7 @@ def combine_plaw_results():
     results_may = np.loadtxt(f'../data/testing/plaw_05_25_generational.txt', delimiter=',') #75000 simulations
     combo_results = (np.array(results_june) * 50) + (np.array(results_may) * 75)
     combo_results = combo_results / (50+75)
-    np.savetxt(f'../data/paper/plaw_combo_125k_generational.txt', combo_results, delimiter=',')
+    np.savetxt(f'../data/paper-copies/plaw_combo_125k_generational.txt', combo_results, delimiter=',')
     print(combo_results[0])
 
 def network_drawing():
@@ -429,7 +429,7 @@ def network_drawing():
 
     axs[1,1].axis('off')
 
-    plt.savefig('cartoon_network.svg', fmt='svg')
+    # plt.savefig('cartoon_network.svg', fmt='svg')
     plt.show()
 
 

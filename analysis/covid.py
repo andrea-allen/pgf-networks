@@ -235,12 +235,15 @@ def make_figure():
     # plt.colorbar()
     # plt.show()
 
-    np.savetxt('X_vals_g9_s18.txt', X)
-    np.savetxt('Y_vals_g9_s18.txt', Y)
-    np.savetxt('Z_vals_g9_s18.txt', Z_vals)
+    # np.savetxt('X_vals_g9_s18.txt', X)
+    # np.savetxt('Y_vals_g9_s18.txt', Y)
+    # np.savetxt('Z_vals_g9_s18.txt', Z_vals)
 
     return X, Y, Z_vals
 
+"""
+Helper function used for making Figure 3 contour plot
+"""
 def make_figure2():
     k = .1
     r0 = 2.5
@@ -282,7 +285,7 @@ def make_figure2():
     # populate results with each point over (g,s) survival prob
     # add real data points
 
-def contour_figs():
+def contour_figs(data_path=None):
     plt.rcParams["text.usetex"] = True
     plt.rcParams["font.size"] = 16
     plt.rcParams["font.family"] = "sans-serif"
@@ -312,10 +315,12 @@ def contour_figs():
 
 
 
-    X, Y, Z = make_figure()
-    # X = np.loadtxt('X_vals2.txt')
-    # Y = np.loadtxt('Y_vals2.txt')
-    # Z = np.loadtxt('Z_vals2.txt')
+    if data_path is None:
+        X, Y, Z = make_figure()
+    else:
+        X = np.loadtxt(f'{data_path}/X_vals2.txt') ## PRESAVED VALUES
+        Y = np.loadtxt(f'{data_path}/Y_vals2.txt')
+        Z = np.loadtxt(f'{data_path}/Z_vals2.txt')
     pal = sns.color_palette("colorblind")
     print(pal.as_hex())
     cp = ax.contour(X, Y, Z,levels=40, cmap=get_custom_cmap())
@@ -342,27 +347,10 @@ def contour_figs():
     fig.colorbar(sm, ticks=np.arange(min(cp.levels), max(cp.levels), .1), label=r'Probability of epidemic survival')
     # cbar.set_label(r'Probability of epidemic survival', rotation=270)
 
-    # plt.text(0.16, 0.33, "2019-nCoV, Wuhan",
-    #          color="w",
-    #          horizontalalignment='left',
-    #          verticalalignment='bottom',
-    #          transform=ax.transAxes,
-    #          fontsize=18)
-    # plt.text(0.14, 0.4, "COVID-19 (over-dispersed)",
-    #          color="r",
-    #          horizontalalignment='left',
-    #          verticalalignment='bottom',
-    #          transform=ax.transAxes,
-    #          backgroundcolor="w")
-
-    # plt.text(0.05, 0.05, r'low $R_0$, high variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
-    # plt.text(0.57, 0.95, r'high $R_0$, low variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
-
-
     # Save to file.
     plt.tight_layout(0.1)
     # plt.savefig('contour_draft2.png')
-    plt.savefig('ccontour_WA_9_18.svg', format='svg')
+    # plt.savefig('ccontour_WA_9_18.svg', format='svg')
     plt.show()
 
 def contour_fig2():
@@ -433,10 +421,13 @@ def contour_fig2():
 
     # Save to file.
     plt.tight_layout(0.1)
-    plt.savefig('contour2_svg2.svg', format='svg')
+    # plt.savefig('contour2_svg2.svg', format='svg')
 
     plt.show()
 
+"""
+Figure 3 here is what is used in Paper 1
+"""
 def contour_fig3():
     plt.rcParams["text.usetex"] = True
     plt.rcParams["font.size"] = 16
@@ -474,20 +465,6 @@ def contour_fig3():
     # TODO don't plot s=0 row
     Z = Z[1:]
 
-    #### trying something
-    # centers = [0.5, 11.5, 1.5, 1000]
-    # dx, = np.diff(centers[:2]) / (X.shape[1] - 1)
-    # dy, = -np.diff(centers[2:]) / (X.shape[0] - 1)
-    # extent = [centers[0] - dx / 2, centers[1] + dx / 2, centers[2] + dy / 2, centers[3] - dy / 2]
-    # plt.imshow(X, cmap='jet', interpolation=None, extent=extent, aspect='auto')
-    #
-    # plt.xticks(np.arange(centers[0], centers[1] + dx, dx))
-    # plt.yticks(np.arange(centers[3], centers[2] + dy, dy))
-    ####
-
-
-    # extent=[0, 12, 1, 1500]
-
     # cp = ax.imshow(Z, interpolation='none', extent=extent, origin='lower', alpha=1, aspect='auto',
     #                cmap=get_custom_cmap()) #Spectral_r
     cp = ax.imshow(Z, interpolation='none', origin='lower', alpha=1, aspect='auto',
@@ -522,26 +499,13 @@ def contour_fig3():
     # sm.set_array([])
     # fig.colorbar(sm, ticks=np.arange(min(cp.levels), max(cp.levels), .1), label=r'Probability of epidemic survival')
 
-    # plt.text(0.16, 0.33, "2019-nCoV, Wuhan",
-    #          color="w",
-    #          horizontalalignment='left',
-    #          verticalalignment='bottom',
-    #          transform=ax.transAxes,
-    #          fontsize=18)
-    # plt.text(0.14, 0.4, "COVID-19 (over-dispersed)",
-    #          color="r",
-    #          horizontalalignment='left',
-    #          verticalalignment='bottom',
-    #          transform=ax.transAxes,
-    #          backgroundcolor="w")
-
     # plt.text(0.05, 0.05, r'low $R_0$, high variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
     # plt.text(0.57, 0.95, r'high $R_0$, low variance', fontsize=16, horizontalalignment='left', verticalalignment='center', transform=ax.transAxes)
 
 
     # Save to file.
     # plt.tight_layout(0.1)
-    plt.savefig('contour3_yscale_fixed1.svg', format='svg')
+    # plt.savefig('contour3_yscale_fixed1.svg', format='svg')
 
     plt.show()
 
