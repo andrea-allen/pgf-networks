@@ -163,7 +163,7 @@ def run_single_simulation(A, adjlist, current, results_type='generation', interv
     start_time = time.time()
     N = len(adjlist)
     # Constructing the simulation of specified Intervention Type, otherwise will run a regular simulation
-    if intervention_type == "random-rollout":
+    if intervention_type == "random_rollout":
         sim = extended_simulation.RandomRolloutSimulation(N=N, adjlist=adjlist)
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
@@ -186,7 +186,7 @@ def run_single_simulation(A, adjlist, current, results_type='generation', interv
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
         sim.configure_intervention(intervention_gen=intervention_gen, beta_redux=beta_interv, proportion_reduced=prop_reduced)
-    elif intervention_type == "targeted-rollout":
+    elif intervention_type == "targeted_rollout":
         sim = extended_simulation.TargetedRolloutSimulation(N=N, adjlist=adjlist)
         sim.set_uniform_beta(beta_init)
         sim.set_uniform_gamma(gamma_init)
