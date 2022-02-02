@@ -40,7 +40,7 @@ if __name__ == '__main__':
     print("done")
     # ## Random Vaccination
     #TBD
-    plotting_util.plots_for_nerccs_talk([3, 5, 6, 15], 400,  '../data/paper/plaw_T8_10k_120ksims_q3_generational.txt', '../data/talk_results/plaw_mod_random_vax{0}.txt',
+    plotting_util.plots_for_nerccs_talk([3, 5, 6, 15], 400,  '../archive/paper1data/plaw_T8_10k_120ksims_q3_generational.txt', '../data/talk_results/plaw_mod_random_vax{0}.txt',
                                                     '../data/testing/plaw_random_vax_10knodes_20k_sims_intervene.txt', '../data/talk_results/plaw_mod_random_vax{0}_intv.txt',
                                                     same_plot=True, normalize_axis_x=False, inset_label=f'$T_g \\rightarrow T_4=0$ for \n 50\% Vaccinated')
     plt.show()

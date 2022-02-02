@@ -28,11 +28,11 @@ er_degree_dist = degree_distributions.binomial_degree_distb(400, k_mean_degree)
 #                                            intervention_type="random_rollout", run_regular=False)
 
 # ER with the magic random rollout effects
-pgf_formalism.compute_phase_space(20, 400, er_degree_dist, 0.8, True,
-                                  [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 16, 17, 18, 19],
-                                  f'{LOCAL_DATA_PATH}/rollouts/random/er_manatee_11_12_{0}',
-                                  rollout_dict={3: .2, 4: .2, 6: .3}, do_non_interv=False, do_interv=True,
-                                  intervention_type="random_rollout", pre_vax_correction=True)
+# pgf_formalism.compute_phase_space(20, 400, er_degree_dist, 0.8, True,
+#                                   [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 16, 17, 18, 19],
+#                                   f'{LOCAL_DATA_PATH}/rollouts/random/er_manatee_11_12_{0}',
+#                                   rollout_dict={3: .2, 4: .2, 6: .3}, do_non_interv=False, do_interv=True,
+#                                   intervention_type="random_rollout", pre_vax_correction=True)
 
 plotting_util.plot_sims_vs_analytical_multigens([1, 2, 3, 4, 5, 6, 8], 200,
                                                 f'{LOCAL_DATA_PATH}/rollouts/random/er_g5_intervene.txt', # non-intervention
