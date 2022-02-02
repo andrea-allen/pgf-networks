@@ -12,6 +12,7 @@ import math
 
 
 # This function yields the index of the most recent intervention to k (w function)
+# Updated as of 1/31 - not using this function
 def index_of_recent_intervene(k, interGen):
     for i in range(1, len(interGen)):
         # print(i)
@@ -25,6 +26,7 @@ def index_of_recent_intervene(k, interGen):
 
 
 # This function gives the next soonest intervention (f function)
+# Updated as of 1/31 - not using this function
 def next_soonest_intervene(k, interGen):
     for i in range(1, len(interGen)):
         if (k >= interGen[i - 1]) & (k < interGen[i]):
@@ -34,6 +36,7 @@ def next_soonest_intervene(k, interGen):
 
 
 # Takes terms out of the equation when k is not an intervention gen 
+# Updated as of 1/31 - not using this function
 def indicator_1(k):
     if k == math.inf:
         return 0
@@ -49,7 +52,9 @@ def indicator_1(k):
 #     return 0
 
 
+
 # Amount of time from k until generation next_soonest_intervene
+# Updated as of 1/31 - not using this function
 def time_from_current_to_next_intervene(k, l, interGen):
     f_l = next_soonest_intervene(l, interGen)
 
@@ -58,19 +63,23 @@ def time_from_current_to_next_intervene(k, l, interGen):
     return -1
 
 
+
 # Poisson Process Time term
+# Updated as of 1/31 - not using this function
 def pp_time_term(b, q, gen, f_gen, interGen):
     return q * b / (time_from_current_to_next_intervene(gen, f_gen, interGen))
 
 
 # Function for defining parameters
-def define_parameters(beta_vec, gamma_vec, q_vec, vaccs_vec, gen, interGen):
-    beta = beta_vec[index_of_recent_intervene(gen, interGen)]
-    gamma = gamma_vec[index_of_recent_intervene(gen, interGen)]
-    q = q_vec[index_of_recent_intervene(gen, interGen)]
-    vacc = vaccs_vec[index_of_recent_intervene(gen, interGen)]
+# def define_parameters(beta_vec, gamma_vec, q_vec, vaccs_vec, gen, interGen):
+#     beta = beta_vec[index_of_recent_intervene(gen, interGen)]
+#     gamma = gamma_vec[index_of_recent_intervene(gen, interGen)]
+#     q = q_vec[index_of_recent_intervene(gen, interGen)]
+#     vacc = vaccs_vec[index_of_recent_intervene(gen, interGen)]
+#
+#     return [beta, gamma, q, vacc]
 
-    return [beta, gamma, q, vacc]
+
 
 
 def first_term_transmission(betas, gammas, qs, vaccs, gen, interGen):
@@ -130,161 +139,15 @@ def transmission_expression(betas, gammas, qs, vaccs, gen, interGen):
     return first_term + second_term
 
 
-# %% TEST
+def l_of_g(g, l, b_lminus, b_l, gamma_lminus, gamma_l, q_lminus, q_l, v_lminus, v_l):
+    first_term = ((1-v_lminus)*q_lminus*b_lminus)/(b_lminus*(1-v_lminus) + gamma_lminus + b_lminus*q_lminus*(1-v_lminus))
+    second_term = ((1-v_l)*b_l)/(b_l*(1-v_l) + gamma_l + b_l*q_l*(1-v_l))
 
+    return first_term**(l-g)*second_term
 
-class TestTransmissionFuncts(unittest.TestCase):
+def t_of_g(betas, gammas, qs, vaccs, g):
+    g_term = ((1-vaccs[g])*betas[g])/(betas[g]*(1-vaccs[g]) + gammas[g] + betas[g]*qs[g]*(1-vaccs[g]))
+    for l in range(g + 1, len(betas)):
+        g_term += l_of_g(g, l, betas[l-1], betas[l], gammas[l-1], gammas[l], qs[l-1], qs[l], vaccs[l-1], vaccs[l])
 
-    def test_index_of_recent_intervene(self):
-        h = [0, 3, 5]
-        self.assertEqual(index_of_recent_intervene(1, h), 0)
-        self.assertEqual(index_of_recent_intervene(3, h), 1)
-        self.assertEqual(index_of_recent_intervene(4, h), 1)
-
-    def test_next_soonest_intervene(self):
-        h = [0, 3, 5]
-        self.assertEqual(next_soonest_intervene(1, h), 3)
-        self.assertEqual(next_soonest_intervene(3, h), 5)
-        self.assertEqual(next_soonest_intervene(4, h), 5)
-        self.assertEqual(next_soonest_intervene(5, h), math.inf)
-
-    def test_time_from_current_to_next_intervene(self):
-        h = [0, 3, 5]
-        self.assertEqual(time_from_current_to_next_intervene(1, 1, h), 2)
-        self.assertEqual(time_from_current_to_next_intervene(3, 3, h), 2)
-        self.assertEqual(time_from_current_to_next_intervene(4, 4, h), 1)
-        self.assertEqual(time_from_current_to_next_intervene(5, 5, h), math.inf)
-
-        self.assertEqual(time_from_current_to_next_intervene(1, 2, h), 2)
-        self.assertEqual(time_from_current_to_next_intervene(3, 4, h), 2)
-        self.assertEqual(time_from_current_to_next_intervene(4, 6, h), math.inf)
-        self.assertEqual(time_from_current_to_next_intervene(5, 6, h), math.inf)
-
-    def test_first_term_transmission_basecase(self):
-        h = [0]
-        beta = [0.9]
-        gamma = [.001]
-        expected_T = 0.9 / (0.9 + 0.001)
-        q = [2.5]
-        vacc = [0]
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 0, h), expected_T)
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 1, h), expected_T)
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 3, h), expected_T)
-
-    def test_first_term_transmission_trivial(self):
-        h = [0]
-        beta = [0.9]
-        gamma = [.001]
-        expected_T = 0.9 / (0.9 + 0.001)
-        q = [2.5]
-        vacc = [0]
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 0, h), expected_T)
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 1, h), expected_T)
-        self.assertEqual(first_term_transmission(beta, gamma, q, vacc, 3, h), expected_T)
-
-    def test_transmission_expression_basecase(self):
-        h = [0]
-        beta = [0.9]
-        gamma = [.001]
-        expected_T = 0.9 / (0.9 + 0.001)
-        q = [2.5]
-        vacc = [0]
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 0, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 1, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 2, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 3, h), expected_T)
-
-    def test_transmission_expression_trivial(self):
-        h = [0, 2]
-        beta = [0.9, 0.9]
-        gamma = [.001, .001]
-        expected_T = 0.9 / (0.9 + 0.001)
-        q = [2.5, 2.5]
-        vacc = [0, 0]
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 0, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 1, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 2, h), expected_T)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 3, h), expected_T)
-
-    def test_transmission_expression_vaccination_change_single(self):
-        h = [0, 2]
-        beta = [0.9, 0.9]
-        gamma = [.001, .001]
-        expected_T0 = (.9) / (.901 + (2.5 * .9) / (2)) + (
-                ((2.5 * .9) / (2)) / (.901 + (2.5 * .9) / (2)) * ((.9 * .5) / (.901)))
-        expected_T1 = (.9) / (.901 + (2.5 * .9) / (1)) + (
-                ((2.5 * .9) / (1)) / (.901 + (2.5 * .9) / (1)) * ((.9 * .5) / (.901)))
-        expected_T2 = (.9 * .5) / (.901)
-        q = [2.5, 2.5]
-        vacc = [0, .5]
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 0, h), expected_T0)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 1, h), expected_T1)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 2, h), expected_T2)
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 3, h), expected_T2)
-
-    def test_transmission_expression_vaccination_change_double(self):
-        h = [0, 2, 4]
-        beta = [0.9, 0.9, 0.9]
-        gamma = [0.001, 0.001, 0.001]
-
-        expected_T0 = ((.9) / (.901 + ((1 * 2.5 * 0.9) / 2))) \
-                      + ((((1 * 2.5 * 0.9) / 2) / (.901 + (1 * 2.5 * 0.9) / 2))
-                         * (0.9 * .5) / (.901 + (.5 * 2.5 * 0.9) / 4)) \
-                      + ((((2.5 * .9) / 2) / (.901 + (2.5 * .9) / 2))
-                         * ((.9 * .3) / .901))
-
-        expected_T1 = ((.9) / (.901 + ((2.5 * 0.9) / 1))) \
-                      + ((((1 * 2.5 * 0.9) / 1) / (.901 + (1 * 2.5 * 0.9) / 1))
-                         * (0.9 * .5) / (.901 + (.5 * 2.5 * 0.9) / 3)) \
-                      + ((((1 * 2.5 * .9) / 1) / (.901 + (1 * 2.5 * .9) / 1))
-                         * ((.9 * .3) / .901))
-
-        expected_T2 = ((.9 * .5) / (.901 + ((.5 * 2.5 * 0.9) / 2))) \
-                      + ((((.5 * 2.5 * 0.9) / 2) / (.901 + (.5 * 2.5 * 0.9) / 2))
-                         * ((0.9 * .3) / (.901)))
-
-        expected_T3 = ((.9 * .5) / (.901 + ((.5 * 2.5 * 0.9) / 1))) \
-                      + ((((.5 * 2.5 * 0.9) / 1) / (.901 + (.5 * 2.5 * 0.9) / 1))
-                         * ((0.9 * .3) / (.901)))
-
-        expected_T4 = (.9 * .3) / (.901)
-        q = [2.5, 2.5, 2.5]
-        vacc = [0, .5, .7]  # cumulative numbers
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 0, h), expected_T0)  # good
-        self.assertAlmostEqual(transmission_expression(beta, gamma, q, vacc, 1, h), expected_T1, 5)  # good
-        self.assertAlmostEqual(transmission_expression(beta, gamma, q, vacc, 2, h), expected_T2, 5)  # good
-        self.assertEqual(transmission_expression(beta, gamma, q, vacc, 3, h), expected_T3)  # good
-        self.assertAlmostEqual(transmission_expression(beta, gamma, q, vacc, 4, h), expected_T4, 5)  # good
-
-    def test_transmission_expression_triple(self):
-        h = [0, 3, 4, 6]
-        beta = [.8, .8, .8, .8]
-        beta_const = .8
-        gamma_const = 0.2
-        gamma = [.2, .2, .2, .2]
-        q = [2.5, 2.5, 2.5, 2.5]
-        q_const = 2.5
-        vacc_cum = [0, .2, .4, .7] ## cumulative random vax
-
-        expected_T0 = None #TODO
-        expected_T1 = (beta_const*(1-0))\
-                      /(beta_const+gamma_const + (q_const*beta_const/2)) \
-                      + ( ((q_const*beta_const/2)/(beta_const+gamma_const + (q_const*beta_const/2)))
-           *(beta_const*(1-.2)/(beta_const+gamma_const+((1-.2)*q_const*beta_const/3))) ) \
-                      + (((q_const * beta_const / 2) / (beta_const + gamma_const + (q_const * beta_const / 2)))
-           * (beta_const * (1 - .4) / (beta_const + gamma_const + ((1 - .4) * q_const * beta_const / 5))))\
-                      + (((q_const * beta_const / 2) / (beta_const + gamma_const + (q_const * beta_const / 2)))
-           * (beta_const * (1 - .7) / (beta_const + gamma_const )))
-
-        expected_T2 = None #TODO
-        expected_T3 = None #TODO
-        expected_T4 = None #TODO
-        print(f'\n{expected_T1}')
-        self.assertAlmostEqual(transmission_expression(beta, gamma, q, vacc_cum, 1, h), expected_T1, 5)  # good
-
-
-
-
-
-if __name__ == '__main__':
-    unittest.main()
+    return g_term
