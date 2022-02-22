@@ -424,7 +424,12 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         data = np.loadtxt(fname_sim_results, delimiter=',')
         # data_gen_renorm = data[gen][:x_lim] / np.sum(data[gen][:x_lim])
         # data_gen_renorm = data[gen][:400]
-        time_series = data[gen][x_start:x_lim] #TODO trying this
+        time_series = data[gen][x_start:x_lim]
+        ## Smoothing:
+        for x in range(0, x_lim-x_start-1):
+            if time_series[x]<10**(-5):
+                print(time_series[x])
+                time_series[x] = (time_series[x-1] + time_series[x+1])/2
         x_vals = np.arange(x_start, x_lim)
         x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))
         if normalize_axis_x:
@@ -450,6 +455,10 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
     if plot_intervention_sims:
         data_int = np.loadtxt(fname_sim_results_interv, delimiter=',')
         time_series_int = data_int[gen][x_start:x_lim]
+        for x in range(0, x_lim-x_start):
+            if time_series_int[x]<10**(-5):
+                print(time_series_int[x])
+                time_series_int[x] = (time_series_int[x-1] + time_series_int[x+1])/2
         x_vals = np.arange(x_start, x_lim)
         if normalize_axis_x:
             x_vals = x_vals / 10000

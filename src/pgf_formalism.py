@@ -432,26 +432,37 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
     inter_list = [0]
     inter_list.extend(intervention_gen_keys)
     current_gen_idx = 0
-    next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
     beta = 0.8
     gamma = (beta - beta*initial_T) / initial_T
     q_1 = z1_of(g1_of(original_degree_distrb))
     v_rollout_cumu = [0]
     v_rollout_cumu.extend(np.cumsum(list(rollout_dict.values())))
+    vacc_vector = np.zeros(num_gens)
+    for i in range(num_gens):
+        if i in inter_list and i!=0:
+            vacc_vector[i] = rollout_dict[i]+vacc_vector[i-1]
+        else:
+            vacc_vector[i] = vacc_vector[i-1]
+    # new_g1 = original_degree_distrb # TRYING THIS 2/8/22
 
     for g in range(1, num_gens):
-        T_g = manatee.transmission_expression(betas=[beta, beta, beta, beta], gammas=[gamma, gamma, gamma, gamma],
-                                              qs=[q_1, q_1, q_1, q_1], vaccs=v_rollout_cumu, gen=g, interGen=inter_list)
-        print(g, T_g)
-        g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g)
-        M_0_g, M_1_g = constructMatrixM(g0_T, g1_T)
+        # change num_gens to a big big number in computation and then see what the plot looks like
+        T_g = manatee.t_of_g(betas=np.full(num_gens, beta), gammas=np.full(num_gens, gamma), qs=np.full(num_gens, q_1),
+                             vaccs=vacc_vector, g=g)
+        # T_g = manatee.transmission_expression(betas=[beta, beta, beta, beta], gammas=[gamma, gamma, gamma, gamma],
+        #                                       qs=[q_1, q_1, q_1, q_1], vaccs=v_rollout_cumu, gen=g, interGen=inter_list)
+        print(g, T_g) # this makes sense
+        # T_g = 0.8
+        # trying something:
+        g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g) # changing it to modify the new G1 with the new Tg?
+        M_0_g, M_1_g = constructMatrixM(g0_T, g1_T) # this now might be wiping away the changes made with the random vax dist
         M = M_1_g
 
-        if g in intervention_gen_keys:
-            new_g1 = random_vacc_distribution(original_degree_distrb, T_g, rollout_dict[g])  ## Check that this is correctly g
-            new_M = constructMatrixM(g0, new_g1)
-            M_1 = new_M[1]
-            M = M_1
+        # if g in intervention_gen_keys:
+        #     new_g1 = random_vacc_distribution(original_degree_distrb, T_g, vacc_vector[g])  ## Check that this is correctly g
+        #     new_M = constructMatrixM(g0, new_g1)
+        #     M_1 = new_M[1]
+        #     M = M_1
         if g == 1:
             M = M_0
         for s in range(max_s):

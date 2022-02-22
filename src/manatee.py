@@ -52,7 +52,6 @@ def indicator_1(k):
 #     return 0
 
 
-
 # Amount of time from k until generation next_soonest_intervene
 # Updated as of 1/31 - not using this function
 def time_from_current_to_next_intervene(k, l, interGen):
@@ -61,7 +60,6 @@ def time_from_current_to_next_intervene(k, l, interGen):
     if f_l - k > 0:
         return f_l - k
     return -1
-
 
 
 # Poisson Process Time term
@@ -78,8 +76,6 @@ def pp_time_term(b, q, gen, f_gen, interGen):
 #     vacc = vaccs_vec[index_of_recent_intervene(gen, interGen)]
 #
 #     return [beta, gamma, q, vacc]
-
-
 
 
 def first_term_transmission(betas, gammas, qs, vaccs, gen, interGen):
@@ -140,14 +136,30 @@ def transmission_expression(betas, gammas, qs, vaccs, gen, interGen):
 
 
 def l_of_g(g, l, b_lminus, b_l, gamma_lminus, gamma_l, q_lminus, q_l, v_lminus, v_l):
-    first_term = ((1-v_lminus)*q_lminus*b_lminus)/(b_lminus*(1-v_lminus) + gamma_lminus + b_lminus*q_lminus*(1-v_lminus))
-    second_term = ((1-v_l)*b_l)/(b_l*(1-v_l) + gamma_l + b_l*q_l*(1-v_l))
+    first_term = ((1 - v_lminus) * q_lminus * b_lminus) / (
+                b_lminus + gamma_lminus + b_lminus * q_lminus * (1 - v_lminus))
+    second_term = ((1 - v_l) * b_l) / (b_l + gamma_l + b_l * q_l * (1 - v_l))
 
-    return first_term**(l-g)*second_term
+    return first_term ** (l - g) * second_term
+
 
 def t_of_g(betas, gammas, qs, vaccs, g):
-    g_term = ((1-vaccs[g])*betas[g])/(betas[g]*(1-vaccs[g]) + gammas[g] + betas[g]*qs[g]*(1-vaccs[g]))
-    for l in range(g + 1, len(betas)):
-        g_term += l_of_g(g, l, betas[l-1], betas[l], gammas[l-1], gammas[l], qs[l-1], qs[l], vaccs[l-1], vaccs[l])
+    g_term = ((1 - vaccs[g]) * betas[g]) / (betas[g] + gammas[g] + betas[g] * qs[g] * (1 - vaccs[g]))
+    # .266
+    betas_extended = list(betas)
+    vaccs_extended = list(vaccs)
+    gammas_extended = list(gammas)
+    qs_extended = list(qs)
+    for i in range(500):
+        betas_extended.append(betas[-1])
+        vaccs_extended.append(vaccs[-1])
+        gammas_extended.append(gammas[-1])
+        qs_extended.append(qs[-1])
+    for l in range(g + 1, len(betas_extended)):
+        # g_term += l_of_g(g, l, betas[l - 1], betas[l], gammas[l - 1], gammas[l], qs[l - 1], qs[l], vaccs[l - 1],
+        #                  vaccs[l])
+        g_term += l_of_g(g, l, betas_extended[l - 1], betas_extended[l], gammas_extended[l - 1], gammas_extended[l],
+                         qs_extended[l - 1], qs_extended[l], vaccs_extended[l - 1],
+                         vaccs_extended[l])
 
     return g_term
