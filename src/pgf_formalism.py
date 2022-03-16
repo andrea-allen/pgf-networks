@@ -1,11 +1,11 @@
 import math
-
 import numpy as np
-
 from src import gen_extinct_prob, manatee
 
-
-
+"""
+For use, call compute_phase_space from outside file with associated parameters to obtain and save
+matrix files of the s,m phase space for each generation specified.
+"""
 
 def compute_extinct_prob_all(deg_dist=None, T=1.0, n_gens=20, renorm=True, fft = True, custom_g0=None, custom_g1=None):
     if deg_dist is not None:
@@ -50,6 +50,25 @@ def compute_phase_space(num_gens, num_nodes, degree_distribution, transmissibili
                         file_fmt_to_save='phase_space/generation_{0}', intervention_gen=-1, intervention_trans=None,
                         vacc_pop=.5, rollout_dict=None,
                         do_non_interv=True, do_interv=True, intervention_type="none", pre_vax_correction=False):
+    """
+    Computes and saves a matrix for each generation of the s,m phase space
+    :param num_gens: Number of generations to compute til
+    :param num_nodes: Number of nodes in the network. Should match the length of the passed degree_distribution
+    :param degree_distribution: Vector or list of length num_nodes.
+    :param transmissibility: Original transmission paramter T
+    :param save_results: boolean, will save files to directory and format in file_fmt_to_save. Must specify dyamic arg param for generation, {0}.
+    :param gens_to_save: Which generations to save a file for
+    :param file_fmt_to_save: Directory and file name pattern, with arg for gen number, such as my_files/generation_{0}
+    :param intervention_gen: FOR SINGLE, UNIVERSAL INTERVENTION ONLY: Generation of intervention
+    :param intervention_trans: FOR SINGLE, UNIVERSAL INTERVENTION ONLY: Transmissiblity change at intervention
+    :param vacc_pop: FOR SINGLE, UNIVERSAL INTERVENTION ONLY: population vaccinated at intervention
+    :param rollout_dict: Non-cumulative dict of generations and their vaccination percentages, e.g. {3: .05, 4: .01, 5:.02}
+    :param do_non_interv: boolean. Will run non-intervention case on same degree distribution and transmissibility.
+    :param do_interv: boolean. Will run intervention model.
+    :param intervention_type: string. Specify universal, random_rollout, or targeted_rollout
+    :param pre_vax_correction: IGNORE, DO NOT USE
+    :return:
+    """
     # the generating function for psi gen g (prob of having s infected by the end of gen g of which m became infected during gen g
     initProb = 1
 
@@ -140,40 +159,6 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     return G1_with_T, G0_with_T
 
 
-def random_vacc_distribution(degree_distrb, T, V):
-    maxk = len(degree_distrb)
-
-    # Important! Only feed this function the original degree distribution
-    # it will be then transformed to g1, assuming this is happening
-    # at a generation later than 0
-    # TODO Make sure this gets normalized?
-    q_k = g1_of(degree_distrb)
-
-    P_lk = np.zeros((maxk, maxk))
-
-    for k in range(0, maxk):
-        P_jk = np.zeros(maxk)
-        for j in range(0, k + 1):
-            try:
-                p_j_given_k = q_k[k] * (math.gamma(k + 1) / (math.gamma(j + 1) * math.gamma(k - j + 1))
-                                        * ((1 - V) ** (j)) * (V ** (k - j)))
-                P_jk[j] = p_j_given_k
-            except OverflowError:
-                P_jk[j] = 0
-
-            for l in range(0, j + 1):
-                try:
-                    p_l_given_j = (math.gamma(j + 1) / (math.gamma(l + 1) * math.gamma(j - l + 1))) * (
-                            (1 - T) ** (j - l)) * (T ** (l))
-                    P_lk[k][l] = P_jk[j] * p_l_given_j
-                except OverflowError:
-                    P_lk[k][l] = 0
-
-    P_l_distrb = np.sum(P_lk, axis=0)
-    P_l_distrb = P_l_distrb / (np.sum(P_l_distrb))
-    return P_l_distrb
-
-
 def critical_degree_calc(prop, degree_d):
     k_crit = len(degree_d) #default for the critical k value
     temp_prop = prop
@@ -182,62 +167,6 @@ def critical_degree_calc(prop, degree_d):
         k_crit -= 1
 
     return k_crit
-
-def targeted_vacc_distribution(degree_distrb, T, V):
-    maxk = len(degree_distrb)
-
-    # Important! Only feed this function the original degree distribution
-    # it will be then transformed to g1, assuming this is happening
-    # at a generation later than 0
-
-    q_k = g1_of(degree_distrb)
-    crit_value = critical_degree_calc(V, degree_distrb)
-
-    num_H = 0
-    for c in range(crit_value, maxk-1):
-        num_H += c*q_k[c]
-
-    denom_H = 0
-    for f in range(maxk-1):
-        denom_H += f*q_k[f]
-
-    H = num_H / denom_H
-
-    P_lkTarget = np.zeros((maxk, maxk))
-
-    # need to have an if statement in the second for loop that adjusts the transmissibility
-    for k in range(0, maxk):
-        P_jkTarget = np.zeros(maxk)
-        for j in range(0, k + 1):
-
-            try:
-                p_j_given_k_tar = q_k[k] * (math.gamma(k + 1) / (math.gamma(j + 1) * math.gamma(k - j + 1))
-                                        * ((1 - H) ** (j)) * (H ** (k - j)))
-                P_jkTarget[j] = p_j_given_k_tar
-            except OverflowError:
-                P_jkTarget[j] = 0
-
-            for l in range(0, j + 1):
-
-                #Determine what k is to change T_k accordingly
-                T_k = T
-                if k >= crit_value:
-                    T_k = 0
-
-                try:
-                    p_l_given_j_tar = (math.gamma(j + 1) / (math.gamma(l + 1) * math.gamma(j - l + 1))) * (
-                            (1 - T_k) ** (j - l)) * (T_k ** (l))
-                    P_lkTarget[k][l] = P_jkTarget[j] * p_l_given_j_tar
-                except OverflowError:
-                    P_lkTarget[k][l] = 0
-
-    P_l_tar_distrb = np.sum(P_lkTarget, axis=0)
-    P_l_tar_distrb = P_l_tar_distrb / (np.sum(P_l_tar_distrb))
-    return P_l_tar_distrb
-
-
-
-
 
 def constructMatrixM(g_0, g_1):
     # Constructs the matrix of pgfs for G0_with transmission convolved to every mth power
@@ -322,10 +251,12 @@ def Psi(degree_distrb=None, initProb=1, num_gens=400, max_s=400, max_m=400, init
         allPsi = random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, M_0, rollout_dict, pre_vax_correction)
 
     elif intervention_type=="random":
-        allPsi = random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction)
+        print('PLEASE USE RANDOM ROLLOUT')
+        # allPsi = random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction)
 
     elif intervention_type=="targeted":
-        allPsi = targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction)
+        print('PLEASE USE TARGETED ROLLOUT')
+        # allPsi = targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction)
 
     elif intervention_type=="targeted_rollout":
         allPsi = targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, M_0, rollout_dict, pre_vax_correction)
@@ -392,46 +323,12 @@ def universal_intervention(num_gens, max_s, max_m, original_degree_distrb, inter
         allPsi[g] = psi_g
     return allPsi
 
-def random_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction):
-    # TODO to clean up to incorporate MANATEE
-    inter_list = [0, intervention_gen]
-    prop_vacc_list = [0, prop_vacc]
-    beta = 0.8
-    gamma = (beta - beta*initial_T) / initial_T
-    for g in range(1, num_gens):
-        q_1 = z1_of(g1_of(original_degree_distrb))
-        T_g = manatee.transmission_expression(betas=[beta, beta], gammas=[gamma, gamma], qs=[q_1, q_1], vaccs=prop_vacc_list, gen=g, interGen=inter_list)
-        print(g, T_g)
-        g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g)
-        M_0_g, M_1_g = constructMatrixM(g0_T, g1_T)
-        M = M_1_g
-        if g == 1:
-            M = M_0_g
-
-        if g==intervention_gen:
-            new_g1 = random_vacc_distribution(original_degree_distrb, T_g, prop_vacc)
-            new_M = constructMatrixM(g0, new_g1)
-            M_1 = new_M[1]
-            M = M_1
-            if g == 1:
-                M = M_0
-        for s in range(max_s):
-            for m in range(max_m):
-                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M)
-        psi_g = allPsi[g]
-        psi_g = psi_g / np.sum(psi_g)
-        allPsi[g] = psi_g
-
-    return allPsi
-
-
 
 def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, M_0,
                                 rollout_dict, pre_vax_correction):
     intervention_gen_keys = list(rollout_dict.keys())
     inter_list = [0]
     inter_list.extend(intervention_gen_keys)
-    current_gen_idx = 0
     beta = 0.8
     gamma = (beta - beta*initial_T) / initial_T
     q_1 = z1_of(g1_of(original_degree_distrb))
@@ -443,26 +340,16 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
             vacc_vector[i] = rollout_dict[i]+vacc_vector[i-1]
         else:
             vacc_vector[i] = vacc_vector[i-1]
-    # new_g1 = original_degree_distrb # TRYING THIS 2/8/22
 
     for g in range(1, num_gens):
         # change num_gens to a big big number in computation and then see what the plot looks like
         T_g = manatee.t_of_g(betas=np.full(num_gens, beta), gammas=np.full(num_gens, gamma), qs=np.full(num_gens, q_1),
                              vaccs=vacc_vector, g=g)
-        # T_g = manatee.transmission_expression(betas=[beta, beta, beta, beta], gammas=[gamma, gamma, gamma, gamma],
-        #                                       qs=[q_1, q_1, q_1, q_1], vaccs=v_rollout_cumu, gen=g, interGen=inter_list)
         print(g, T_g) # this makes sense
-        # T_g = 0.8
-        # trying something:
         g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g) # changing it to modify the new G1 with the new Tg?
         M_0_g, M_1_g = constructMatrixM(g0_T, g1_T) # this now might be wiping away the changes made with the random vax dist
         M = M_1_g
 
-        # if g in intervention_gen_keys:
-        #     new_g1 = random_vacc_distribution(original_degree_distrb, T_g, vacc_vector[g])  ## Check that this is correctly g
-        #     new_M = constructMatrixM(g0, new_g1)
-        #     M_1 = new_M[1]
-        #     M = M_1
         if g == 1:
             M = M_0
         for s in range(max_s):
@@ -474,143 +361,74 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
     return allPsi
 
-def targeted_intervention(num_gens, max_s, max_m, original_degree_distrb, intervention_gen, prop_vacc, initial_T, allPsi, g0, M_1, M_0, pre_vax_correction):
-    for g in range(1, num_gens):
-        if pre_vax_correction:
-            if g < intervention_gen:
-                # Re-compute T_g based on beta, gamma, g, v, and g_int
-                beta_1 = .5 # TODO is it ok that this is arbitrary?
-                beta_1 = .004
-                gamma_1 = (beta_1 - beta_1*initial_T) / initial_T
-                q_1 = z1_of(g1_of(original_degree_distrb))
-                # Compute V, which is H here
-                maxk = len(original_degree_distrb)
-                q_k = g1_of(original_degree_distrb)
-                crit_value = critical_degree_calc(prop_vacc, original_degree_distrb)
+def modify_g0(G0, k_crit, H):
+    G0_x = np.zeros((len(G0)))
+    for k in range(0, k_crit):
+        G0_x[k] = G0[k]
+    G0_x = G0_x/np.sum(G0_x)
+    return G0_x
 
-                num_H = 0
-                for c in range(crit_value, maxk - 1):
-                    num_H += c * q_k[c]
 
-                denom_H = 0
-                for f in range(maxk - 1):
-                    denom_H += f * q_k[f]
 
-                H = num_H / denom_H
-                # T = b/(b+y) ---> (b+y)T = b --> bT + yT = b ---> (b- bT)/T = y
-                T_g_i = T_pre_vax_fancy_2(beta_1=beta_1, beta_2=beta_1, gamma_1=gamma_1, gamma_2=gamma_1, q_1=q_1, gen_i=intervention_gen-g, v=H)
-                # Use new T_g to compute: new secondary degree distributions with T G(x;T):
-                g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g_i)
-                #                                                      new T_g)
-                # Re-compute M0 and M1 from new g1, g0
-                M_0_g, M_1_g = constructMatrixM(g0_T, g1_T)
-                M = M_1_g
-                if g == 1:
-                    M = M_0_g
-        else:
-            if g < intervention_gen:
-                M = M_1
-                if g == 1:
-                    M = M_0
-        print('working on gen ' + str(g))
-        if g == intervention_gen:
-            T = initial_T
-            # if pre_vax_correction: #TODO: trying using original T
-            #     T = T_g_i
-            new_g1 = targeted_vacc_distribution(original_degree_distrb, T, prop_vacc) #TODO initial_T or most recent T_g_i?
-            new_M = constructMatrixM(g0, new_g1) #g0 does not matter because M_0 won't get used, unless the intervention is at gen 1 which wouldn't make sense
-            M_1 = new_M[1]
-            M = M_1
-            if g == 1:
-                M = M_0
-        for s in range(max_s):
-            for m in range(max_m):
-                allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M)
-        psi_g = allPsi[g]
-        psi_g = psi_g / np.sum(psi_g)
-        allPsi[g] = psi_g
-
-    return allPsi
-
-def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, initial_T, allPsi, g0, M_1, M_0, rollout_dict, pre_vax_correction):
+def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb,
+                                  initial_T, allPsi, g0, M_1, M_0, rollout_dict,
+                                  pre_vax_correction):
+    # First, need to create and find H, q and T for each generation g in the rollout:
     intervention_gen_keys = list(rollout_dict.keys())
-    current_gen_idx = 0
-    next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
-    total_vax_prop = rollout_dict[next_up_intervention_gen]
+    inter_list = [0]
+    inter_list.extend(intervention_gen_keys)
+    v_rollout_cumu = [0]
+    v_rollout_cumu.extend(np.cumsum(list(rollout_dict.values())))
+    vacc_vector = np.zeros(num_gens)
+    for i in range(num_gens):
+        if i in inter_list and i!=0:
+            vacc_vector[i] = rollout_dict[i]+vacc_vector[i-1]
+        else:
+            vacc_vector[i] = vacc_vector[i-1]
+    beta = 0.8 # arbitrary, via choice of initial_T
+    gamma = (beta - beta*initial_T) / initial_T
+    maxk = len(original_degree_distrb)
+    g1_orig = g1_of(original_degree_distrb)
+    origin_q = np.sum([k*g1_orig[k] for k in range(len(g1_orig))])
+    dynamic_q = np.zeros((num_gens))
+    first_gen_inter = intervention_gen_keys[0]
+    dynamic_q[:first_gen_inter] = origin_q
+    dynamic_H = np.zeros((num_gens))
+    store_G1s = np.zeros((maxk, maxk))
+    store_G0s = np.zeros((maxk, maxk))
+    store_G1s[:first_gen_inter] = g1_orig
+    store_G0s[:first_gen_inter] = original_degree_distrb
+
+    ##### finding the q's and H's for each intervention:
+    for gen, V in rollout_dict.items():
+        print(vacc_vector[gen])
+        crit_value = critical_degree_calc(vacc_vector[gen], original_degree_distrb) # check if original makes sense
+        print(crit_value)
+        H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
+            /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
+        print(f'H:{H}')
+        mod_G0_H = modify_g0(original_degree_distrb, crit_value, H)
+        mod_G1_H = g1_of(mod_G0_H)
+        store_G1s[gen:] = mod_G1_H
+        store_G0s[gen:] = mod_G0_H
+        q_g = z1_of(mod_G1_H)
+        print(q_g)
+        dynamic_q[gen:] = q_g
+        dynamic_H[gen:] = H
+
+    ######
 
     for g in range(1, num_gens):
-        if pre_vax_correction:
-            if g < intervention_gen_keys[current_gen_idx]:
-                beta_1 = .004
-                gamma_1 = (beta_1 - beta_1*initial_T) / initial_T
-                q_1 = z1_of(g1_of(original_degree_distrb))
-                # Compute V, which is H here
-                maxk = len(original_degree_distrb)
-                q_k = g1_of(original_degree_distrb)
-                crit_value = critical_degree_calc(total_vax_prop, original_degree_distrb)
+        T_g = manatee.t_of_g(betas=np.full(num_gens, beta), gammas=np.full(num_gens, gamma), qs=dynamic_q,
+                             vaccs=dynamic_H, g=g)
+        print(g, T_g)
+        g0_x = store_G0s[g]
+        g1_T, g0_T = gen_functions_with_transmissibility(g0_x, T_g)
+        M_0_g, M_1_g = constructMatrixM(g0_T, g1_T)
+        M = M_1_g
 
-                num_H = 0
-                for c in range(crit_value, maxk - 1):
-                    num_H += c * q_k[c]
-
-                denom_H = 0
-                for f in range(maxk - 1):
-                    denom_H += f * q_k[f]
-
-                H = num_H / denom_H
-
-                T_g_i = T_pre_vax_fancy_2(beta_1=beta_1, beta_2=beta_1, gamma_1=gamma_1, gamma_2=gamma_1, q_1=q_1,
-                                          gen_i=next_up_intervention_gen - g,
-                                          v=H) #Not sure if this new transmissibility should be the v_new, or v_cumulative
-                g1_T, g0_T = gen_functions_with_transmissibility(original_degree_distrb, T_g_i)
-                M_0_g, M_1_g = constructMatrixM(g0_T, g1_T)
-                M = M_1_g
-                if g == 1:
-                    M = M_0_g
-        else:
-            if g < next_up_intervention_gen:
-                M = M_1
-                if g == 1:
-                    M = M_0
-        print('working on gen ' + str(g))
-        if g == next_up_intervention_gen:
-            beta_1 = .004
-            gamma_1 = (beta_1 - beta_1 * initial_T) / initial_T
-            q_1 = z1_of(g1_of(original_degree_distrb))
-            # Compute V, which is H here
-            maxk = len(original_degree_distrb)
-            q_k = g1_of(original_degree_distrb)
-
-            if current_gen_idx < len(intervention_gen_keys) - 1:
-                next_next_intrvention = intervention_gen_keys[current_gen_idx + 1]
-                next_vax_prop = rollout_dict[next_next_intrvention]
-
-                crit_value = critical_degree_calc(total_vax_prop+next_vax_prop, original_degree_distrb)
-
-                num_H = 0
-                for c in range(crit_value, maxk - 1):
-                    num_H += c * q_k[c]
-
-                denom_H = 0
-                for f in range(maxk - 1):
-                    denom_H += f * q_k[f]
-
-                H = num_H / denom_H
-
-                T_g_i = T_pre_vax_fancy_2(beta_1=beta_1, beta_2=beta_1, gamma_1=gamma_1, gamma_2=gamma_1, q_1=q_1,
-                                          gen_i=next_next_intrvention - g,
-                                          v=H)
-            T = T_g_i
-            new_g1 = targeted_vacc_distribution(original_degree_distrb, T, rollout_dict[next_up_intervention_gen])
-            new_M = constructMatrixM(g0, new_g1)
-            M_1 = new_M[1]
-            M = M_1
-            if g == 1:
-                M = M_0
-            if current_gen_idx < len(intervention_gen_keys) - 1:
-                current_gen_idx += 1
-                next_up_intervention_gen = intervention_gen_keys[current_gen_idx]
-                total_vax_prop += rollout_dict[next_up_intervention_gen]
+        if g == 1:
+            M = M_0
         for s in range(max_s):
             for m in range(max_m):
                 allPsi[g][s][m] = computeLittlePsi(s, m, allPsi[g - 1], M)
@@ -650,60 +468,6 @@ def T_pre_vax_fancy(beta_1, beta_2, gamma_1, gamma_2, q_1, gen_i, v):
     term_2 = math.e ** (-gamma_2*gen_i/(q_1*beta_1)) - ((gamma_2/(gamma_2+beta_2)) * math.e**(-(beta_2+gamma_2)*gen_i/(q_1*beta_1)))
     T_gen_i = term_1 + (1-v) * term_2
     return T_gen_i
-
-## Work on 10/4/2021
-def T_g_prime(beta, gamma, q_1, current_gen, v_rollout_dict, next_up_intr):
-    #TODO give a dict of betas and gammas if they change
-    T_modified = 0
-    total_num_gens = len(v_rollout_dict)
-    if next_up_intr is not None:
-        time_til_intr_g = next_up_intr - current_gen     # number gens until generation of the first intervention
-        base_term = beta / (beta + gamma + (
-                    q_1 * beta / time_til_intr_g))  # TODO deal with literl base case (if there's NO intervention)
-    else:
-        base_term = beta/(beta+gamma)
-
-    # try:
-    #     next_g = list(v_rollout_dict.keys())[1]
-    # except KeyError:
-    #     next_g = None
-    # base_term += intervention_term(intr_g=list(v_rollout_dict.keys())[0], next_g=next_g, current_g=current_gen, beta=beta,
-    #                                gamma=gamma, q_1=q_1, v_k=v_rollout_dict[list(v_rollout_dict.keys())[0]])
-    # TODO finish
-    T_modified = base_term
-    # TODO now, iterate for all k, k+1 pairs of coming interventions and add to T_modified
-    for k in range(0, total_num_gens):
-        try:
-            next_g = list(v_rollout_dict.keys())[k+1]
-        except IndexError:
-            next_g = None
-        if next_g is not None and next_g > current_gen and list(v_rollout_dict.keys())[k] > current_gen:
-            T_modified += intervention_term(intr_g=list(v_rollout_dict.keys())[k], next_g=next_g, current_g=current_gen,
-                                            beta=beta, gamma=gamma, q_1=q_1,
-                                            v_k=v_rollout_dict[list(v_rollout_dict.keys())[k]])
-        else:
-            T_modified += intervention_term(intr_g=list(v_rollout_dict.keys())[k], next_g=None, current_g=current_gen,
-                                            beta=beta, gamma=gamma, q_1=q_1,
-                                            v_k=v_rollout_dict[list(v_rollout_dict.keys())[-1]]) #TODO need to finish this part, also refactor EVERYTHING
-    return T_modified
-
-## This thing I want it to return the coefficient of that Heaviside function
-def intervention_term(intr_g, next_g, current_g, beta, gamma, q_1, v_k):
-    # TODO do some editing and re-naming
-    whole_term = 0
-    ## intr_g is the actual generation number of the intervention
-    time_til_intr_g = intr_g - current_g
-    first_fraction = (q_1*beta/time_til_intr_g)/(beta+gamma+(q_1*beta/time_til_intr_g))
-    whole_term += first_fraction
-
-    denom_second_term = (beta + gamma)
-    if next_g is not None:
-        time_til_next_g = next_g-current_g
-        denom_second_term += (q_1*beta/time_til_next_g)
-    second_fraction = (beta * (1 - v_k)) / denom_second_term
-    whole_term = whole_term*second_fraction
-
-    return whole_term
 
 
 
