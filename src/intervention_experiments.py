@@ -23,6 +23,34 @@ k_mean_degree = 2.5
 # k_mean_degree = 5
 er_degree_dist = degree_distributions.binomial_degree_distb(400, k_mean_degree)
 
+"""
+EXAMPLES
+###########
+#targeted intervention simulations on powerlaw
+## SET UP YOUR OWN FILE PATHS BELOW
+"""
+# CODE TO SIMULATE
+ensemble.run_ensemble_intervention_effects(power_law_q2, '../data/manatee/rollouts/pl_03-16-22_targeted_132pct', 10000, 10000,
+                                           init_T=0.8, intervention_gen_list=[4,6,8], prop_reduced_list=[.01, .03, .02],
+                                           intervention_type="targeted_rollout", run_regular=False)
+# CODE TO MODEL
+pgf_formalism.compute_phase_space(20, 400, power_law_q2,  0.8, True,
+                                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16, 17, 18, 19],
+                                  f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_{{0}}',
+                                  rollout_dict={4:.01, 6:.03, 8:.02}, do_non_interv=False, do_interv=True,
+                                  intervention_type="targeted_rollout", pre_vax_correction=True)
+
+# CODE TO PLOT RESULTING DISTRIBUTIONS
+plotting_util.plot_sims_vs_analytical_multigens([1, 2, 3, 4, 5, 9, 12, 13, 15, 18], 200,
+                                                f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_intervene.txt', # non-intervention
+                                                # Plotting intervention as the "no intervention" argument to just see those curves
+                                                # f'{LOCAL_DATA_PATH}/rollouts/random/er_manatee_11_12_{{0}}_intv.txt',
+                                                f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_{{0}}_intv.txt',
+                                                same_plot=True, normalize_axis_x=False,
+                                                colors_plot1={1: 'red', 2: 'orange', 3: 'brown', 4: 'green', 5: 'blue',
+                                                              6: 'purple', 9: 'pink', 12: 'teal', 13: 'black', 15:'magenta', 18:'grey'})
+plt.show()
+
 # plt.figure('4-6-8 90% POWER LAW')
 # plotting_util.plot_sims_vs_analytical_multigens([1, 2, 3, 4, 5, 9, 12, 13, 15, 18], 200,
 #                                                 f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_02-22-22_g4-6-8_intervene.txt', # non-intervention
@@ -73,34 +101,6 @@ er_degree_dist = degree_distributions.binomial_degree_distb(400, k_mean_degree)
 #                                                               6: 'purple', 9: 'pink', 12: 'teal', 13: 'black', 15:'magenta', 18:'grey'})
 # # plt.title('SIMS ONLY power law targeted')
 # plt.show()
-
-###########
-# targeted intervention simulations on powerlaw
-# start_time = time.time()
-# CODE TO SIMULATE
-# ensemble.run_ensemble_intervention_effects(power_law_q2, '../data/manatee/rollouts/pl_03-16-22_targeted_132pct', 10000, 10000,
-#                                            init_T=0.8, intervention_gen_list=[4,6,8], prop_reduced_list=[.01, .03, .02],
-#                                            intervention_type="targeted_rollout", run_regular=False)
-# end_time = time.time() - start_time
-# np.savetxt(f'{LOCAL_DATA_PATH}/manatee/rollouts/plaw_3-16_targeted_time.txt', np.array([end_time]))
-# CODE TO MODEL
-# pgf_formalism.compute_phase_space(20, 400, power_law_q2,  0.8, True,
-#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15, 16, 17, 18, 19],
-#                                   f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_{{0}}',
-#                                   rollout_dict={4:.01, 6:.03, 8:.02}, do_non_interv=False, do_interv=True,
-#                                   intervention_type="targeted_rollout", pre_vax_correction=True)
-
-# CODE TO PLOT
-plotting_util.plot_sims_vs_analytical_multigens([1, 2, 3, 4, 5, 9, 12, 13, 15, 18], 200,
-                                                f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_intervene.txt', # non-intervention
-                                                # Plotting intervention as the "no intervention" argument to just see those curves
-                                                # f'{LOCAL_DATA_PATH}/rollouts/random/er_manatee_11_12_{{0}}_intv.txt',
-                                                f'{LOCAL_DATA_PATH}/manatee/rollouts/pl_03-16-22_targeted_132pct_{{0}}_intv.txt',
-                                                same_plot=True, normalize_axis_x=False,
-                                                colors_plot1={1: 'red', 2: 'orange', 3: 'brown', 4: 'green', 5: 'blue',
-                                                              6: 'purple', 9: 'pink', 12: 'teal', 13: 'black', 15:'magenta', 18:'grey'})
-# plt.title('SIMS ONLY power law targeted')
-plt.show()
 
 
 
