@@ -22,6 +22,17 @@ power_law_q2 = degree_distributions.power_law_degree_distrb(400, mu=10)
 k_mean_degree = 2.5
 # k_mean_degree = 5
 er_degree_dist = degree_distributions.binomial_degree_distb(400, k_mean_degree)
+geom_degree_dist = degree_distributions.exponential_degree_dist(400, .6)
+print(f'mean degree: {sum([k*geom_degree_dist[k] for k in range(400)])}')
+# fig, ax = plt.subplots(1,2)
+# ax[0].plot(geom_degree_dist)
+# ax[0].plot(power_law_q2)
+# ax[0].plot(er_degree_dist)
+# ax[0].semilogy()
+# ax[1].plot(geom_degree_dist)
+# ax[1].plot(power_law_q2)
+# ax[1].plot(er_degree_dist)
+# plt.show()
 
 """
 EXAMPLES

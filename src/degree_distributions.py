@@ -23,6 +23,13 @@ def binomial_degree_distb(N, lam=6):
             print(N, k)
     return p_k
 
+def exponential_degree_dist(N, p):
+    p_k = np.empty(N)
+    for k in range(1, N):
+        p_k[k] =  (1 - p) * p**k
+    p_k = p_k/np.sum(p_k)
+    return p_k
+
 def mean_degree(deg_distr):
     total_sum = 0
     for k in range(len(deg_distr)):

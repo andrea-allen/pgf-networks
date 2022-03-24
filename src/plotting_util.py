@@ -428,7 +428,7 @@ def plot_sims_vs_analytical_outbreak_sizes(fig, ax1, gen, x_lim, fname_sim_resul
         ## Smoothing:
         for x in range(0, x_lim-x_start-1):
             if time_series[x]<10**(-5):
-                print(time_series[x])
+                # print(time_series[x])
                 time_series[x] = (time_series[x-1] + time_series[x+1])/2
         x_vals = np.arange(x_start, x_lim)
         x_ticks = np.arange(2, x_lim, int((x_lim - 2) / 10))

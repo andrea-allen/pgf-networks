@@ -361,11 +361,12 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
     return allPsi
 
-def modify_g0(G0, k_crit, H):
+def modify_g0(G0, k_crit):
     G0_x = np.zeros((len(G0)))
     for k in range(0, k_crit):
         G0_x[k] = G0[k]
-    G0_x = G0_x/np.sum(G0_x)
+    if np.sum(G0_x) > 0:
+        G0_x = G0_x/np.sum(G0_x)
     return G0_x
 
 
@@ -407,11 +408,14 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
         H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
             /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
         print(f'H:{H}')
-        mod_G0_H = modify_g0(original_degree_distrb, crit_value, H)
+        mod_G0_H = modify_g0(original_degree_distrb, crit_value)
+        print(mod_G0_H)
         mod_G1_H = g1_of(mod_G0_H)
         store_G1s[gen:] = mod_G1_H
         store_G0s[gen:] = mod_G0_H
         q_g = z1_of(mod_G1_H)
+        if np.isnan(q_g):
+            q_g = 0
         print(q_g)
         dynamic_q[gen:] = q_g
         dynamic_H[gen:] = H
