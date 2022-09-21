@@ -32,10 +32,11 @@ def compute_extinct_prob_all(deg_dist=None, T=1.0, n_gens=20, renorm=True, fft =
     return [extct_array, psi]
 
 def expected_num_infected(deg_dist, T):
-    psi = Psi(deg_dist, initProb=1, num_gens=50, max_s=400, max_m=400, initial_T=T)
+    d_len = len(deg_dist)
+    psi = Psi(deg_dist, initProb=1, num_gens=50, max_s=d_len, max_m=d_len, initial_T=T)
     expected_cum_array = np.zeros(50)
     for gen in range(50):
-        psi[gen][:,0] = np.zeros(400)
+        psi[gen][:,0] = np.zeros(d_len)
         psi[gen] = psi[gen]/np.sum(psi[gen])
         inverted_s_m = psi[gen]
         ps_g_analytical = np.sum(inverted_s_m, axis=0)
@@ -102,6 +103,8 @@ def compute_phase_space(num_gens, num_nodes, degree_distribution, transmissibili
 
 
 def pdf_of(degree_list):
+    if np.sum(degree_list) == 0:
+        return np.array(degree_list)
     g0 = np.zeros(len(degree_list))
     for i in range(len(g0)):
         g0[i] = degree_list[i] / np.sum(degree_list)
@@ -119,6 +122,8 @@ def g1_of(g_0):
     g_1 = np.zeros(len(g_0))
     for k in range(len(g_0) - 1):
         g_1[k] = (k + 1) * g_0[k + 1]
+    if np.sum(g_0) == 0:
+        return g_1
     return g_1 / (z1_of(g_0))
 
 
@@ -152,21 +157,22 @@ def gen_functions_with_transmissibility(degree_distrb, T):
             except OverflowError:
                 p_LK[k][l] = 0
     p_l = np.sum(p_LK, axis=0)
-    p_l = p_l / (np.sum(p_l))
+    if np.sum(p_l) != 0:
+        p_l = p_l / (np.sum(p_l))
 
     G0_with_T = pdf_of(p_l)
     G1_with_T = g1_of(G0_with_T)
     return G1_with_T, G0_with_T
 
 
-def critical_degree_calc(prop, degree_d):
+def critical_degree_calc(prop, degree_d): # This function is the change
     k_crit = len(degree_d) #default for the critical k value
     temp_prop = prop
     while temp_prop > 0:
         temp_prop = temp_prop - degree_d[k_crit-1]
         k_crit -= 1
 
-    return k_crit
+    return k_crit, -temp_prop
 
 def constructMatrixM(g_0, g_1):
     # Constructs the matrix of pgfs for G0_with transmission convolved to every mth power
@@ -361,10 +367,11 @@ def random_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb, 
 
     return allPsi
 
-def modify_g0(G0, k_crit):
+def modify_g0(G0, k_crit, replacement):
     G0_x = np.zeros((len(G0)))
     for k in range(0, k_crit):
         G0_x[k] = G0[k]
+    G0_x[k_crit] = replacement
     if np.sum(G0_x) > 0:
         G0_x = G0_x/np.sum(G0_x)
     return G0_x
@@ -403,12 +410,12 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
     ##### finding the q's and H's for each intervention:
     for gen, V in rollout_dict.items():
         print(vacc_vector[gen])
-        crit_value = critical_degree_calc(vacc_vector[gen], original_degree_distrb) # check if original makes sense
+        crit_value, replace_prob = critical_degree_calc(vacc_vector[gen], original_degree_distrb) # check if original makes sense
         print(crit_value)
         H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
             /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
         print(f'H:{H}')
-        mod_G0_H = modify_g0(original_degree_distrb, crit_value)
+        mod_G0_H = modify_g0(original_degree_distrb, crit_value, replace_prob)
         print(mod_G0_H)
         mod_G1_H = g1_of(mod_G0_H)
         store_G1s[gen:] = mod_G1_H
