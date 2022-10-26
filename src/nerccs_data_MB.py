@@ -9,7 +9,7 @@ from analysis import ensemble
 LOCAL_DATA_PATH = "../data"
 max_len_rand = 7000
 max_len_targ = 7000
-gens_compute = 13
+gens_compute = 16
 power_law_q2 = degree_distributions.power_law_degree_distrb(400, mu=10)
 k_mean_degree = 2.5
 # k_mean_degree = 5
@@ -26,54 +26,54 @@ EXAMPLES
 
 # Non intervention
 # pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
-#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-#                                   f'../nerccs2022/geo_05-5-22_non_interv_{{0}}', do_non_interv=True, do_interv=False, pre_vax_correction=True)
-#
+#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12,14,16],
+#                                   f'../nerccs2022/geo_10-3-22_non_interv_{{0}}', do_non_interv=True, do_interv=False, pre_vax_correction=True)
+
 
 #Random (single and roll outs)
 
-pgf_formalism.compute_phase_space(gens_compute, max_len_rand, geom_degree_dist_rand,  0.8, True,
-                                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-                                  f'../nerccs2022/geo_05-11-22_random_gen5_15_{{0}}',
-                                  rollout_dict={5:.15}, do_non_interv=False, do_interv=True,
-                                  intervention_type="random_rollout", pre_vax_correction=True)
+# pgf_formalism.compute_phase_space(gens_compute, max_len_rand, geom_degree_dist_rand,  0.8, True,
+#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16],
+#                                   f'../nerccs2022/geo_09-21-22_random_gen5_25_{{0}}',
+#                                   rollout_dict={5:.025}, do_non_interv=False, do_interv=True,
+#                                   intervention_type="random_rollout", pre_vax_correction=True)
+#
+# ensemble.run_ensemble_intervention_effects(geom_degree_dist_rand, f'../nerccs2022/geo_09-21-22_random_gen5_sims', num_sims=75000, num_nodes=20000,
+#                                            init_T=0.8, intervention_gen_list=[5], prop_reduced_list=[.025], intervention_type="random_rollout", run_regular=False)
+#
+#
+# pgf_formalism.compute_phase_space(gens_compute, max_len_rand, geom_degree_dist_rand, 0.8, True,
+#                                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16],
+#                                   f'../nerccs2022/geo_05-11-22_random_rollout_005_{{0}}',
+#                                   rollout_dict={4:0.005, 6:0.005, 8:0.005, 10:0.005, 12:0.005}, do_non_interv=False, do_interv=True,
+#                                   intervention_type="random_rollout", pre_vax_correction=True)
+#
+# ensemble.run_ensemble_intervention_effects(geom_degree_dist_rand, f'../nerccs2022/geo_05-5-22_random_rollout_005_sims', num_sims=75000, num_nodes=20000,
+#                                            init_T=0.8, intervention_gen_list=[4, 6, 8, 10, 12], prop_reduced_list=[0.005, 0.005, 0.005, 0.005, 0.005], intervention_type="random_rollout", run_regular=False)
 
-# ensemble.run_ensemble_intervention_effects(geom_degree_dist_rand, f'../nerccs2022/geo_05-5-22_random_gen5_sims', num_sims=75000, num_nodes=20000,
-#                                            init_T=0.8, intervention_gen_list=[5], prop_reduced_list=[.15], intervention_type="random_rollout", run_regular=False)
-#
-#
-pgf_formalism.compute_phase_space(gens_compute, max_len_rand, geom_degree_dist_rand, 0.8, True,
-                                    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-                                  f'../nerccs2022/geo_05-11-22_random_rollout_10_{{0}}',
-                                  rollout_dict={4:0.1, 6:0.1, 8:0.1, 10:0.1, 12:0.1}, do_non_interv=False, do_interv=True,
-                                  intervention_type="random_rollout", pre_vax_correction=True)
-
-# ensemble.run_ensemble_intervention_effects(geom_degree_dist_rand, f'../nerccs2022/geo_05-5-22_random_rollout_15_sims', num_sims=75000, num_nodes=20000,
-#                                            init_T=0.8, intervention_gen_list=[4, 6, 8, 10, 12], prop_reduced_list=[0.1, 0.1, 0.1, 0.1, 0.1], intervention_type="random_rollout", run_regular=False)
-#
 
 
 
 # Targeted (single and roll outs)
-# Do this
-pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
-                                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                                  f'../nerccs2022/geo_05-11-22_targeted_gen5_10_{{0}}',
-                                  rollout_dict={5:.1}, do_non_interv=False, do_interv=True,
-                                  intervention_type="targeted_rollout", pre_vax_correction=True)
+# Do this CHANGE TO A MIDDLE PERCENT
+# pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
+#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,12,14,16],
+#                                   f'../nerccs2022/geo_10-5-22_targeted_gen5_p015_{{0}}',
+#                                   rollout_dict={7:.015}, do_non_interv=False, do_interv=True,
+#                                   intervention_type="targeted_rollout", pre_vax_correction=True)
 
-# ensemble.run_ensemble_intervention_effects(geom_degree_dist_targ, f'../nerccs2022/geo_05-10-22_targeted_gen5_sims_2p5', num_sims=75000, num_nodes=20000,
-#                                            init_T=0.8, intervention_gen_list=[5], prop_reduced_list=[.025], intervention_type="targeted_rollout", run_regular=False)
+# ensemble.run_ensemble_intervention_effects(geom_degree_dist_targ, f'../nerccs2022/geo_10-10-22_targeted_gen5_sims_p015', num_sims=50000, num_nodes=20000,
+#                                            init_T=0.8, intervention_gen_list=[7], prop_reduced_list=[.015], intervention_type="targeted_rollout", run_regular=False)
 #
 #Do this
-pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
-                                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                                  f'../nerccs2022/geo_05-11-22_targeted_rollout_2_{{0}}',
-                                  rollout_dict={4:.02, 6:.02, 8:.02, 10:.02, 12:.02}, do_non_interv=False, do_interv=True,
-                                  intervention_type="targeted_rollout", pre_vax_correction=True)
+# pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
+#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,12,14,16],
+#                                   f'../nerccs2022/geo_10-1-22_targeted_rollout_2_{{0}}',
+#                                   rollout_dict={4:.005, 6:.005, 8:.005, 10:.005, 12:.005}, do_non_interv=False, do_interv=True,
+#                                   intervention_type="targeted_rollout", pre_vax_correction=True)
 
 # ensemble.run_ensemble_intervention_effects(geom_degree_dist_targ, f'../nerccs2022/geo_05-4-22_targeted_rollout_2_sims', num_sims=75000, num_nodes=20000,
-#                                            init_T=0.8, intervention_gen_list=[4,6,8,10,12], prop_reduced_list=[.02,.02,.02,.02,.02],
+#                                            init_T=0.8, intervention_gen_list=[4,6,8,10,12], prop_reduced_list=[.005,.005,.005,.005,.005],
 #                                          intervention_type="targeted_rollout", run_regular=False)
 
 # DO This
@@ -110,16 +110,16 @@ pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_t
 #                                   intervention_type="targeted_rollout", pre_vax_correction=True)
 
 #
-# for decimal, percent in zip([0.01, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15, 0.175, 0.20],[2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20]):
-#     pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
-#                                       [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-#                                       f'../nerccs2022/geo_05-5-22_targeted_rollout_{percent}_resultsfigs_{{0}}',
-#                                       rollout_dict={4:decimal, 6:decimal, 8:decimal, 10:decimal, 12:decimal}, do_non_interv=False, do_interv=True,
-#                                       intervention_type="targeted_rollout", pre_vax_correction=True)
+for decimal, percent in zip([0.001, 0.0025, 0.005, 0.0075, 0.010, 0.0125, 0.015, 0.0175, 0.020],[0.01, 0.025, 0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.20]):
+    pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
+                                      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14 , 16],
+                                      f'../nerccs2022/geo_10-3-22_targeted_rollout_{percent}_resultsfigs_{{0}}',
+                                      rollout_dict={4:decimal, 6:decimal, 8:decimal, 10:decimal, 12:decimal}, do_non_interv=False, do_interv=True,
+                                      intervention_type="targeted_rollout", pre_vax_correction=True)
 
 # pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ, 0.8, True,
-#                                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12],
-#                                     f'../nerccs2022/geo_05-5-22_targeted_rollout_1_resultsfigs_{{0}}',
+#                                     [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16],
+#                                     f'../nerccs2022/geo_10-10-22_targeted_rollout_1_resultsfigs_{{0}}',
 #                                     rollout_dict={4: 0.01, 6: 0.01, 8: 0.01, 10:0.01, 12: 0.01},
 #                                     do_non_interv=False, do_interv=True,
 #                                     intervention_type="targeted_rollout", pre_vax_correction=True)
