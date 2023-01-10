@@ -126,6 +126,18 @@ def g1_of(g_0):
         return g_1
     return g_1 / (z1_of(g_0))
 
+def g_g_of(g_gminus1, deltas, g):
+    g_g = np.zeros(len(g_gminus1))
+    denom = np.zeros(len(g_gminus1))
+
+    for k in range(len(g_gminus1) - 1):
+        g_g[k] = k * (k+1) * (1 - deltas[g][k+1]) * g_gminus1[k + 1]
+        denom[k] = (k + 1) * (1 - deltas[g][k+1]) * g_gminus1[k + 1]
+    if np.sum(denom) == 0
+        return g_g
+    return g_g / np.sum(denom)
+
+
 
 def phase_space(g_0, g_1, g=10):
     Psi_sm = np.zeros((10, 100, 100))
@@ -165,14 +177,17 @@ def gen_functions_with_transmissibility(degree_distrb, T):
     return G1_with_T, G0_with_T
 
 
-def critical_degree_calc(prop, degree_d): # This function is the change
+def critical_degree_calc(prop, degree_d, delta_k, g): # This function is the change
     k_crit = len(degree_d) #default for the critical k value
     temp_prop = prop
     while temp_prop > 0:
         temp_prop = temp_prop - degree_d[k_crit-1]
+        delta_k[g][k_crit-1] = 1
         k_crit -= 1
 
-    return k_crit, -temp_prop
+    delta_k[g][k_crit] = (1 + temp_prop) / degree_d[k_crit]
+
+    return k_crit, -temp_prop, delta_k
 
 def constructMatrixM(g_0, g_1):
     # Constructs the matrix of pgfs for G0_with transmission convolved to every mth power
@@ -402,30 +417,33 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
     first_gen_inter = intervention_gen_keys[0]
     dynamic_q[:first_gen_inter] = origin_q
     dynamic_H = np.zeros((num_gens))
-    store_G1s = np.zeros((maxk, maxk))
+    store_Ggs = np.zeros((maxk, maxk))
     store_G0s = np.zeros((maxk, maxk))
-    store_G1s[:first_gen_inter] = g1_orig
+    store_Ggs[:first_gen_inter] = g1_orig
     store_G0s[:first_gen_inter] = original_degree_distrb
+    delta_g_k = np.ones((num_gens,maxk))
 
     ##### finding the q's and H's for each intervention:
     for gen, V in rollout_dict.items():
         print(vacc_vector[gen])
-        crit_value, replace_prob = critical_degree_calc(vacc_vector[gen], original_degree_distrb) # check if original makes sense
+        crit_value, replace_prob, delta_g_k = critical_degree_calc(vacc_vector[gen], original_degree_distrb, delta_g_k, gen) # check if original makes sense
         print(crit_value)
-        H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
-            /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
-        print(f'H:{H}')
+        #H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
+        #    /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
+        H_g = np.sum([(k+1) * delta_g_k[gen][k] * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb))])\
+                \np.sum([(k+1) * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb))])
+        print(f'H:{H_g}')
         mod_G0_H = modify_g0(original_degree_distrb, crit_value, replace_prob)
         print(mod_G0_H)
-        mod_G1_H = g1_of(mod_G0_H)
-        store_G1s[gen:] = mod_G1_H
+        mod_Gg_H = g1_of(mod_G0_H)
+        store_Ggs[gen:] = mod_Gg_H
         store_G0s[gen:] = mod_G0_H
-        q_g = z1_of(mod_G1_H)
+        q_g = (1-H_g)* np.sum(mod_Gg_H) #change to the sum since the derivations are different for normalizing
         if np.isnan(q_g):
             q_g = 0
         print(q_g)
         dynamic_q[gen:] = q_g
-        dynamic_H[gen:] = H
+        dynamic_H[gen:] = H_g
 
     ######
 

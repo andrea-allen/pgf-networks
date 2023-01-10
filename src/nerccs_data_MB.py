@@ -24,10 +24,10 @@ EXAMPLES
 ## SET UP YOUR OWN FILE PATHS BELOW
 """
 
-# Non intervention
-# pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
-#                                   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12,14,16],
-#                                   f'../nerccs2022/geo_10-3-22_non_interv_{{0}}', do_non_interv=True, do_interv=False, pre_vax_correction=True)
+#Non intervention
+pgf_formalism.compute_phase_space(gens_compute, max_len_targ, geom_degree_dist_targ,  0.8, True,
+                                  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12,14,16],
+                                  f'../nerccs2022/geo_10-3-22_non_interv_{{0}}', do_non_interv=True, do_interv=False, pre_vax_correction=True)
 
 
 #Random (single and roll outs)
