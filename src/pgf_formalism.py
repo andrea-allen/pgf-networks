@@ -126,7 +126,7 @@ def g1_of(g_0):
         return g_1
     return g_1 / (z1_of(g_0))
 
-def g_g_of(g_gminus1, deltas, g):
+def g_g_of(g_gminus1, deltas, g): # Different derivation than the g1_of function since we need to incorporate the deltas.
     g_g = np.zeros(len(g_gminus1))
     denom = np.zeros(len(g_gminus1))
 
@@ -435,7 +435,7 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
         print(f'H:{H_g}')
         mod_G0_H = modify_g0(original_degree_distrb, crit_value, replace_prob)
         print(mod_G0_H)
-        mod_Gg_H = g1_of(mod_G0_H)
+        mod_Gg_H = g_g_of(mod_G0_H)
         store_Ggs[gen:] = mod_Gg_H
         store_G0s[gen:] = mod_G0_H
         q_g = (1-H_g)* np.sum(mod_Gg_H) #change to the sum since the derivations are different for normalizing
