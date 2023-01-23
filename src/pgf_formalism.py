@@ -133,7 +133,7 @@ def g_g_of(g_gminus1, deltas, g): # Different derivation than the g1_of function
     for k in range(len(g_gminus1) - 1):
         g_g[k] = k * (k+1) * (1 - deltas[g][k+1]) * g_gminus1[k + 1]
         denom[k] = (k + 1) * (1 - deltas[g][k+1]) * g_gminus1[k + 1]
-    if np.sum(denom) == 0
+    if np.sum(denom) == 0:
         return g_g
     return g_g / np.sum(denom)
 
@@ -182,10 +182,10 @@ def critical_degree_calc(prop, degree_d, delta_k, g): # This function is the cha
     temp_prop = prop
     while temp_prop > 0:
         temp_prop = temp_prop - degree_d[k_crit-1]
-        delta_k[g][k_crit-1] = 1
+        delta_k[g][k_crit-1] = 1.0
         k_crit -= 1
 
-    delta_k[g][k_crit] = (1 + temp_prop) / degree_d[k_crit]
+    delta_k[g][k_crit] = (-temp_prop) * degree_d[k_crit]
 
     return k_crit, -temp_prop, delta_k
 
@@ -421,7 +421,7 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
     store_G0s = np.zeros((maxk, maxk))
     store_Ggs[:first_gen_inter] = g1_orig
     store_G0s[:first_gen_inter] = original_degree_distrb
-    delta_g_k = np.ones((num_gens,maxk))
+    delta_g_k = np.zeros((num_gens,maxk))
 
     ##### finding the q's and H's for each intervention:
     for gen, V in rollout_dict.items():
@@ -430,15 +430,14 @@ def targeted_rollout_intervention(num_gens, max_s, max_m, original_degree_distrb
         print(crit_value)
         #H = np.sum([(k) * original_degree_distrb[k] for k in range(crit_value, len(original_degree_distrb))])\
         #    /np.sum([(k) * original_degree_distrb[k] for k in range(0, len(original_degree_distrb))])
-        H_g = np.sum([(k+1) * delta_g_k[gen][k] * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb))])\
-                \np.sum([(k+1) * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb))])
+        H_g = np.sum([(k+1) * delta_g_k[gen][k] * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb)-1)]) /np.sum([(k+1) * original_degree_distrb[k+1] for k in range(0, len(original_degree_distrb)-1)])
         print(f'H:{H_g}')
         mod_G0_H = modify_g0(original_degree_distrb, crit_value, replace_prob)
         print(mod_G0_H)
-        mod_Gg_H = g_g_of(mod_G0_H)
+        mod_Gg_H = g_g_of(mod_G0_H, delta_g_k, gen)
         store_Ggs[gen:] = mod_Gg_H
         store_G0s[gen:] = mod_G0_H
-        q_g = (1-H_g)* np.sum(mod_Gg_H) #change to the sum since the derivations are different for normalizing
+        q_g = (1-H_g)* np.sum(mod_Gg_H) #changed to the sum since the derivations are different for normalizing
         if np.isnan(q_g):
             q_g = 0
         print(q_g)
